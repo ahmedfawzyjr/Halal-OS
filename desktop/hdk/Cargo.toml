@@ -1,0 +1,15 @@
+[package]
+name = "halal-hdk"
+version = "2.0.0"
+edition = "2021"
+authors = ["Halal OS contributors"]
+description = "Halal Design Kit (HDK) - Production GTK4 & libadwaita UI components for Halal OS."
+
+[dependencies]
+gtk4 = { version = "0.7", package = "gtk" }
+libadwaita = { version = "0.5", package = "adw" }
+once_cell = "1.18"
+gdk4 = { version = "0.7", package = "gdk" }
+gio = "0.18"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

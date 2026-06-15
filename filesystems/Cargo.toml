@@ -1,0 +1,13 @@
+[package]
+name = "halalfs"
+version = "2.0.0"
+edition = "2021"
+authors = ["Halal OS contributors"]
+description = "FUSE interface skeleton representing the halalfs filesystem mapping virtual directory paths and encryption structures."
+
+[dependencies]
+fuser = "0.12"
+libc = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+aes-gcm = "0.10"

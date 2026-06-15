@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Halal OS - Privacy First, Faith Forward</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="index.css">
+  <!-- Tabler Icons CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body class="wp-dhuhr">
+
+  <!-- ==================== 1. BOOT SCREEN ==================== -->
+  <div id="boot-screen">
+    <svg class="boot-logo" viewBox="0 0 52 52" fill="none">
+      <circle cx="26" cy="26" r="24" stroke="#1B5E20" stroke-width="2.5"/>
+      <path d="M26 8 A18 18 0 1 1 8 26 A14 14 0 1 0 26 8Z" fill="#1B5E20"/>
+      <path d="M33 16 L34.4 19.6 L38 21 L34.4 22.4 L33 26 L31.6 22.4 L28 21 L31.6 19.6Z" fill="#D4A017"/>
+    </svg>
+    <div class="boot-progress-bar">
+      <div class="boot-progress-fill" id="boot-fill"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 2. SETUP WIZARD ==================== -->
+  <div id="setup-wizard">
+    <div class="setup-card glass-panel-elevated">
+      <div class="setup-steps-indicator" role="tablist" aria-label="Setup Steps">
+        <div class="setup-step-dot active" data-step="0" role="tab" tabindex="0" aria-selected="true" aria-label="Step 1: Language selection">1</div>
+        <div class="setup-step-dot" data-step="1" role="tab" tabindex="0" aria-selected="false" aria-label="Step 2: Prayer calculation method">2</div>
+        <div class="setup-step-dot" data-step="2" role="tab" tabindex="0" aria-selected="false" aria-label="Step 3: Privacy & protection settings">3</div>
+        <div class="setup-step-dot" data-step="3" role="tab" tabindex="0" aria-selected="false" aria-label="Step 4: Installation complete">4</div>
+      </div>
+
+      <div class="setup-body">
+        <!-- Slide 0: Language selection -->
+        <div class="setup-slide active" id="slide-lang">
+          <h2 style="font-size: 20px; font-weight: 700;">Welcome to Halal OS / مرحباً بك</h2>
+          <p style="font-size: 13px; color: var(--color-text-secondary);">Choose your default language. This controls language text, direction, layout alignment, and default fonts.</p>
+          <div class="setup-lang-grid" role="group" aria-label="Language selection options">
+            <button class="setup-btn-option selected" onclick="selectSetupLanguage('en', 'ltr')" aria-label="Choose English LTR">
+              <span>🇬🇧</span> English
+            </button>
+            <button class="setup-btn-option" onclick="selectSetupLanguage('ar', 'rtl')" aria-label="Choose Arabic RTL">
+              <span>🇸🇦</span> العربية
+            </button>
+            <button class="setup-btn-option" onclick="selectSetupLanguage('ur', 'rtl')" aria-label="Choose Urdu RTL">
+              <span>🇵🇰</span> اردو
+            </button>
+            <button class="setup-btn-option" onclick="selectSetupLanguage('de', 'ltr')" aria-label="Choose German LTR">
+              <span>🇩🇪</span> Deutsch
+            </button>
+          </div>
+        </div>
+
+        <!-- Slide 1: Prayer Calculation Method -->
+        <div class="setup-slide" id="slide-prayer">
+          <h2 style="font-size: 20px; font-weight: 700;" id="txt-setup-p-title">Prayer Calculation</h2>
+          <p style="font-size: 13px; color: var(--color-text-secondary);" id="txt-setup-p-desc">Configure the method used for calculating daily prayer times according to local conventions.</p>
+          <div class="setup-checkbox-list" role="radiogroup" aria-label="Prayer time calculation method options">
+            <div class="setup-checkbox-item" onclick="selectSetupPrayerMethod(this, 'egypt')" role="radio" aria-checked="true" tabindex="0" aria-label="Egyptian General Authority of Survey calculation method. Standard in Egypt, Sudan, parts of Middle East">
+              <input type="radio" name="prayer-method" checked id="pm-egypt" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">Egyptian General Authority of Survey</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Standard in Egypt, Sudan, parts of Middle East</div>
+              </div>
+            </div>
+            <div class="setup-checkbox-item" onclick="selectSetupPrayerMethod(this, 'mwl')" role="radio" aria-checked="false" tabindex="0" aria-label="Muslim World League calculation method. Standard in Europe, most of Asia">
+              <input type="radio" name="prayer-method" id="pm-mwl" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">Muslim World League (MWL)</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Standard in Europe, most of Asia</div>
+              </div>
+            </div>
+            <div class="setup-checkbox-item" onclick="selectSetupPrayerMethod(this, 'isna')" role="radio" aria-checked="false" tabindex="0" aria-label="Islamic Society of North America calculation method. Standard in USA, Canada">
+              <input type="radio" name="prayer-method" id="pm-isna" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">Islamic Society of North America (ISNA)</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Standard in USA, Canada</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2: Privacy Profile -->
+        <div class="setup-slide" id="slide-privacy">
+          <h2 style="font-size: 20px; font-weight: 700;" id="txt-setup-pr-title">Privacy & Protection</h2>
+          <p style="font-size: 13px; color: var(--color-text-secondary);" id="txt-setup-pr-desc">Halal OS blocks tracking by default. Adjust your privacy preferences below.</p>
+          <div class="setup-checkbox-list" role="group" aria-label="Privacy and Protection Profiles">
+            <label class="setup-checkbox-item" role="checkbox" aria-checked="true" tabindex="0" aria-label="Enable halalfire Network Shield. App-level tracker block and secure DoH router.">
+              <input type="checkbox" checked id="chk-halalfire" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">Enable halalfire Network Shield</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">App-level tracker block and secure DoH router.</div>
+              </div>
+            </label>
+            <label class="setup-checkbox-item" role="checkbox" aria-checked="true" tabindex="0" aria-label="On-Device Amina AI Assistance. Processes commands locally. Zero cloud latency or telemetry.">
+              <input type="checkbox" checked id="chk-amina" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">On-Device Amina AI Assistance</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Processes commands locally. Zero cloud latency or telemetry.</div>
+              </div>
+            </label>
+            <label class="setup-checkbox-item" role="checkbox" aria-checked="true" tabindex="0" aria-label="End-to-End Encrypted Cloud Sync. Synch bookmarks and prayer logs to self-hosted Halal Cloud.">
+              <input type="checkbox" checked id="chk-sync" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">End-to-End Encrypted Cloud Sync</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Synch bookmarks and prayer logs to self-hosted Halal Cloud.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Slide 3: Finish -->
+        <div class="setup-slide" id="slide-finish">
+          <div style="font-size: 48px; color: var(--color-emerald-active); margin-bottom: 8px;">☪</div>
+          <h2 style="font-size: 22px; font-weight: 700; color: var(--color-emerald-active);" id="txt-setup-f-title">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</h2>
+          <p style="font-size: 14px; color: var(--color-text-secondary);" id="txt-setup-f-desc">In the name of Allah, the Most Gracious, the Most Merciful</p>
+          <p style="font-size: 13px; color: var(--color-text-muted); max-width: 400px; margin: 0 auto;" id="txt-setup-f-sub">Your Halal OS desktop is configured and ready. Enjoy a secure, modern, and faith-integrated desktop environment.</p>
+        </div>
+      </div>
+
+      <div class="setup-footer">
+        <button class="setup-btn-text" id="setup-prev-btn" onclick="prevSetupStep()" style="visibility: hidden;">
+          <i class="ti ti-arrow-left"></i> <span id="lbl-setup-back">Back</span>
+        </button>
+        <button class="setup-btn-primary" id="setup-next-btn" onclick="nextSetupStep()">
+          <span id="lbl-setup-next">Continue</span> <i class="ti ti-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 3. DESKTOP SHELL ==================== -->
+  <div id="desktop-shell">
+    
+    <!-- TOP STATUS BAR (HIFZ PANEL) -->
+    <header class="hifz-panel glass-panel">
+      <div class="hp-left">
+        <div class="hp-brand" onclick="toggleLauncher()" tabindex="0" role="button" aria-label="Open Bismillah Menu" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 52 52" fill="none">
+            <circle cx="26" cy="26" r="24" stroke="currentColor" stroke-width="3.5"/>
+            <path d="M26 8 A18 18 0 1 1 8 26 A14 14 0 1 0 26 8Z" fill="currentColor"/>
+            <path d="M33 16 L34.4 19.6 L38 21 L34.4 22.4 L33 26 L31.6 22.4 L28 21 L31.6 19.6Z" fill="#D4A017"/>
+          </svg>
+          <span>Halal OS</span>
+        </div>
+        <div class="hp-prayer-widget" onclick="openWindow('window-islamic'); selectIslamicSubTab('prayer')" tabindex="0" role="button" aria-label="Open Prayer Times Window">
+          <i class="ti ti-moon-stars"></i>
+          <span id="top-prayer-text">Dhuhr in 42 min</span>
+        </div>
+      </div>
+      <div class="hp-center">
+        <div class="hp-clock" id="top-clock" onclick="openWindow('window-islamic'); selectIslamicSubTab('calendar')" tabindex="0" role="button" aria-label="Open Calendar Window">12:18 PM</div>
+        <div style="font-size: 11px; color: var(--color-gold-light); font-weight: 500; cursor: pointer; margin-left: 8px;" id="top-hijri-date" onclick="openWindow('window-islamic'); selectIslamicSubTab('calendar')" tabindex="0" role="button" aria-label="Open Hijri Calendar Tab">15 Dhul-Hijjah 1447</div>
+      </div>
+      <div class="hp-right">
+        <div class="hp-icon-btn" title="Shield Guard Dashboard" id="privacy-shield-btn" onclick="togglePrivacyShieldDropdown()" tabindex="0" role="button" aria-label="Toggle Privacy Shield Dashboard" aria-haspopup="true" aria-expanded="false">
+          <i class="ti ti-shield-check privacy-shield-indicator" id="top-shield-icon"></i>
+        </div>
+        <div class="hp-icon-btn" title="Ilm Panel Sidebar" onclick="toggleIlmPanel()" tabindex="0" role="button" aria-label="Toggle Ilm Sidebar Panel" aria-haspopup="true" aria-expanded="false">
+          <i class="ti ti-book-2"></i>
+        </div>
+        <div class="hp-icon-btn" title="Quick Settings Overlay" onclick="toggleQuickSettings()" tabindex="0" role="button" aria-label="Toggle Quick Settings Menu" aria-haspopup="true" aria-expanded="false">
+          <i class="ti ti-settings-2"></i>
+        </div>
+      </div>
+
+      <!-- Live Privacy Dashboard Overlay -->
+      <div id="privacy-shield-dropdown" class="glass-panel-elevated" style="position: absolute; right: 16px; top: 46px; width: 320px; border-radius: var(--r-medium); padding: 18px; display: none; flex-direction: column; gap: 14px; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-weight: 700; font-size: 14px;" id="lbl-psd-title">halalfire Network Audit</div>
+          <span class="tag tag-green" style="font-size: 10px;" id="lbl-psd-status">Active Protection</span>
+        </div>
+        <div class="privacy-score-widget" style="padding: 10px; gap: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--color-border);">
+          <div class="ps-radial" id="psd-radial-score" style="width: 52px; height: 52px; font-size: 16px; background: radial-gradient(closest-side, #242424 79%, transparent 80% 100%), conic-gradient(var(--color-success) 98%, rgba(255,255,255,0.1) 0);">98</div>
+          <div>
+            <div style="font-size: 12px; font-weight: 600;" id="lbl-psd-score-title">Security Core Health</div>
+            <div style="font-size: 11px; color: var(--color-text-muted);" id="lbl-psd-score-desc">Zero telemetry, local DNS resolution</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 11px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px;" id="lbl-psd-block-title">Block Log (Live)</div>
+          <div class="privacy-audit-logs" id="psd-audit-logs" style="height: 100px;">
+            [04:15:32] Blocked tracker: telemetry.kde.org
+            [04:20:10] Blocked analytic: google-analytics.com
+            [04:22:44] Blocked tracker: metrics.debian.org
+          </div>
+        </div>
+        <button class="btn btn-sm btn-primary" style="width: 100%; justify-content: center;" onclick="openWindow('window-settings'); selectSettingsSubTab('privacy')">
+          <i class="ti ti-settings"></i> <span id="lbl-psd-btn">Manage Permissions</span>
+        </button>
+      </div>
+
+      <!-- Quick Settings Panel -->
+      <div id="quick-settings-panel" class="glass-panel-elevated">
+        <div class="qs-header">
+          <div style="font-weight: 700;" id="lbl-qs-title">Quick Settings</div>
+        </div>
+        <div class="qs-slider-group">
+          <div class="qs-slider-item">
+            <i class="ti ti-volume" style="width: 16px;"></i>
+            <input type="range" class="hdk-slider" min="0" max="100" value="80" style="flex: 1;">
+          </div>
+          <div class="qs-slider-item">
+            <i class="ti ti-brightness-up" style="width: 16px;"></i>
+            <input type="range" class="hdk-slider" min="0" max="100" value="90" style="flex: 1;">
+          </div>
+        </div>
+        <div class="qs-grid">
+          <button class="qs-btn active" onclick="toggleQSSetting(this, 'wifi')"><i class="ti ti-wifi"></i> <span>Wi-Fi</span></button>
+          <button class="qs-btn active" onclick="toggleQSSetting(this, 'shield')"><i class="ti ti-shield-check"></i> <span id="lbl-qs-fw">Firewall</span></button>
+          <button class="qs-btn" onclick="toggleQSSetting(this, 'bluetooth')"><i class="ti ti-bluetooth"></i> <span>Bluetooth</span></button>
+          <button class="qs-btn active" onclick="toggleQSSetting(this, 'doh')"><i class="ti ti-lock-square"></i> <span id="lbl-qs-dns">Secure DNS</span></button>
+        </div>
+        <div class="qs-footer">
+          <div style="font-size: 11px; color: var(--color-text-secondary);"><i class="ti ti-battery-4"></i> Battery: 94%</div>
+          <button class="btn btn-sm" onclick="openWindow('window-settings'); selectSettingsSubTab('general')" id="lbl-qs-set-btn">Settings</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- WINDOW WORKSPACE CONTAINER -->
+    <main class="workspace-canvas" id="workspace">
+      <div class="os-window-deck" id="window-deck">
+
+      <!-- ==================== WINDOW: TAZKIYAH (SETTINGS) ==================== -->
+      <div class="os-window glass-panel-elevated" id="window-settings" style="left: 60px; top: 40px;">
+        <div class="window-titlebar">
+          <div class="wt-title">
+            <span class="network-dot yellow" title="Local network permissions only"></span>
+            <i class="ti ti-settings"></i>
+            <span id="title-settings">Tazkiyah Settings</span>
+          </div>
+          <div class="wt-controls" role="group" aria-label="Window Actions">
+            <button class="window-dot minimize" onclick="minimizeWindow('window-settings')" title="Minimize" aria-label="Minimize Settings Window"></button>
+            <button class="window-dot maximize" onclick="maximizeWindow('window-settings')" title="Maximize" aria-label="Maximize Settings Window"></button>
+            <button class="window-dot close" onclick="closeWindow('window-settings')" title="Close" aria-label="Close Settings Window"></button>
+          </div>
+        </div>
+        <div class="window-content">
+          <div class="settings-layout">
+            <aside class="settings-sidebar" role="tablist" aria-label="Settings Categories">
+              <div class="settings-nav-btn active" data-tab="general" onclick="selectSettingsSubTab('general')" role="tab" tabindex="0" aria-selected="true">
+                <i class="ti ti-device-laptop"></i> <span id="lbl-set-nav-general">General</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="privacy" onclick="selectSettingsSubTab('privacy')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-shield"></i> <span id="lbl-set-nav-privacy">Privacy</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="islamic" onclick="selectSettingsSubTab('islamic')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-moon-stars"></i> <span id="lbl-set-nav-islamic">Faith Settings</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="appearance" onclick="selectSettingsSubTab('appearance')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-palette"></i> <span id="lbl-set-nav-appearance">Appearance</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="hdk" onclick="selectSettingsSubTab('hdk')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-color-swatch"></i> <span id="lbl-set-nav-hdk">HDK Lab</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="brand" onclick="selectSettingsSubTab('brand')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-brand-mastercard"></i> <span>Brand System</span>
+              </div>
+            </aside>
+            <main class="settings-main">
+              
+              <!-- Tab: General -->
+              <div class="settings-tab-panel active" id="set-tab-general">
+                <h3 class="settings-section-title" id="lbl-set-gen-title">System Configuration</h3>
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-gen-lang">System Language</div>
+                      <div class="settings-row-desc" id="lbl-set-gen-lang-desc">Switch layout direction and UI language</div>
+                    </div>
+                    <select id="settings-lang-select" onchange="changeSystemLanguage(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 6px 12px; border-radius: var(--r-small); outline: none;">
+                      <option value="en">English (LTR)</option>
+                      <option value="ar">العربية (RTL)</option>
+                      <option value="ur">اردو (RTL)</option>
+                      <option value="de">Deutsch (LTR)</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-gen-ver">Halal OS Version</div>
+                      <div class="settings-row-desc">Version 2.0.0 Stable Build (Powered by AntiGravity)</div>
+                    </div>
+                    <span class="tag tag-green" style="font-weight: 600;">LTS</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Privacy -->
+              <div class="settings-tab-panel" id="set-tab-privacy" style="display: none;">
+                <h3 class="settings-section-title" id="lbl-set-priv-title">Amanah Privacy Dashboard</h3>
+                <div class="privacy-score-widget">
+                  <div class="ps-radial" id="settings-privacy-score">98</div>
+                  <div>
+                    <div style="font-size: 14px; font-weight: 600;" id="lbl-set-priv-score">Privacy Score: High Protection</div>
+                    <div style="font-size: 11px; color: var(--color-text-muted);" id="lbl-set-priv-score-desc">All system analytics disabled, app sandbox verified.</div>
+                  </div>
+                </div>
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-priv-shield">halalfire Firewall Shield</div>
+                      <div class="settings-row-desc" id="lbl-set-priv-shield-desc">Filters network requests, block ad-trackers system-wide</div>
+                    </div>
+                    <label class="halal-switch">
+                      <input type="checkbox" checked id="settings-chk-firewall" onchange="toggleFirewall(this.checked)">
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-priv-telemetry">Block Telemetry &amp; Logs</div>
+                      <div class="settings-row-desc" id="lbl-set-priv-telemetry-desc">Intercept and deny metadata collection by package mirrors</div>
+                    </div>
+                    <label class="halal-switch">
+                      <input type="checkbox" checked id="settings-chk-telemetry">
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-priv-sandbox">Flatpak App Isolation (halalbox)</div>
+                      <div class="settings-row-desc" id="lbl-set-priv-sandbox-desc">Strictly isolate third-party apps in security sandboxes</div>
+                    </div>
+                    <label class="halal-switch">
+                      <input type="checkbox" checked>
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Islamic -->
+              <div class="settings-tab-panel" id="set-tab-islamic" style="display: none;">
+                <h3 class="settings-section-title" id="lbl-set-isl-title">Islamic Native Preferences</h3>
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-isl-calc">Calculation Method</div>
+                      <div class="settings-row-desc" id="lbl-set-isl-calc-desc">Modify geographical prayer angle parameters</div>
+                    </div>
+                    <select id="settings-prayer-select" onchange="changePrayerMethod(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 6px 12px; border-radius: var(--r-small); outline: none;">
+                      <option value="egypt">Egyptian Authority of Survey</option>
+                      <option value="mwl">Muslim World League</option>
+                      <option value="isna">Islamic Society of North America</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-isl-adhan">System Adhan Sound</div>
+                      <div class="settings-row-desc" id="lbl-set-isl-adhan-desc">Play full Adhan call during prayer times</div>
+                    </div>
+                    <label class="halal-switch">
+                      <input type="checkbox" checked id="settings-chk-adhan">
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-isl-ramadan">Ramadan Theme Mode</div>
+                      <div class="settings-row-desc" id="lbl-set-isl-ramadan-desc">Enable gold aesthetic decorations and fasting tracker</div>
+                    </div>
+                    <label class="halal-switch">
+                      <input type="checkbox" id="settings-chk-ramadan" onchange="toggleRamadanMode(this.checked)">
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-isl-loc">Mock GPS Coordinates</div>
+                      <div class="settings-row-desc" id="lbl-set-isl-loc-desc">Set system latitude/longitude for Qibla calculation</div>
+                    </div>
+                    <span style="font-family: var(--font-mono); font-size: 12px; color: var(--color-gold-light);">30.0444° N, 31.2357° E (Cairo)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Appearance -->
+              <div class="settings-tab-panel" id="set-tab-appearance" style="display: none;">
+                <h3 class="settings-section-title" id="lbl-set-app-title">Visual Customization</h3>
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-app-theme">System Theme</div>
+                      <div class="settings-row-desc" id="lbl-set-app-theme-desc">Toggle clean dark mode or light modes</div>
+                    </div>
+                    <select id="settings-theme-select" onchange="changeSystemTheme(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 6px 12px; border-radius: var(--r-small); outline: none;">
+                      <option value="dark">Midnight Dark (Standard)</option>
+                      <option value="light">Pearl White Light</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-app-wp">Adaptive Wallpaper</div>
+                      <div class="settings-row-desc" id="lbl-set-app-wp-desc">Automatically adapt desktop background to prayer intervals</div>
+                    </div>
+                    <label class="halal-switch">
+                      <input type="checkbox" checked id="settings-chk-adaptive-wp" onchange="toggleAdaptiveWallpaper(this.checked)">
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title" id="lbl-set-app-motion">Reduced Motion System</div>
+                      <div class="settings-row-desc" id="lbl-set-app-motion-desc">Deactivate dynamic desktop transition animations</div>
+                    </div>
+                    <label class="halal-switch">
+                      <input type="checkbox" id="settings-chk-motion" onchange="toggleReducedMotion(this.checked)">
+                      <span class="switch-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: HDK Specimen -->
+              <div class="settings-tab-panel" id="set-tab-hdk" style="display: none;">
+                <h3 class="settings-section-title" id="lbl-set-hdk-title">Halal Design Kit (HDK) Specimen</h3>
+                <div style="font-size: 12px; color: var(--color-text-secondary);" id="lbl-set-hdk-desc">Standard component specifications defined in the GUI Improvement Plan.</div>
+                <div class="settings-card-group">
+                  <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                    <div style="font-size: 12px; font-weight: 600;" id="lbl-hdk-btns">HDK Buttons</div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                      <button class="btn btn-primary">Primary</button>
+                      <button class="btn">Secondary</button>
+                      <button class="btn" style="background:#D4A017; color:#412402; border:none; font-weight:500;">Gold Accent</button>
+                      <button class="btn" style="background:#C62828; color:white; border:none;">Danger</button>
+                    </div>
+                  </div>
+                  <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                    <div style="font-size: 12px; font-weight: 600;" id="lbl-hdk-controls">HDK Slider &amp; Switches</div>
+                    <div style="display: flex; align-items: center; gap: 20px; width: 100%;">
+                      <label class="halal-switch">
+                        <input type="checkbox" checked>
+                        <span class="switch-slider"></span>
+                      </label>
+                      <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                        <i class="ti ti-sun"></i>
+                        <input type="range" class="hdk-slider" id="hdk-demo-slider" min="0" max="100" value="70" oninput="updateHDKSlider(this.value)">
+                        <span style="font-family: var(--font-mono); font-size: 11px;" id="hdk-slider-value">70%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="settings-row" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                    <div style="font-size: 12px; font-weight: 600;" id="lbl-hdk-crescent">Crescent Progress Indicator</div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                      <svg width="44" height="44" viewBox="0 0 52 52" fill="none">
+                        <circle cx="26" cy="26" r="22" stroke="rgba(255,255,255,0.08)" stroke-width="3.5"/>
+                        <path d="M26 4 A22 22 0 1 1 4 26" stroke="var(--color-emerald-active)" stroke-width="3.5" id="hdk-progress-arc" stroke-dasharray="138" stroke-dashoffset="41"/>
+                        <text x="26" y="30" font-size="11" fill="white" font-weight="700" text-anchor="middle" id="hdk-progress-text">70%</text>
+                      </svg>
+                      <span style="font-size: 11px; color: var(--color-text-secondary);" id="lbl-hdk-crescent-desc">Crescent shape maps remaining intervals prior to Adhan alerts.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Brand System (from Brand Identity + GUI Design System) -->
+              <div class="settings-tab-panel" id="set-tab-brand" style="display: none;">
+                <h3 class="settings-section-title">Brand Identity &amp; Design System</h3>
+                <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px;">Complete visual identity — logo, colors, typography, motion tokens, and component specs.</div>
+
+                <!-- Logo Variants -->
+                <div class="brand-section">
+                  <div class="brand-sec-label">Primary Logo</div>
+                  <div class="brand-logo-grid">
+                    <!-- Light -->
+                    <div class="brand-logo-canvas brand-logo-light">
+                      <div class="brand-wordmark">
+                        <svg width="40" height="40" viewBox="0 0 52 52" fill="none">
+                          <circle cx="26" cy="26" r="24" stroke="#1B5E20" stroke-width="2"/>
+                          <path d="M26 8 A18 18 0 1 1 8 26 A14 14 0 1 0 26 8Z" fill="#1B5E20"/>
+                          <path d="M33 16 L34.4 19.6 L38 21 L34.4 22.4 L33 26 L31.6 22.4 L28 21 L31.6 19.6Z" fill="#D4A017"/>
+                        </svg>
+                        <div>
+                          <div style="font-size:18px;font-weight:700;color:#0A3D12;line-height:1">Halal</div>
+                          <div style="font-size:9px;font-weight:500;letter-spacing:4px;color:#2E7D32">OS</div>
+                        </div>
+                      </div>
+                      <div class="brand-logo-label">Light</div>
+                    </div>
+                    <!-- Dark -->
+                    <div class="brand-logo-canvas brand-logo-dark">
+                      <div class="brand-wordmark">
+                        <svg width="40" height="40" viewBox="0 0 52 52" fill="none">
+                          <circle cx="26" cy="26" r="24" stroke="#66BB6A" stroke-width="2"/>
+                          <path d="M26 8 A18 18 0 1 1 8 26 A14 14 0 1 0 26 8Z" fill="#66BB6A"/>
+                          <path d="M33 16 L34.4 19.6 L38 21 L34.4 22.4 L33 26 L31.6 22.4 L28 21 L31.6 19.6Z" fill="#FAC775"/>
+                        </svg>
+                        <div>
+                          <div style="font-size:18px;font-weight:700;color:#A5D6A7;line-height:1">Halal</div>
+                          <div style="font-size:9px;font-weight:500;letter-spacing:4px;color:#66BB6A">OS</div>
+                        </div>
+                      </div>
+                      <div class="brand-logo-label">Dark</div>
+                    </div>
+                    <!-- Green -->
+                    <div class="brand-logo-canvas brand-logo-green">
+                      <div class="brand-wordmark">
+                        <svg width="40" height="40" viewBox="0 0 52 52" fill="none">
+                          <circle cx="26" cy="26" r="24" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+                          <path d="M26 8 A18 18 0 1 1 8 26 A14 14 0 1 0 26 8Z" fill="white"/>
+                          <path d="M33 16 L34.4 19.6 L38 21 L34.4 22.4 L33 26 L31.6 22.4 L28 21 L31.6 19.6Z" fill="#D4A017"/>
+                        </svg>
+                        <div>
+                          <div style="font-size:18px;font-weight:700;color:white;line-height:1">Halal</div>
+                          <div style="font-size:9px;font-weight:500;letter-spacing:4px;color:rgba(255,255,255,0.7)">OS</div>
+                        </div>
+                      </div>
+                      <div class="brand-logo-label" style="color:rgba(255,255,255,0.7)">Green</div>
+                    </div>
+                    <!-- Mono -->
+                    <div class="brand-logo-canvas brand-logo-light" style="background:#fff">
+                      <div class="brand-wordmark">
+                        <svg width="40" height="40" viewBox="0 0 52 52" fill="none">
+                          <circle cx="26" cy="26" r="24" stroke="#1A1A1A" stroke-width="2"/>
+                          <path d="M26 8 A18 18 0 1 1 8 26 A14 14 0 1 0 26 8Z" fill="#1A1A1A"/>
+                          <path d="M33 16 L34.4 19.6 L38 21 L34.4 22.4 L33 26 L31.6 22.4 L28 21 L31.6 19.6Z" fill="white"/>
+                        </svg>
+                        <div>
+                          <div style="font-size:18px;font-weight:700;color:#1A1A1A;line-height:1">Halal</div>
+                          <div style="font-size:9px;font-weight:500;letter-spacing:4px;color:#555">OS</div>
+                        </div>
+                      </div>
+                      <div class="brand-logo-label">Monochrome</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Color System -->
+                <div class="brand-section">
+                  <div class="brand-sec-label">Color System</div>
+                  <!-- Forest Green -->
+                  <div style="margin-bottom:14px">
+                    <div class="brand-color-name">Forest — Primary</div>
+                    <div class="brand-color-row">
+                      <div class="brand-swatch" style="background:#04200A" title="#04200A"></div>
+                      <div class="brand-swatch" style="background:#0A3D12" title="#0A3D12"></div>
+                      <div class="brand-swatch" style="background:#1B5E20" title="#1B5E20"></div>
+                      <div class="brand-swatch" style="background:#2E7D32" title="#2E7D32"></div>
+                      <div class="brand-swatch" style="background:#43A047" title="#43A047"></div>
+                      <div class="brand-swatch" style="background:#66BB6A" title="#66BB6A"></div>
+                      <div class="brand-swatch" style="background:#A5D6A7" title="#A5D6A7"></div>
+                      <div class="brand-swatch" style="background:#E8F5E9" title="#E8F5E9"></div>
+                    </div>
+                    <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;font-size:11px;color:var(--color-text-secondary)">
+                      <span><strong style="color:var(--color-emerald-dark)">Night</strong> — Topbar, headers</span>
+                      <span><strong style="color:var(--color-emerald)">Primary</strong> — Brand, CTAs</span>
+                      <span><strong style="color:var(--color-emerald-hover)">Active</strong> — Hover states</span>
+                      <span><strong style="color:#888">Mist</strong> — Tinted surfaces</span>
+                    </div>
+                  </div>
+                  <!-- Gold -->
+                  <div style="margin-bottom:14px">
+                    <div class="brand-color-name">Gold — Accent</div>
+                    <div class="brand-color-row">
+                      <div class="brand-swatch" style="background:#412402" title="#412402"></div>
+                      <div class="brand-swatch" style="background:#633806" title="#633806"></div>
+                      <div class="brand-swatch" style="background:#8B6914" title="#8B6914"></div>
+                      <div class="brand-swatch" style="background:#D4A017" title="#D4A017"></div>
+                      <div class="brand-swatch" style="background:#ECC94B" title="#ECC94B"></div>
+                      <div class="brand-swatch" style="background:#FAC775" title="#FAC775"></div>
+                      <div class="brand-swatch" style="background:#FAEEDA" title="#FAEEDA"></div>
+                    </div>
+                    <div style="font-size:11px;color:var(--color-text-secondary);margin-top:6px">Logo star, premium badges, prayer highlights, Ramadan themes</div>
+                  </div>
+                  <!-- Neutral -->
+                  <div>
+                    <div class="brand-color-name">Neutral</div>
+                    <div class="brand-color-row">
+                      <div class="brand-swatch" style="background:#0D0F0D" title="#0D0F0D"></div>
+                      <div class="brand-swatch" style="background:#1A1A1A" title="#1A1A1A"></div>
+                      <div class="brand-swatch" style="background:#444444" title="#444444"></div>
+                      <div class="brand-swatch" style="background:#888888" title="#888888"></div>
+                      <div class="brand-swatch" style="background:#C0C0C0" title="#C0C0C0"></div>
+                      <div class="brand-swatch" style="background:#E4E4E4" title="#E4E4E4"></div>
+                      <div class="brand-swatch" style="background:#F8F7F4" title="#F8F7F4"></div>
+                    </div>
+                    <div style="font-size:11px;color:var(--color-text-secondary);margin-top:6px">Text, borders, surfaces — warm off-white (#F8F7F4), never pure white</div>
+                  </div>
+                </div>
+
+                <!-- Typography -->
+                <div class="brand-section">
+                  <div class="brand-sec-label">Typography Scale</div>
+                  <div class="brand-type-specimen">
+                    <div class="brand-type-meta">Display · Inter 700 · 36px · tracking -1px</div>
+                    <div style="font-size:36px;font-weight:700;letter-spacing:-1px;color:var(--color-emerald-dark);line-height:1.1">Privacy first.<br>Faith forward.</div>
+                  </div>
+                  <div class="brand-type-specimen">
+                    <div class="brand-type-meta">H1 · Inter 600 · 24px · tracking -0.5px</div>
+                    <div style="font-size:24px;font-weight:600;letter-spacing:-0.5px;color:var(--color-text-primary)">Your digital life, on your terms.</div>
+                  </div>
+                  <div class="brand-type-specimen">
+                    <div class="brand-type-meta">H2 · Inter 500 · 18px</div>
+                    <div style="font-size:18px;font-weight:500;color:var(--color-text-primary)">Halal OS — built for 1.8 billion people.</div>
+                  </div>
+                  <div class="brand-type-specimen">
+                    <div class="brand-type-meta">Body · System UI 400 · 14px · line-height 1.7</div>
+                    <div style="font-size:14px;line-height:1.7;color:var(--color-text-secondary)">An open-source operating system designed to be privacy-first, security-first, and Islamic-native. Your data never leaves your device without your permission.</div>
+                  </div>
+                  <div class="brand-type-specimen">
+                    <div class="brand-type-meta">Caption · 11px · uppercase · tracking 1.5px · weight 600</div>
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-text-muted)">Prayer times · Security status · Halal cloud</div>
+                  </div>
+                  <div class="brand-type-specimen" style="direction:rtl;text-align:right">
+                    <div class="brand-type-meta" style="direction:ltr;text-align:left">Arabic · Noto Naskh Arabic 400/700 · 18px · RTL</div>
+                    <div style="font-size:18px;color:var(--color-text-primary);font-family:var(--font-arabic);line-height:1.7">نظام التشغيل الحلال — خصوصيتك أولاً</div>
+                    <div style="font-size:15px;color:var(--color-text-secondary);font-family:var(--font-quran);line-height:1.7">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+                  </div>
+                </div>
+
+                <!-- Motion System -->
+                <div class="brand-section">
+                  <div class="brand-sec-label">Motion System</div>
+                  <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px">Every animation follows four principles: <strong>purposeful</strong> (no decoration), <strong>fast</strong> (&lt;300ms), <strong>respectful</strong> (prefers-reduced-motion honored), and <strong>Islamic</strong> (calligraphy-inspired easing curves).</div>
+                  <div class="brand-motion-row">
+                    <div class="brand-motion-demo">
+                      <div class="brand-motion-box" id="bmd-pulse" style="animation:brandPulse 2s infinite"><i class="ti ti-sparkles"></i></div>
+                      <div style="font-size:12px;font-weight:500;margin-bottom:2px">Attention pulse</div>
+                      <div style="font-size:11px;color:var(--color-text-muted)">Prayer alerts, AI ready</div>
+                      <button class="btn btn-sm" style="margin-top:8px" onclick="replayBrandAnim('bmd-pulse','brandPulse 2s infinite')">Replay</button>
+                    </div>
+                    <div class="brand-motion-demo">
+                      <div class="brand-motion-box" id="bmd-fadein"><i class="ti ti-layout-dashboard"></i></div>
+                      <div style="font-size:12px;font-weight:500;margin-bottom:2px">Fade + slide in</div>
+                      <div style="font-size:11px;color:var(--color-text-muted)">Page transitions, cards</div>
+                      <button class="btn btn-sm" style="margin-top:8px" onclick="replayBrandAnim('bmd-fadein','brandFadeSlide 0.35s ease both')">Replay</button>
+                    </div>
+                    <div class="brand-motion-demo">
+                      <div class="brand-motion-box" id="bmd-slide"><i class="ti ti-arrow-right"></i></div>
+                      <div style="font-size:12px;font-weight:500;margin-bottom:2px">Slide in (RTL-aware)</div>
+                      <div style="font-size:11px;color:var(--color-text-muted)">Sidebar, drawer open</div>
+                      <button class="btn btn-sm" style="margin-top:8px" onclick="replayBrandAnim('bmd-slide','brandSlideRight 0.4s ease both')">Replay</button>
+                    </div>
+                    <div class="brand-motion-demo">
+                      <div class="brand-motion-box" id="bmd-shimmer" style="animation:brandShimmer 1.4s ease-in-out infinite"><i class="ti ti-loader"></i></div>
+                      <div style="font-size:12px;font-weight:500;margin-bottom:2px">Shimmer loader</div>
+                      <div style="font-size:11px;color:var(--color-text-muted)">AI inference, sync</div>
+                      <button class="btn btn-sm" style="margin-top:8px" onclick="replayBrandAnim('bmd-shimmer','brandShimmer 1.4s ease-in-out infinite')">Replay</button>
+                    </div>
+                  </div>
+                  <!-- Easing tokens -->
+                  <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+                    <div class="brand-easing-card"><div class="brand-easing-name">--ease-enter</div><div class="brand-easing-val">cubic-bezier(0.0, 0.0, 0.2, 1) · 200ms</div><div class="brand-easing-use">Page load, modal open</div></div>
+                    <div class="brand-easing-card"><div class="brand-easing-name">--ease-exit</div><div class="brand-easing-val">cubic-bezier(0.4, 0.0, 1.0, 1) · 150ms</div><div class="brand-easing-use">Dismiss, close, navigate</div></div>
+                    <div class="brand-easing-card"><div class="brand-easing-name">--ease-spring</div><div class="brand-easing-val">cubic-bezier(0.34, 1.56, 0.64, 1) · 250ms</div><div class="brand-easing-use">Hover cards, icon press</div></div>
+                    <div class="brand-easing-card"><div class="brand-easing-name">--ease-prayer</div><div class="brand-easing-val">cubic-bezier(0.25, 0.46, 0.45, 0.94) · 500ms</div><div class="brand-easing-use">Adhan fade-in, Quran</div></div>
+                  </div>
+                  <!-- Duration scale -->
+                  <div style="margin-top:14px">
+                    <div style="font-size:12px;font-weight:600;margin-bottom:8px">Duration scale</div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:24px;height:3px;background:var(--color-emerald);border-radius:99px;opacity:0.3"></div><div style="font-size:10px;font-weight:500">50ms</div><div style="font-size:9px;color:var(--color-text-muted)">Micro</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:44px;height:3px;background:var(--color-emerald);border-radius:99px;opacity:0.5"></div><div style="font-size:10px;font-weight:500">100ms</div><div style="font-size:9px;color:var(--color-text-muted)">Fast</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:72px;height:3px;background:var(--color-emerald);border-radius:99px;opacity:0.7"></div><div style="font-size:10px;font-weight:500">200ms</div><div style="font-size:9px;color:var(--color-text-muted)">Standard</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100px;height:3px;background:var(--color-emerald);border-radius:99px;opacity:0.85"></div><div style="font-size:10px;font-weight:500">300ms</div><div style="font-size:9px;color:var(--color-text-muted)">Emphasis</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:140px;height:3px;background:var(--color-emerald);border-radius:99px;opacity:1"></div><div style="font-size:10px;font-weight:500">500ms</div><div style="font-size:9px;color:var(--color-text-muted)">Page load</div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Localization Preview -->
+                <div class="brand-section">
+                  <div class="brand-sec-label">Localization System</div>
+                  <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px">Click a locale to preview UI direction and typography. All layouts flip with the CSS <code style="background:rgba(27,94,32,0.15);padding:1px 5px;border-radius:4px;font-size:11px">dir</code> attribute — no separate RTL stylesheet needed.</div>
+                  <div class="brand-locale-grid" id="brand-locale-grid">
+                    <div class="brand-locale-card active" onclick="setBrandLocale('ar','rtl','مرحباً بكم في Halal OS',this)"><div style="font-size:18px">🇸🇦</div><div style="font-size:11px;font-weight:500">العربية</div><div style="font-size:10px;color:var(--color-text-muted)">RTL · Arabic</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('en','ltr','Welcome to Halal OS',this)"><div style="font-size:18px">🇬🇧</div><div style="font-size:11px;font-weight:500">English</div><div style="font-size:10px;color:var(--color-text-muted)">LTR</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('ur','rtl','Halal OS میں خوش آمدید',this)"><div style="font-size:18px">🇵🇰</div><div style="font-size:11px;font-weight:500">اردو</div><div style="font-size:10px;color:var(--color-text-muted)">RTL · Urdu</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('tr','ltr','Halal OS\'e hoş geldiniz',this)"><div style="font-size:18px">🇹🇷</div><div style="font-size:11px;font-weight:500">Türkçe</div><div style="font-size:10px;color:var(--color-text-muted)">LTR</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('ms','ltr','Selamat datang ke Halal OS',this)"><div style="font-size:18px">🇲🇾</div><div style="font-size:11px;font-weight:500">Bahasa Melayu</div><div style="font-size:10px;color:var(--color-text-muted)">LTR</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('id','ltr','Selamat datang di Halal OS',this)"><div style="font-size:18px">🇮🇩</div><div style="font-size:11px;font-weight:500">Indonesia</div><div style="font-size:10px;color:var(--color-text-muted)">LTR</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('fr','ltr','Bienvenue dans Halal OS',this)"><div style="font-size:18px">🇫🇷</div><div style="font-size:11px;font-weight:500">Français</div><div style="font-size:10px;color:var(--color-text-muted)">LTR</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('de','ltr','Willkommen bei Halal OS',this)"><div style="font-size:18px">🇩🇪</div><div style="font-size:11px;font-weight:500">Deutsch</div><div style="font-size:10px;color:var(--color-text-muted)">LTR</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('bn','ltr','Halal OS-এ স্বাগতম',this)"><div style="font-size:18px">🇧🇩</div><div style="font-size:11px;font-weight:500">বাংলা</div><div style="font-size:10px;color:var(--color-text-muted)">Bengali</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('so','ltr','Ku soo dhawoow Halal OS',this)"><div style="font-size:18px">🇸🇴</div><div style="font-size:11px;font-weight:500">Soomaali</div><div style="font-size:10px;color:var(--color-text-muted)">LTR · Somali</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('sw','ltr','Karibu Halal OS',this)"><div style="font-size:18px">🇹🇿</div><div style="font-size:11px;font-weight:500">Kiswahili</div><div style="font-size:10px;color:var(--color-text-muted)">LTR</div></div>
+                    <div class="brand-locale-card" onclick="setBrandLocale('ps','rtl','د Halal OS ښه راغلاست',this)"><div style="font-size:18px">🇦🇫</div><div style="font-size:11px;font-weight:500">پښتو</div><div style="font-size:10px;color:var(--color-text-muted)">RTL · Pashto</div></div>
+                  </div>
+                  <!-- Live locale preview -->
+                  <div class="brand-locale-preview" id="brand-locale-preview">
+                    <div style="font-size:10px;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Live preview</div>
+                    <div id="blp-greeting" style="font-size:22px;font-weight:700;color:var(--color-emerald);direction:rtl;text-align:right;transition:all 0.25s">مرحباً بكم في Halal OS</div>
+                    <div id="blp-ui" style="margin-top:12px;border-top:1px solid var(--color-border);padding-top:10px;direction:rtl;display:flex;align-items:center;gap:8px">
+                      <div style="width:28px;height:28px;border-radius:6px;background:rgba(27,94,32,0.2);display:flex;align-items:center;justify-content:center"><i class="ti ti-moon-stars" style="color:var(--color-emerald)"></i></div>
+                      <div><div id="blp-label1" style="font-size:12px;font-weight:500">أوقات الصلاة</div><div id="blp-label2" style="font-size:10px;color:var(--color-text-muted)">القاهرة، مصر</div></div>
+                      <div style="margin-right:0;margin-left:auto"><span class="brand-tag brand-tag-green" id="blp-badge">نشط</span></div>
+                    </div>
+                    <div style="margin-top:8px;display:flex;gap:6px">
+                      <span class="brand-tag brand-tag-green" id="blp-dir">Dir: RTL ←</span>
+                      <span class="brand-tag brand-tag-blue" id="blp-script">Script: Arabic</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Button System -->
+                <div class="brand-section">
+                  <div class="brand-sec-label">Button System</div>
+                  <div class="brand-btn-showcase">
+                    <button class="btn btn-primary">Primary</button>
+                    <button class="btn btn-secondary">Secondary</button>
+                    <button class="btn btn-ghost">Ghost</button>
+                    <button class="btn btn-gold">Gold Accent</button>
+                    <button class="btn btn-pill">Pill CTA</button>
+                    <button class="btn btn-danger">Danger</button>
+                    <button class="btn" disabled style="opacity:0.4;cursor:not-allowed">Disabled</button>
+                  </div>
+                </div>
+
+                <!-- Brand Voice -->
+                <div class="brand-section">
+                  <div class="brand-sec-label">Brand Voice</div>
+                  <div class="brand-voice-grid">
+                    <div class="brand-voice-card">
+                      <h4 style="font-size:12px;font-weight:600;margin-bottom:8px">We are</h4>
+                      <div class="brand-voice-item"><span class="bv-dot-green">+</span> Trustworthy — never vague about privacy</div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">+</span> Respectful — Islamic values inform, not dictate</div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">+</span> Direct — plain language, no jargon</div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">+</span> Empowering — the user always decides</div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">+</span> Globally inclusive — 12 languages day one</div>
+                    </div>
+                    <div class="brand-voice-card">
+                      <h4 style="font-size:12px;font-weight:600;margin-bottom:8px">We are not</h4>
+                      <div class="brand-voice-item"><span class="bv-dot-red">−</span> Preachy or moralizing</div>
+                      <div class="brand-voice-item"><span class="bv-dot-red">−</span> Exclusive — non-Muslims are welcome</div>
+                      <div class="brand-voice-item"><span class="bv-dot-red">−</span> Corporate or cold</div>
+                      <div class="brand-voice-item"><span class="bv-dot-red">−</span> Fearful (security as paranoia)</div>
+                      <div class="brand-voice-item"><span class="bv-dot-red">−</span> Heavy or slow</div>
+                    </div>
+                    <div class="brand-voice-card">
+                      <h4 style="font-size:12px;font-weight:600;margin-bottom:8px">Tagline options</h4>
+                      <div class="brand-voice-item"><span class="bv-dot-green">1</span> <em>Privacy first. Faith forward.</em></div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">2</span> <em>Your OS. Your values. Your data.</em></div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">3</span> <em>Open. Secure. Islamic-native.</em></div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">4</span> <em>Built for the Ummah. Open to the world.</em></div>
+                    </div>
+                    <div class="brand-voice-card">
+                      <h4 style="font-size:12px;font-weight:600;margin-bottom:8px">Naming conventions</h4>
+                      <div class="brand-voice-item"><span class="bv-dot-green">+</span> Halal OS — full name, first mention</div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">+</span> halal-os — technical / CLI context</div>
+                      <div class="brand-voice-item"><span class="bv-dot-green">+</span> Amina — voice assistant (not "Siri")</div>
+                      <div class="brand-voice-item"><span class="bv-dot-red">−</span> "HalalOS" — no camelCase</div>
+                      <div class="brand-voice-item"><span class="bv-dot-red">−</span> "Halal" alone — too vague</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Hero Lockup -->
+                <div class="brand-section">
+                  <div class="brand-sec-label">Hero Lockup</div>
+                  <div class="brand-hero-lockup">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                      <svg width="32" height="32" viewBox="0 0 52 52" fill="none"><circle cx="26" cy="26" r="24" stroke="#1B5E20" stroke-width="2"/><path d="M26 8 A18 18 0 1 1 8 26 A14 14 0 1 0 26 8Z" fill="#1B5E20"/><path d="M33 16 L34.4 19.6 L38 21 L34.4 22.4 L33 26 L31.6 22.4 L28 21 L31.6 19.6Z" fill="#D4A017"/></svg>
+                      <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--color-text-muted)">Halal OS — Open Source</span>
+                    </div>
+                    <div style="font-size:28px;font-weight:700;letter-spacing:-0.3px;color:var(--color-text-primary);line-height:1.2">Privacy first.<br>Faith forward.</div>
+                    <div style="font-size:13px;color:var(--color-text-secondary);margin-top:8px;line-height:1.6">An open-source operating system for the world's 1.8 billion Muslims — and everyone who believes privacy is a right, not a feature.</div>
+                    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+                      <button class="btn btn-primary">Download Halal OS</button>
+                      <button class="btn btn-secondary">View on GitHub</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </main>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== WINDOW: HAFIZ (FILE MANAGER) ==================== -->
+      <div class="os-window glass-panel-elevated" id="window-files" style="left: 100px; top: 80px;">
+        <div class="window-titlebar">
+          <div class="wt-title">
+            <span class="network-dot green" title="Isolated Sandbox: No external internet access permitted"></span>
+            <i class="ti ti-folder"></i>
+            <span id="title-files">Hafiz File Manager</span>
+          </div>
+          <div class="wt-controls" role="group" aria-label="Window Actions">
+            <button class="window-dot minimize" onclick="minimizeWindow('window-files')" title="Minimize" aria-label="Minimize File Manager Window"></button>
+            <button class="window-dot maximize" onclick="maximizeWindow('window-files')" title="Maximize" aria-label="Maximize File Manager Window"></button>
+            <button class="window-dot close" onclick="closeWindow('window-files')" title="Close" aria-label="Close File Manager Window"></button>
+          </div>
+        </div>
+        <div class="window-content">
+          <div class="files-layout">
+            <aside class="files-sidebar">
+              <div class="files-sidebar-item active" data-dir="home" onclick="selectFolder('home')" tabindex="0" role="button" aria-label="Open Home Directory">
+                <i class="ti ti-home"></i> <span id="lbl-file-nav-home">Home</span>
+              </div>
+              <div class="files-sidebar-item" data-dir="islamic" onclick="selectFolder('islamic')" tabindex="0" role="button" aria-label="Open Islamic Documents">
+                <i class="ti ti-book-2"></i> <span id="lbl-file-nav-islamic">Islamic Docs</span>
+              </div>
+              <div class="files-sidebar-item" data-dir="security" onclick="selectFolder('security')" tabindex="0" role="button" aria-label="Open Security Core Configuration">
+                <i class="ti ti-shield"></i> <span id="lbl-file-nav-security">Security Core</span>
+              </div>
+              <div class="files-sidebar-item" data-dir="vault" onclick="selectFolder('vault')" tabindex="0" role="button" aria-label="Open Faith Vault">
+                <i class="ti ti-lock"></i> <span id="lbl-file-nav-vault">Faith Vault</span>
+              </div>
+              <div class="files-sidebar-item" data-dir="trash" onclick="selectFolder('trash')" tabindex="0" role="button" aria-label="Open Trash Directory">
+                <i class="ti ti-trash"></i> <span id="lbl-file-nav-trash">Trash</span>
+              </div>
+              
+              <!-- Disk Space Widget -->
+              <div class="files-disk-widget">
+                <div class="fdw-header">
+                  <span>Btrfs Disk Space</span>
+                  <strong>21%</strong>
+                </div>
+                <div class="fdw-progress-bar">
+                  <div class="fdw-progress-fill" style="width: 21%;"></div>
+                </div>
+                <div class="fdw-footer">4.2 GB of 20 GB used</div>
+              </div>
+            </aside>
+            <main class="files-main">
+              <div class="files-toolbar">
+                <div class="files-path" id="current-file-path">/home/halalos/</div>
+                
+                <!-- AI Search and Tags Filter -->
+                <div style="display: flex; gap: 8px; align-items: center; flex: 1; margin: 0 16px;">
+                  <div class="files-search-wrapper" style="position: relative; flex: 1;">
+                    <i class="ti ti-sparkles" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-gold-light); font-size: 14px;"></i>
+                    <input type="text" id="files-search-input" placeholder="Ask AI to find files... (e.g., 'hadith')" class="files-search-bar" oninput="searchFilesAI(this.value)">
+                  </div>
+                  <select id="files-tag-filter" onchange="filterFilesByTag(this.value)" class="files-tag-select">
+                    <option value="all">All Tags</option>
+                    <option value="Faith">Faith</option>
+                    <option value="Secure">Secure</option>
+                    <option value="Work">Work</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <button class="btn btn-sm" onclick="toggleFilesViewMode()" id="btn-files-view-toggle" title="Toggle List/Grid View"><i class="ti ti-layout-grid" id="icon-files-view-toggle"></i></button>
+                  <button class="btn btn-sm" onclick="toggleFilesColumnView()" id="btn-files-column-toggle" title="Toggle Column View (macOS-style)"><i class="ti ti-layout-columns"></i></button>
+                  <button class="btn btn-sm" onclick="toggleFilesDualPane()" id="btn-files-dual-pane" title="Toggle Dual Pane View"><i class="ti ti-columns"></i></button>
+                  <button class="btn btn-sm btn-danger" onclick="triggerEmptyTrash()" id="btn-empty-trash" style="display: none;"><i class="ti ti-trash-x"></i> Empty Trash</button>
+                  <button class="btn btn-sm" onclick="triggerVaultLock()" id="btn-lock-vault" style="display: none;"><i class="ti ti-lock"></i> Lock Vault</button>
+                </div>
+              </div>
+              
+              <!-- Wrapper supporting dual/standard panes -->
+              <div class="files-panes-wrapper" id="files-panes-wrapper">
+                <!-- Pane 1 (Primary) -->
+                <div class="files-pane" id="files-pane-primary">
+                  <div class="files-pane-header" style="display: none;" id="lbl-pane-primary-title">Primary Pane</div>
+                  <div class="files-grid" id="files-grid-content">
+                    <!-- Dynamic Grid files -->
+                  </div>
+                </div>
+                <!-- Pane 2 (Secondary) -->
+                <div class="files-pane" id="files-pane-secondary" style="display: none;">
+                  <div class="files-pane-header" id="lbl-pane-secondary-title">Secondary Pane</div>
+                  <div class="files-grid" id="files-grid-content-sec">
+                    <!-- Dynamic Grid files for pane 2 -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Column View Container (Pane 3) -->
+              <div class="files-columns-container" id="files-columns-container" style="display: none;">
+                <!-- Column 1: Directory list -->
+                <div class="files-column" id="files-col-folders"></div>
+                <!-- Column 2: File list -->
+                <div class="files-column" id="files-col-files"></div>
+                <!-- Column 3: Detailed preview -->
+                <div class="files-column" id="files-col-detail"></div>
+              </div>
+
+              <!-- Quick Look Overlay -->
+              <div class="quick-look-overlay" id="quick-look-overlay" style="display: none;" onclick="closeQuickLook(event)">
+                <div class="quick-look-card">
+                  <div class="ql-header">
+                    <span style="font-weight: 700; font-size: 14px;" id="ql-filename">filename.txt</span>
+                    <button class="btn btn-sm" onclick="closeQuickLookDirect()"><i class="ti ti-x"></i></button>
+                  </div>
+                  <div class="ql-preview" id="ql-preview-content">
+                    File content goes here...
+                  </div>
+                  <div class="ql-metadata">
+                    <div><strong id="lbl-ql-size">Size:</strong> <span id="ql-meta-size">1.2 KB</span></div>
+                    <div><strong id="lbl-ql-date">Modified:</strong> <span id="ql-meta-date">15 Dhul-Hijjah</span></div>
+                    <div><strong id="lbl-ql-type">Type:</strong> <span id="ql-meta-type">Text Document</span></div>
+                    <div><strong id="lbl-ql-sandbox">Sandbox status:</strong> <span id="ql-meta-sandbox" style="color:var(--color-success);">SECURE</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vault Authentication Overlay -->
+              <div class="vault-auth-overlay" id="vault-auth-overlay" style="display: none;">
+                <i class="ti ti-lock" style="font-size: 48px; color: var(--color-gold);"></i>
+                <div style="font-weight: 700; font-size: 15px;" id="lbl-file-vault-title">Faith Vault Locked</div>
+                <div style="font-size: 12px; color: var(--color-text-muted);" id="lbl-file-vault-desc">Enter password to unlock private Zakat and Hajj records.</div>
+                <input type="password" placeholder="Vault password (try 'bismillah')" class="vault-input" id="vault-pass-input" onkeyup="checkVaultPassword(event)">
+                <button class="btn btn-primary" onclick="unlockVault()" id="lbl-file-vault-btn">Unlock Vault</button>
+                <div style="color: var(--color-danger); font-size: 11px; display: none;" id="vault-error-msg">Incorrect password.</div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== WINDOW: KALAM (TERMINAL) ==================== -->
+      <div class="os-window glass-panel-elevated" id="window-terminal" style="left: 140px; top: 120px;">
+        <div class="window-titlebar">
+          <div class="wt-title">
+            <span class="network-dot red" title="Standard Network permissions: full LAN/WAN access"></span>
+            <i class="ti ti-terminal"></i>
+            <span id="title-terminal">Kalam Terminal</span>
+          </div>
+          <div class="wt-controls" role="group" aria-label="Window Actions">
+            <button class="window-dot minimize" onclick="minimizeWindow('window-terminal')" title="Minimize" aria-label="Minimize Terminal Window"></button>
+            <button class="window-dot maximize" onclick="maximizeWindow('window-terminal')" title="Maximize" aria-label="Maximize Terminal Window"></button>
+            <button class="window-dot close" onclick="closeWindow('window-terminal')" title="Close" aria-label="Close Terminal Window"></button>
+          </div>
+        </div>
+        <div class="window-content" style="background: #060806; flex-direction: column;">
+          <!-- Tabs Bar -->
+          <div class="terminal-tabs-bar">
+            <div class="terminal-tab active" id="terminal-tab-0" onclick="selectTerminalTab(0)">
+              <i class="ti ti-terminal"></i> <span id="lbl-term-tab-0">Kalam-1</span>
+            </div>
+            <div class="terminal-tab-add" onclick="addNewTerminalTab()"><i class="ti ti-plus"></i></div>
+          </div>
+          <!-- Toolbar with splits control -->
+          <div class="terminal-toolbar">
+            <span style="font-size: 10px; color: var(--color-text-muted);" id="lbl-term-info">Interactive Kalam Console</span>
+            <div style="display: flex; gap: 6px;">
+              <button class="terminal-toolbar-btn" onclick="splitTerminal('vertical')"><i class="ti ti-columns"></i> Split Vertically</button>
+              <button class="terminal-toolbar-btn" onclick="splitTerminal('horizontal')"><i class="ti ti-layout-rows"></i> Split Horizontally</button>
+              <button class="terminal-toolbar-btn" onclick="resetTerminalSplits()"><i class="ti ti-aspect-ratio"></i> Reset Splits</button>
+            </div>
+          </div>
+          <!-- Panes Container -->
+          <div class="terminal-panes-container" id="terminal-panes-container">
+            <div class="terminal-pane" id="terminal-pane-0">
+              <div class="terminal-wrapper" id="terminal-click-area-0" onclick="focusTerminal(0)">
+                <div class="terminal-banner" id="terminal-banner-text-0">☪ KALAM TERMINAL v2.0.0 (Tab-1)
+Base: Debian GNU/Linux 13 (trixie) x86_64
+System load: 0.12 | Network shield: ACTIVE
+Type 'help' to view available Islamic and system terminal utilities.
+                </div>
+                <div class="terminal-history" id="terminal-history-0"></div>
+                <div class="terminal-prompt-row">
+                  <span class="terminal-prompt-symbol">halalos@kalam:~#</span>
+                  <div class="terminal-input-wrapper">
+                    <span class="terminal-suggestion" id="terminal-suggestion-0"></span>
+                    <input type="text" class="terminal-input" id="terminal-text-input-0" autocomplete="off" spellcheck="false" onkeydown="handleTerminalKey(event, 0)" oninput="updateTerminalSuggestion(this.value, 0)">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== WINDOW: BROWSER ==================== -->
+      <div class="os-window glass-panel-elevated" id="window-browser" style="left: 180px; top: 160px;">
+        <div class="window-titlebar">
+          <div class="wt-title">
+            <span class="network-dot red" title="Standard Network permissions: full LAN/WAN access"></span>
+            <i class="ti ti-world"></i>
+            <span id="title-browser">Halal Browser</span>
+          </div>
+          <div class="wt-controls" role="group" aria-label="Window Actions">
+            <button class="window-dot minimize" onclick="minimizeWindow('window-browser')" title="Minimize" aria-label="Minimize Browser Window"></button>
+            <button class="window-dot maximize" onclick="maximizeWindow('window-browser')" title="Maximize" aria-label="Maximize Browser Window"></button>
+            <button class="window-dot close" onclick="closeWindow('window-browser')" title="Close" aria-label="Close Browser Window"></button>
+          </div>
+        </div>
+        <div class="window-content">
+          <!-- Sidebar for vertical tabs -->
+          <div class="browser-tabs-sidebar" id="browser-tabs-sidebar">
+            <div class="browser-v-tab active" id="browser-v-tab-0" onclick="selectBrowserTab(0)">
+              <i class="ti ti-book-2"></i> <span id="lbl-bvt-quran">Quran Web</span>
+            </div>
+            <div class="browser-v-tab" id="browser-v-tab-1" onclick="selectBrowserTab(1)">
+              <i class="ti ti-shield"></i> <span id="lbl-bvt-wiki">Privacy Wiki</span>
+            </div>
+            <div class="browser-v-tab" id="browser-v-tab-2" onclick="selectBrowserTab(2)">
+              <i class="ti ti-chart-bar"></i> <span id="lbl-bvt-audit">Block Stats</span>
+            </div>
+            <div class="browser-v-tab" id="browser-v-tab-split" onclick="toggleBrowserSplit()" style="margin-top: auto; border-top: 1px solid var(--color-border); padding-top: 10px; color: var(--color-gold-light);">
+              <i class="ti ti-columns"></i> <span id="lbl-bvt-split">Split Page</span>
+            </div>
+          </div>
+
+          <div class="browser-layout">
+            <div class="browser-toolbar">
+              <div class="browser-nav-btn" onclick="browserGoHome()"><i class="ti ti-home"></i></div>
+              <div class="browser-address-bar-wrapper">
+                <input type="text" class="browser-address-bar" id="browser-url" value="https://quran.halalos.org" onkeyup="handleBrowserGo(event)">
+                <i class="ti ti-shield-check browser-shield-btn" id="browser-shield-icon" onclick="toggleBrowserShieldDropdown()"></i>
+                
+                <!-- Browser Shield Dropdown -->
+                <div id="browser-shield-dropdown" class="glass-panel-elevated" style="position: absolute; right: 0; top: 38px; width: 240px; border-radius: var(--r-small); padding: 12px; display: none; flex-direction: column; gap: 8px; z-index: 100;">
+                  <div style="font-weight: 700; font-size: 12px;" id="lbl-bsh-title">Browser Protection</div>
+                  <div style="font-size: 11px; color: var(--color-text-secondary);"><i class="ti ti-eye-off" style="color: var(--color-success);"></i> <span id="lbl-bsh-trackers">14 Trackers Blocked</span></div>
+                  <div style="font-size: 11px; color: var(--color-text-secondary);"><i class="ti ti-shield-lock" style="color: var(--color-success);"></i> <span id="lbl-bsh-dns">Secure DoH Active</span></div>
+                  <div style="font-size: 11px; color: var(--color-text-secondary);"><i class="ti ti-ban" style="color: var(--color-success);"></i> <span id="lbl-bsh-filter">Faith Filter: Strict</span></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Browser Viewport which supports single/split views -->
+            <div class="browser-viewport" id="browser-viewport-container" style="display: flex; width: 100%; height: 100%;">
+              
+              <!-- Left / Primary view -->
+              <div class="browser-viewport-pane" id="browser-viewport-primary" style="flex: 1; height: 100%; display: flex; flex-direction: column; position: relative;">
+                
+                <!-- Blocker Page Overlay inside viewport -->
+                <div class="haram-blocker-page" id="browser-haram-blocker" style="display: none;">
+                  <div class="hb-badge" id="lbl-hb-badge">Restricted Domain</div>
+                  <div class="hb-title" id="hb-title-text">Blocked by Halal OS Shield</div>
+                  <div class="hb-quran">إِنَّمَا يُرِيدُ الشَّيْطَانُ أَن يُوقِعَ بَيْنَكُمُ الْعَدَاوَةَ وَالْبَغْضَاءَ فِي الْخَمْرِ وَالْمَيْسِرِ</div>
+                  <div class="hb-translation" id="lbl-hb-translation">"Satan only wants to cause between you animosity and hatred through intoxicants and gambling..." (Surah Al-Ma'idah 5:91)</div>
+                  <p style="font-size: 12px; color: var(--color-text-muted); max-width: 480px;" id="lbl-hb-desc">This website has been flagged for violating Islamic guidelines and local sandbox security policies. All access attempts are logged.</p>
+                  <div class="hb-buttons">
+                    <button class="btn btn-primary" onclick="browserGoHome()" id="lbl-hb-btn-safe">Go Back to Safety</button>
+                    <button class="btn" style="border-color: var(--color-danger); color: #ff8f8f;" onclick="bypassHaramBlocker()" id="lbl-hb-btn-bypass">Override Sandbox (Logged)</button>
+                  </div>
+                </div>
+
+                <div class="browser-demo-page" id="browser-page-quran">
+                  <h2 style="font-size: 18px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;" id="lbl-br-quran-title">Islamic Web Hub</h2>
+                  <p style="font-size: 13px; color: var(--color-text-secondary);" id="lbl-br-quran-desc">Welcome to the integrated Islamic directory. Search across verses, Hadith collections, and fatwas.</p>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" placeholder="Enter surah or keyword..." style="flex:1; padding:8px 12px; border-radius:var(--r-small); border: 1px solid var(--color-border); background:rgba(255,255,255,0.05); color:white; outline:none;" id="browser-search-input">
+                    <button class="btn btn-primary" onclick="searchBrowserQuran()" id="lbl-br-quran-btn">Search</button>
+                  </div>
+                  <div class="quran-reader-pane" style="background: rgba(0,0,0,0.1); border: 1px solid var(--color-border);" id="browser-quran-result-pane">
+                    <div class="quran-verse-block">
+                      <div class="quran-arabic-text" style="font-size: 22px;">اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ</div>
+                      <div class="quran-translation-text" style="font-size: 12px;">"Read! In the name of your Lord who created" (Surah Al-Alaq 96:1)</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="browser-demo-page" id="browser-page-wiki" style="display: none;">
+                  <h2 style="font-size: 18px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">Privacy Wiki Project</h2>
+                  <p style="font-size: 13px; color: var(--color-text-secondary);">Decentralized directory detailing digital defense tactics, zero-knowledge sync algorithms, and open source applications.</p>
+                  <div class="settings-row" style="background: rgba(255,255,255,0.02); flex-direction: column; align-items: flex-start; gap: 6px;">
+                    <div>
+                      <div style="font-size: 13px; font-weight: 600;">Why On-Device AI?</div>
+                      <div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px; line-height: 1.5;">Cloud-native speech services record transcription histories, associating queries with specific user IDs. Amina AI processes weights locally utilizing WebGPU acceleration to ensure offline absolute confidentiality.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Custom Block Stats Demo Page -->
+                <div class="browser-demo-page" id="browser-page-audit" style="display: none;">
+                  <h2 style="font-size: 18px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;" id="lbl-bvt-audit-title">Privacy Protection Statistics</h2>
+                  <div class="privacy-score-widget" style="padding: 12px; background: rgba(27,94,32,0.1); border: 1px solid rgba(27,94,32,0.3);">
+                    <div style="font-size: 32px;">🛡️</div>
+                    <div>
+                      <div style="font-size: 13px; font-weight: 600;" id="lbl-bp-stat-score">Zero Telemetry Confirmed</div>
+                      <div style="font-size: 11px; color: var(--color-text-muted);" id="lbl-bp-stat-desc">All tracking pixels, canvas metrics, and DNS redirects have been intercepted.</div>
+                    </div>
+                  </div>
+                  <div class="settings-card-group">
+                    <div class="settings-row">
+                      <span style="font-size: 12px; font-weight:600;" id="lbl-bp-stat-blocked">Blocked Trackers (Today)</span>
+                      <strong style="color: var(--color-gold-light); font-family: var(--font-mono);" id="bp-stat-blocked-count">148</strong>
+                    </div>
+                    <div class="settings-row">
+                      <span style="font-size: 12px; font-weight:600;" id="lbl-bp-stat-cookie">Blocked Cookies Intercepted</span>
+                      <strong style="color: var(--color-gold-light); font-family: var(--font-mono);">29</strong>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Right View (Split view pane, initially hidden) -->
+              <div class="browser-viewport-pane" id="browser-viewport-secondary" style="flex: 1; height: 100%; display: none; border-left: 1px solid var(--color-border); flex-direction: column; background: var(--color-bg-elevated);">
+                <div class="browser-demo-page">
+                  <h2 style="font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">Split-View Document Reader</h2>
+                  <p style="font-size: 12px; color: var(--color-text-secondary);">Browse side-by-side tabs in one screen workspace. This matches high-productivity developer layouts.</p>
+                  <div class="quran-reader-pane" style="background: rgba(0,0,0,0.1); padding: 12px; border: 1px solid var(--color-border);">
+                    <div style="font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary);">
+[System Logs - Split Workspace]
+Session ID: 41f20
+DNS resolution mapping: localhost
+LAN status: sandbox Isolated
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== WINDOW: AMINA (AI ASSISTANT) ==================== -->
+      <div class="os-window glass-panel-elevated" id="window-amina" style="left: 220px; top: 200px; width: 440px; height: 500px;">
+        <div class="window-titlebar">
+          <div class="wt-title">
+            <span class="network-dot green" title="On-Device Local Sandbox: No cloud communication"></span>
+            <i class="ti ti-sparkles" style="color: var(--color-emerald-active);"></i>
+            <span id="title-amina">Amina AI Assistant</span>
+          </div>
+          <div class="wt-controls" role="group" aria-label="Window Actions">
+            <button class="window-dot minimize" onclick="minimizeWindow('window-amina')" title="Minimize" aria-label="Minimize Amina Assistant Window"></button>
+            <button class="window-dot maximize" onclick="maximizeWindow('window-amina')" title="Maximize" aria-label="Maximize Amina Assistant Window"></button>
+            <button class="window-dot close" onclick="closeWindow('window-amina')" title="Close" aria-label="Close Amina Assistant Window"></button>
+          </div>
+        </div>
+        <div class="window-content">
+          <div class="amina-layout">
+            <div class="amina-messages" id="amina-chat-history">
+              <div class="amina-bubble assistant" id="amina-welcome">
+                Assalamualaikum! I am Amina, your local-first Islamic-native voice and text assistant. 
+                I run completely on-device without cloud transmission. Ask me system controls or Islamic queries.
+              </div>
+            </div>
+            <div class="amina-input-panel">
+              <input type="text" class="amina-input" id="amina-text-input" placeholder="Type message or instruction..." onkeyup="handleAminaKeyUp(event)">
+              <div class="amina-voice-visualizer" id="amina-mic" onclick="toggleAminaVoice()">
+                <i class="ti ti-microphone"></i>
+              </div>
+              <button class="btn btn-primary" onclick="submitAminaText()" style="padding: 10px 14px; border-radius: var(--r-pill);"><i class="ti ti-send"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== WINDOW: ISLAMIC SUITE ==================== -->
+      <div class="os-window glass-panel-elevated" id="window-islamic" style="left: 260px; top: 240px; width: 800px; height: 530px;">
+        <div class="window-titlebar">
+          <div class="wt-title">
+            <span class="network-dot green" title="On-Device Local Sandbox: No cloud communication"></span>
+            <i class="ti ti-moon-stars" style="color: var(--color-gold);"></i>
+            <span id="title-islamic">Islamic Native Suite</span>
+          </div>
+          <div class="wt-controls" role="group" aria-label="Window Actions">
+            <button class="window-dot minimize" onclick="minimizeWindow('window-islamic')" title="Minimize" aria-label="Minimize Islamic Suite Window"></button>
+            <button class="window-dot maximize" onclick="maximizeWindow('window-islamic')" title="Maximize" aria-label="Maximize Islamic Suite Window"></button>
+            <button class="window-dot close" onclick="closeWindow('window-islamic')" title="Close" aria-label="Close Islamic Suite Window"></button>
+          </div>
+        </div>
+        <div class="window-content">
+          <div class="islamic-layout">
+            <aside class="islamic-sidebar" role="tablist" aria-label="Islamic Suite Features">
+              <div class="islamic-nav-btn active" data-tab="quran" onclick="selectIslamicSubTab('quran')" role="tab" tabindex="0" aria-selected="true">
+                <i class="ti ti-book-2"></i> <span id="lbl-isl-nav-quran">Quran Reader</span>
+              </div>
+              <div class="islamic-nav-btn" data-tab="prayer" onclick="selectIslamicSubTab('prayer')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-clock"></i> <span id="lbl-isl-nav-prayer">Prayer Times</span>
+              </div>
+              <div class="islamic-nav-btn" data-tab="qibla" onclick="selectIslamicSubTab('qibla')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-compass"></i> <span id="lbl-isl-nav-qibla">Qibla Finder</span>
+              </div>
+              <div class="islamic-nav-btn" data-tab="zakat" onclick="selectIslamicSubTab('zakat')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-calculator"></i> <span id="lbl-isl-nav-zakat">Zakat Calc</span>
+              </div>
+              <div class="islamic-nav-btn" data-tab="calendar" onclick="selectIslamicSubTab('calendar')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-calendar"></i> <span id="lbl-isl-nav-calendar">Calendar</span>
+              </div>
+            </aside>
+            <main class="islamic-content">
+
+              <!-- Tab: Quran Reader -->
+              <div class="islamic-tab-panel active" id="isl-tab-quran">
+                <div class="quran-meta-bar" style="flex-wrap: wrap; gap: 10px;">
+                  <div style="font-weight: 700; font-size: 15px;" id="quran-chapter-name">Surah Al-Fatiha (The Opening)</div>
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn btn-sm" onclick="toggleQuranTafsir()"><i class="ti ti-align-left"></i> <span id="lbl-quran-tafsir">Show Tafsir</span></button>
+                    <button class="btn btn-sm" onclick="toggleQuranPlay()" id="btn-quran-audio" style="background: var(--color-gold); color: #412402; border:none;"><i class="ti ti-player-play" id="icon-quran-audio"></i> <span id="lbl-quran-play">Listen</span></button>
+                    <select id="quran-reciter-select" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 4px 8px; border-radius: var(--r-small); outline: none; font-size: 12px;">
+                      <option value="alafasy">Mishary Alafasy</option>
+                      <option value="abdulbasit">Abdul Basit</option>
+                      <option value="alghamdi">Saad Al-Ghamdi</option>
+                    </select>
+                    <select id="quran-surah-select" onchange="loadQuranSurah(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 4px 8px; border-radius: var(--r-small); outline: none; font-size: 12px;">
+                      <option value="1">1. Al-Fatiha</option>
+                      <option value="112">112. Al-Ikhlas</option>
+                      <option value="113">113. Al-Falaq</option>
+                      <option value="114">114. An-Nas</option>
+                    </select>
+                  </div>
+                </div>
+                <canvas class="audio-waveform-canvas" id="quran-audio-wave"></canvas>
+                <div class="quran-reader-pane" style="margin-top: 10px;">
+                  <div id="quran-verses-container">
+                    <!-- Verses will load via JavaScript -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Prayer Times -->
+              <div class="islamic-tab-panel" id="isl-tab-prayer" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+                  <div style="font-weight: 700; font-size: 15px;" id="lbl-prayer-list-title">Daily Prayers - Cairo, Egypt</div>
+                  <span style="font-size: 12px; color: var(--color-gold-light); font-weight: 500;" id="lbl-prayer-calc-indicator">Method: Authority of Survey</span>
+                </div>
+                <div class="prayer-list" id="prayer-list-rows">
+                  <!-- JS generated list of prayers -->
+                </div>
+              </div>
+
+              <!-- Tab: Qibla Compass -->
+              <div class="islamic-tab-panel" id="isl-tab-qibla" style="display: none;">
+                <h3 style="font-size: 15px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;" id="lbl-qibla-title">Qibla Direction (AR Compass)</h3>
+                <div class="qibla-container" style="position: relative;">
+                  <div class="compass-outer" id="qibla-compass-wheel">
+                    <div class="kaaba-marker">🕋</div>
+                    <div class="compass-needle" id="qibla-needle"></div>
+                    <!-- Drag calibration knob -->
+                    <div class="qibla-rotator-handle" id="qibla-drag-knob" title="Drag to align needle">🧭</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <div style="font-weight: 600; font-size: 14px;" id="lbl-qibla-angle">Qibla angle from North: 136° East</div>
+                    <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px;" id="lbl-qibla-desc">Drag the compass wheel or click calibration to lock exactly on 136°.</div>
+                  </div>
+                  <button class="btn btn-sm" onclick="calibrateQiblaCompass()" id="lbl-qibla-btn">Simulate Auto-Calibration</button>
+                </div>
+              </div>
+
+              <!-- Tab: Zakat Calculator -->
+              <div class="islamic-tab-panel" id="isl-tab-zakat" style="display: none;">
+                <h3 style="font-size: 15px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;" id="lbl-zakat-title">Zakat Nisab Obligation Calculator</h3>
+                <div class="zakat-calc-form">
+                  <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(212, 160, 23, 0.08); border: 1px solid rgba(212, 160, 23, 0.2); border-radius: var(--r-small); font-size: 11px;">
+                    <div><span id="lbl-zakat-nisab-val">Live Nisab threshold (85g Gold):</span> <span style="font-family: var(--font-mono); font-weight: 600; color: var(--color-gold-light);">$5,420.00</span></div>
+                    <div><span id="lbl-zakat-gold-val">Gold price per gram:</span> <span style="font-family: var(--font-mono); font-weight: 600; color: var(--color-gold-light);">$63.76</span></div>
+                  </div>
+                  <div class="zakat-input-group">
+                    <label id="lbl-zakat-i-savings">Total Savings / Cash (held for 1 full Lunar year)</label>
+                    <input type="number" id="zakat-savings" class="zakat-text-input" value="12000" oninput="calculateZakat()">
+                  </div>
+                  <div class="zakat-input-group">
+                    <label id="lbl-zakat-i-gold">Value of owned Gold &amp; Silver assets</label>
+                    <input type="number" id="zakat-gold" class="zakat-text-input" value="1500" oninput="calculateZakat()">
+                  </div>
+                  <div class="zakat-input-group">
+                    <label id="lbl-zakat-i-invest">Value of investment funds and stocks</label>
+                    <input type="number" id="zakat-invest" class="zakat-text-input" value="3000" oninput="calculateZakat()">
+                  </div>
+                  <div class="zakat-result-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <span style="font-size: 12px; font-weight: 600;" id="lbl-zakat-res-nisab">Nisab Obligation Status</span>
+                      <span class="tag tag-green" id="zakat-nisab-badge">Met</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; margin-top: 4px;">
+                      <span style="font-size: 15px; font-weight: 700;" id="lbl-zakat-res-due">Zakat Due (2.5%)</span>
+                      <span style="font-size: 20px; font-weight: 800; color: var(--color-emerald-active); font-family: var(--font-mono);" id="zakat-due-value">$412.50</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Calendar -->
+              <div class="islamic-tab-panel" id="isl-tab-calendar" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+                  <div style="font-weight: 700; font-size: 15px;" id="lbl-cal-title">Hijri Calendar Sync</div>
+                  <span style="font-size: 12px; color: var(--color-gold-light); font-weight: 500;" id="lbl-cal-hijri-month">Dhul-Hijjah 1447</span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; font-size: 11px; font-weight: 600; color: var(--color-text-muted); padding-top: 8px;">
+                  <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 8px;" id="calendar-days-grid">
+                  <!-- JS will generate matching calendar days -->
+                </div>
+                <div class="settings-row" style="margin-top: 16px; background: rgba(255,255,255,0.02);">
+                  <div class="settings-row-info">
+                    <div class="settings-row-title" id="lbl-cal-h-title">Upcoming Holiday: Eid al-Adha</div>
+                    <div class="settings-row-desc" id="lbl-cal-h-desc">Occurs on 10 Dhul-Hijjah 1447. Notification triggers automatically.</div>
+                  </div>
+                  <span class="tag tag-gold" style="font-weight: 600;" id="lbl-cal-h-tag">Eid Holiday</span>
+                </div>
+              </div>
+
+            </main>
+          </div>
+        </div>
+      </div> <!-- end window-deck -->
+
+      <!-- Ramadan Fasting Tracker Widget (Floating) -->
+      <div id="fasting-tracker-widget" class="fasting-tracker-widget glass-panel-elevated" style="display: none;">
+        <div class="ft-header">
+          <span id="lbl-ft-title">Fasting Tracker</span>
+          <span id="lbl-ft-date" style="color: var(--color-gold);">Ramadan 15, 1447</span>
+        </div>
+        <div class="ft-body">
+          <div>
+            <div style="font-size: 10px; color: var(--color-text-muted);" id="lbl-ft-imsak">Imsak (Dawn)</div>
+            <div id="ft-imsak-time" style="font-family: var(--font-mono); font-weight: 700;">03:42 AM</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 10px; color: var(--color-text-muted);" id="lbl-ft-iftar">Iftar (Sunset)</div>
+            <div id="ft-iftar-time" style="font-family: var(--font-mono); font-weight: 700; color: var(--color-gold-light);">06:48 PM</div>
+          </div>
+        </div>
+        <div class="ft-progress-container">
+          <div class="ft-progress-bar" id="ft-progress-fill"></div>
+        </div>
+        <div class="ft-footer" id="ft-countdown-text">Iftar in 6h 30m</div>
+      </div>
+
+      <!-- DESKTOP MAQAM WORKSPACE SWITCHER -->
+      <div class="maqam-switcher glass-panel" id="maqam-widget">
+        <div style="font-size: 9px; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 1px;" id="lbl-maqam-title">Maqam Workspace</div>
+        <div class="maqam-grid">
+          <button class="maqam-btn" onclick="switchMaqamWorkspace('fajr')" title="Fajr (Dawn)">Fajr</button>
+          <button class="maqam-btn active" onclick="switchMaqamWorkspace('dhuhr')" title="Dhuhr (Midday)">Dhuhr</button>
+          <button class="maqam-btn" onclick="switchMaqamWorkspace('asr')" title="Asr (Afternoon)">Asr</button>
+          <button class="maqam-btn" onclick="switchMaqamWorkspace('maghrib')" title="Maghrib (Sunset)">Maghrib</button>
+          <button class="maqam-btn" onclick="switchMaqamWorkspace('isha')" title="Isha (Night)">Isha</button>
+          <button class="maqam-btn" onclick="switchMaqamWorkspace('qiyam')" title="Qiyam (Late Night)">Qiyam</button>
+        </div>
+      </div>
+
+      <!-- ILM PANEL (SIDEBAR COLLAPSIBLE) -->
+      <aside class="ilm-panel glass-panel" id="ilm-panel">
+        <div class="ilm-header">
+          <div style="font-weight: 700;" id="lbl-ilm-title">Ilm Panel</div>
+          <div class="hp-icon-btn" onclick="toggleIlmPanel()"><i class="ti ti-x"></i></div>
+        </div>
+        <div class="ilm-body">
+          <!-- Mini Quran Verse Card -->
+          <div class="ilm-card">
+            <div class="ilm-card-title"><i class="ti ti-book-2"></i> <span id="lbl-ilm-verse">Verse of the Day</span></div>
+            <div class="quran-arabic-text" style="font-size: 16px; line-height: 1.8; margin-top: 6px;">إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ</div>
+            <div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px;">"It is You we worship and You we ask for help." (1:5)</div>
+          </div>
+          <!-- Daily Hadith Card -->
+          <div class="ilm-card">
+            <div class="ilm-card-title"><i class="ti ti-quote"></i> <span id="lbl-ilm-wisdom">Daily Wisdom</span></div>
+            <div style="font-size: 12px; font-style: italic; line-height: 1.5; margin-top: 6px;" id="lbl-ilm-hadith-text">"The best of you are those who learn the Quran and teach it." (Bukhari)</div>
+          </div>
+          <!-- Quick Notes Card -->
+          <div class="ilm-card">
+            <div class="ilm-card-title"><i class="ti ti-note"></i> <span id="lbl-ilm-notes">Local Notes</span></div>
+            <textarea class="ilm-textarea" id="ilm-notes" placeholder="Write quick notes here... Synced with Halal Cloud."></textarea>
+          </div>
+        </div>
+      </aside>
+
+    </main>
+
+    <!-- AMAL BAR CONTAINER (DOCK) -->
+    <div class="amal-bar-container glass-panel" role="toolbar" aria-label="Desktop Action Dock (Amal Bar)">
+      <div class="amal-bar">
+        <!-- Launcher (Bismillah Logo) -->
+        <div class="dock-item active" id="dock-launcher" onclick="toggleLauncher()" style="background: var(--color-emerald);" tabindex="0" role="button" aria-label="Open Bismillah Application Menu">
+          <i class="ti ti-moon-stars" style="color: var(--color-gold);"></i>
+          <span class="dock-tooltip" id="tip-bismillah">Bismillah Menu</span>
+        </div>
+        
+        <div class="dock-sep"></div>
+
+        <!-- Settings -->
+        <div class="dock-item" id="dock-window-settings" onclick="openWindow('window-settings')" tabindex="0" role="button" aria-label="Open Tazkiyah Settings">
+          <i class="ti ti-settings"></i>
+          <span class="dock-tooltip" id="tip-settings">Settings</span>
+        </div>
+
+        <!-- Files -->
+        <div class="dock-item" id="dock-window-files" onclick="openWindow('window-files')" tabindex="0" role="button" aria-label="Open Hafiz File Manager">
+          <i class="ti ti-folder"></i>
+          <span class="dock-tooltip" id="tip-files">File Manager</span>
+        </div>
+
+        <!-- Terminal -->
+        <div class="dock-item" id="dock-window-terminal" onclick="openWindow('window-terminal')" tabindex="0" role="button" aria-label="Open Kalam Terminal Console">
+          <i class="ti ti-terminal"></i>
+          <span class="dock-tooltip" id="tip-terminal">Terminal</span>
+        </div>
+
+        <!-- Browser -->
+        <div class="dock-item" id="dock-window-browser" onclick="openWindow('window-browser')" tabindex="0" role="button" aria-label="Open Halal Web Browser">
+          <i class="ti ti-world"></i>
+          <span class="dock-tooltip" id="tip-browser">Browser</span>
+        </div>
+
+        <div class="dock-sep"></div>
+
+        <!-- Quran -->
+        <div class="dock-item" id="dock-quran" onclick="openWindow('window-islamic'); selectIslamicSubTab('quran')" tabindex="0" role="button" aria-label="Open Quran Reader Tab">
+          <i class="ti ti-book-2"></i>
+          <span class="dock-tooltip" id="tip-quran">Quran Reader</span>
+        </div>
+
+        <!-- Prayer -->
+        <div class="dock-item" id="dock-prayer" onclick="openWindow('window-islamic'); selectIslamicSubTab('prayer')" tabindex="0" role="button" aria-label="Open Prayer Times Tab">
+          <i class="ti ti-clock"></i>
+          <span class="dock-tooltip" id="tip-prayer">Prayer Times</span>
+        </div>
+
+        <!-- Qibla -->
+        <div class="dock-item" id="dock-qibla" onclick="openWindow('window-islamic'); selectIslamicSubTab('qibla')" tabindex="0" role="button" aria-label="Open Qibla Finder Tab">
+          <i class="ti ti-compass"></i>
+          <span class="dock-tooltip" id="tip-qibla">Qibla Finder</span>
+        </div>
+
+        <!-- Zakat -->
+        <div class="dock-item" id="dock-zakat" onclick="openWindow('window-islamic'); selectIslamicSubTab('zakat')" tabindex="0" role="button" aria-label="Open Zakat Calculator Tab">
+          <i class="ti ti-calculator"></i>
+          <span class="dock-tooltip" id="tip-zakat">Zakat Calc</span>
+        </div>
+
+        <div class="dock-sep"></div>
+
+        <!-- Amina AI Assistant -->
+        <div class="dock-item" id="dock-window-amina" onclick="openWindow('window-amina')" style="background: radial-gradient(circle, var(--color-emerald) 0%, rgba(0,0,0,0.2) 100%);" tabindex="0" role="button" aria-label="Open Amina AI Assistant">
+          <i class="ti ti-sparkles" style="color: var(--color-gold-light);"></i>
+          <span class="dock-tooltip" id="tip-amina">Amina AI</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== 4. BISMILLAH OVERLAY LAUNCHER ==================== -->
+  <div id="bismillah-menu" onclick="closeLauncherOnOuterClick(event)">
+    <div class="menu-overlay"></div>
+    <div class="menu-content glass-panel-elevated">
+      <div class="menu-search-wrapper">
+        <input type="text" class="menu-search-bar" placeholder="Search applications, calculations, Quran verses..." id="menu-search" oninput="filterLauncherApps(this.value)">
+      </div>
+      <div class="menu-body">
+        <aside class="menu-sidebar">
+          <div class="menu-cat-btn active" data-cat="all" onclick="filterLauncherCategory('all')">
+            <span id="lbl-lch-all">All Apps</span>
+          </div>
+          <div class="menu-cat-btn" data-cat="islamic" onclick="filterLauncherCategory('islamic')">
+            <span id="lbl-lch-faith">Faith Native</span>
+          </div>
+          <div class="menu-cat-btn" data-cat="system" onclick="filterLauncherCategory('system')">
+            <span id="lbl-lch-sys">System Tools</span>
+          </div>
+        </aside>
+        <div class="menu-grid-wrapper">
+          <div class="menu-app-grid" id="launcher-grid">
+            <!-- App list generated dynamically -->
+          </div>
+          <div class="launcher-search-results" id="launcher-search-results" style="display: none;">
+            <!-- Search results dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 5. INSHA NOTIFICATION TOAST CONTAINER ==================== -->
+  <div id="notification-container"></div>
+
+  <!-- Custom Dock Context Menu Overlay -->
+  <div id="dock-context-menu" class="dock-context-menu" style="display: none;">
+    <div class="dcm-item" id="dcm-launch" onclick="dockMenuLaunch()"><span id="lbl-dcm-open">Launch Application</span> <i class="ti ti-rocket"></i></div>
+    <div class="dcm-divider"></div>
+    <div style="font-size: 9px; font-weight: 700; color: var(--color-text-muted); padding: 4px 10px; text-transform: uppercase;" id="lbl-dcm-permissions">Sandbox Permissions</div>
+    <div class="dcm-item" onclick="toggleDockPermission('network')">
+      <span><i class="ti ti-world" style="margin-right: 6px;"></i> Network WAN</span>
+      <div class="dcm-toggle" id="dcm-perm-network"></div>
+    </div>
+    <div class="dcm-item" onclick="toggleDockPermission('files')">
+      <span><i class="ti ti-folder" style="margin-right: 6px;"></i> Local Files</span>
+      <div class="dcm-toggle" id="dcm-perm-files"></div>
+    </div>
+    <div class="dcm-item" onclick="toggleDockPermission('camera')">
+      <span><i class="ti ti-camera" style="margin-right: 6px;"></i> Camera/Mic</span>
+      <div class="dcm-toggle" id="dcm-perm-camera"></div>
+    </div>
+    <div class="dcm-divider"></div>
+    <div class="dcm-item" id="dcm-pin" onclick="toggleDockPin()"><span id="lbl-dcm-pin">Unpin from Dock</span> <i class="ti ti-pin"></i></div>
+    <div class="dcm-item" id="dcm-close" onclick="dockMenuClose()"><span id="lbl-dcm-close" style="color: var(--color-danger);">Quit Process</span> <i class="ti ti-x" style="color: var(--color-danger);"></i></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

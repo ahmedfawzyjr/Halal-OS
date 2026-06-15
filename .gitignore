@@ -1,0 +1,9 @@
+# IDE and metadata
+.gemini/
+.idea/
+.vscode/
+
+# Local/temp files
+*.log
+tmp/
+temp/

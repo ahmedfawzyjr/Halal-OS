@@ -1,0 +1,565 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#1B5E20;--g2:#2E7D32;--g3:#43A047;--gl:#E8F5E9;--gd:#0A3D12;
+  --b:#0D47A1;--bl:#E3F2FD;--bd:#042C53;
+  --gold:#F9A825;--goldl:#FFF9E6;
+  --surface:#FFFFFF;--bg:#F4F6F4;--text:#1A1A1A;--sub:#555;--border:#D8E0D8;
+  --r:14px;--rm:10px;--rs:6px;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;background:var(--gd);color:#fff;padding:0 20px;height:38px;user-select:none}
+.tb-left{display:flex;align-items:center;gap:14px;font-size:13px}
+.tb-logo{font-weight:700;font-size:14px;letter-spacing:0.5px;display:flex;align-items:center;gap:6px}
+.tb-logo span{font-size:16px}
+.tb-clock{font-size:12px;opacity:0.75;font-variant-numeric:tabular-nums}
+.tb-right{display:flex;align-items:center;gap:10px}
+.prayer-pill{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:99px;padding:3px 10px;font-size:11px;display:flex;align-items:center;gap:5px}
+.prayer-pill i{font-size:13px;color:var(--gold)}
+.tb-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.15s;font-size:15px}
+.tb-icon:hover{background:rgba(255,255,255,0.15)}
+
+/* ── DOCK ── */
+.dock{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:4px;height:44px;overflow-x:auto;scrollbar-width:none}
+.dock::-webkit-scrollbar{display:none}
+.dock-item{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--sub);white-space:nowrap;transition:all 0.15s;border:1px solid transparent}
+.dock-item:hover{background:var(--gl);color:var(--g);border-color:var(--border)}
+.dock-item.active{background:var(--gl);color:var(--g);font-weight:500;border-color:#b2dfb2}
+.dock-item i{font-size:16px}
+.dock-sep{width:1px;height:22px;background:var(--border);margin:0 4px;flex-shrink:0}
+
+/* ── LAYOUT ── */
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 82px)}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px 10px;display:flex;flex-direction:column;gap:4px}
+.sidebar-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#aaa;padding:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--rm);cursor:pointer;font-size:13px;color:var(--sub);transition:all 0.15s;border:1px solid transparent}
+.nav-item:hover{background:var(--gl);color:var(--g)}
+.nav-item.active{background:var(--gl);color:var(--g);font-weight:500;border-color:#c8e6c9}
+.nav-item i{font-size:17px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--g);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;font-weight:600}
+
+/* ── CONTENT AREA ── */
+.content{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:20px}
+
+/* ── SECTION HEADER ── */
+.sect-header{display:flex;align-items:center;justify-content:space-between}
+.sect-title{font-size:18px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.sect-title i{color:var(--g);font-size:20px}
+.btn{padding:7px 14px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px;color:var(--text)}
+.btn:hover{background:var(--gl);border-color:#b2dfb2;color:var(--g)}
+.btn-primary{background:var(--g);color:#fff;border-color:var(--g)}
+.btn-primary:hover{background:var(--g2);border-color:var(--g2);color:#fff}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* ── CARDS ── */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:all 0.2s;cursor:pointer}
+.card:hover{border-color:#b2dfb2;box-shadow:0 4px 20px rgba(27,94,32,0.08);transform:translateY(-1px)}
+.card-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+.card-icon.green{background:var(--gl);color:var(--g)}
+.card-icon.blue{background:var(--bl);color:var(--b)}
+.card-icon.gold{background:var(--goldl);color:#B8860B}
+.card-label{font-size:12px;color:var(--sub);margin-bottom:2px}
+.card-value{font-size:22px;font-weight:600;color:var(--text)}
+.card-sub{font-size:11px;color:var(--sub);margin-top:2px}
+
+/* ── PRAYER WIDGET ── */
+.prayer-widget{background:linear-gradient(135deg,var(--gd) 0%,#1B5E20 100%);border-radius:var(--r);padding:20px;color:#fff;position:relative;overflow:hidden}
+.prayer-widget::after{content:'';position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.04)}
+.prayer-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:14px}
+.prayer-slot{text-align:center;padding:8px 4px;border-radius:8px;background:rgba(255,255,255,0.08);transition:all 0.2s}
+.prayer-slot.next{background:rgba(249,168,37,0.2);border:1px solid rgba(249,168,37,0.4)}
+.prayer-slot.done{opacity:0.45}
+.prayer-slot .p-name{font-size:10px;opacity:0.75;margin-bottom:3px}
+.prayer-slot .p-time{font-size:13px;font-weight:600}
+.prayer-slot .p-icon{font-size:16px;margin-bottom:2px}
+
+/* ── AI ASSISTANT ── */
+.ai-bar{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:10px 16px;display:flex;align-items:center;gap:10px;transition:all 0.2s}
+.ai-bar:focus-within{border-color:var(--g);box-shadow:0 0 0 3px rgba(27,94,32,0.08)}
+.ai-bar i{color:var(--g);font-size:18px}
+.ai-bar input{flex:1;border:none;outline:none;font-size:14px;background:transparent;color:var(--text)}
+.ai-bar input::placeholder{color:#aaa}
+.ai-chip-row{display:flex;gap:6px;flex-wrap:wrap}
+.ai-chip{padding:5px 11px;border-radius:99px;border:1px solid var(--border);font-size:12px;cursor:pointer;background:var(--surface);color:var(--sub);transition:all 0.15s;white-space:nowrap}
+.ai-chip:hover{background:var(--gl);border-color:#b2dfb2;color:var(--g)}
+
+/* ── RECENT APPS ── */
+.app-row{display:flex;gap:10px;flex-wrap:wrap}
+.app-icon-btn{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;padding:10px;border-radius:var(--rm);border:1px solid transparent;transition:all 0.15s;min-width:70px}
+.app-icon-btn:hover{background:var(--gl);border-color:#c8e6c9}
+.app-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.app-icon.g{background:var(--gl)}
+.app-icon.b{background:var(--bl)}
+.app-icon.gold{background:var(--goldl)}
+.app-icon.teal{background:#E0F7FA}
+.app-icon.red{background:#FFEBEE}
+.app-icon.purple{background:#EDE7F6}
+.app-name{font-size:11px;color:var(--sub);text-align:center}
+
+/* ── LOCALIZATION PANEL ── */
+.locale-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.locale-card{padding:10px 12px;border-radius:var(--rm);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;background:var(--surface)}
+.locale-card:hover{border-color:var(--g);background:var(--gl)}
+.locale-card.active{border-color:var(--g);background:var(--gl);box-shadow:0 0 0 2px rgba(27,94,32,0.12)}
+.locale-flag{font-size:20px;margin-bottom:4px}
+.locale-name{font-size:12px;font-weight:500;color:var(--text)}
+.locale-dir{font-size:10px;color:var(--sub)}
+.locale-sample{font-size:11px;color:var(--g);margin-top:3px;direction:inherit}
+
+/* ── MOTION SECTION ── */
+.motion-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.motion-demo{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);padding:14px;text-align:center}
+.motion-box{width:40px;height:40px;border-radius:10px;background:var(--gl);border:2px solid var(--g);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;color:var(--g);font-size:18px}
+.motion-label{font-size:12px;color:var(--sub)}
+
+/* RTL support */
+.rtl-preview{direction:rtl;text-align:right}
+.rtl-preview .nav-badge{margin-left:0;margin-right:auto}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;background:var(--bg);border-radius:var(--rm);padding:3px}
+.tab{padding:6px 14px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--sub);transition:all 0.15s;border:1px solid transparent}
+.tab.active{background:var(--surface);color:var(--g);font-weight:500;border-color:var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.tab:hover:not(.active){color:var(--text)}
+
+/* ── STATUS BAR ── */
+.status-bar{display:flex;gap:8px;align-items:center}
+.status-dot{width:7px;height:7px;border-radius:50%}
+.status-green{background:#43A047}
+.status-amber{background:#F9A825}
+.status-label{font-size:12px;color:var(--sub)}
+
+/* ── NOTIFICATION ── */
+.notif{background:var(--surface);border:1px solid var(--border);border-radius:var(--rm);padding:12px 14px;display:flex;gap:10px;align-items:flex-start;position:relative;overflow:hidden}
+.notif::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--g);border-radius:99px}
+.notif-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.notif-title{font-size:13px;font-weight:500;color:var(--text)}
+.notif-sub{font-size:12px;color:var(--sub);margin-top:2px}
+.notif-time{font-size:11px;color:#aaa;margin-left:auto;flex-shrink:0}
+
+/* Animations */
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(27,94,32,0.3)}70%{box-shadow:0 0 0 8px rgba(27,94,32,0)}100%{box-shadow:0 0 0 0 rgba(27,94,32,0)}}
+@keyframes shimmer{0%{opacity:0.6}50%{opacity:1}100%{opacity:0.6}}
+@keyframes slideRight{from{transform:translateX(-8px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.anim-fadein{animation:fadeSlideIn 0.35s ease both}
+.anim-pulse .motion-box{animation:pulse-ring 2s infinite}
+.anim-shimmer .motion-box{animation:shimmer 1.4s ease-in-out infinite}
+.anim-slide .motion-box{animation:slideRight 0.4s ease}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:4px 0}
+
+/* Tag */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px}
+.tag-green{background:var(--gl);color:var(--g2)}
+.tag-blue{background:var(--bl);color:var(--b)}
+.tag-gold{background:var(--goldl);color:#8B6914}
+</style>
+
+<h2 class="sr-only">Halal OS smart GUI design system — interactive preview with desktop shell, motion system, and localization switcher</h2>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-logo"><span>☪</span> Halal OS</div>
+    <div class="prayer-pill"><i class="ti ti-moon-stars" aria-hidden="true"></i> Dhuhr in 43 min</div>
+    <div class="tb-clock" id="tb-clock">12:17</div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-icon" title="Wi-Fi"><i class="ti ti-wifi"></i></div>
+    <div class="tb-icon" title="Sound"><i class="ti ti-volume"></i></div>
+    <div class="tb-icon" title="Battery"><i class="ti ti-battery-3"></i></div>
+    <div class="tb-icon" title="Notifications"><i class="ti ti-bell"></i></div>
+    <div class="tb-icon" title="Settings"><i class="ti ti-settings"></i></div>
+  </div>
+</div>
+
+<!-- DOCK -->
+<div class="dock">
+  <div class="dock-item active"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+  <div class="dock-item"><i class="ti ti-folder"></i> Files</div>
+  <div class="dock-item"><i class="ti ti-world"></i> Browser</div>
+  <div class="dock-item"><i class="ti ti-mail"></i> Mail</div>
+  <div class="dock-item"><i class="ti ti-calendar"></i> Calendar</div>
+  <div class="dock-sep"></div>
+  <div class="dock-item"><i class="ti ti-book"></i> Quran</div>
+  <div class="dock-item"><i class="ti ti-clock"></i> Prayer</div>
+  <div class="dock-item"><i class="ti ti-compass"></i> Qibla</div>
+  <div class="dock-sep"></div>
+  <div class="dock-item"><i class="ti ti-terminal"></i> Terminal</div>
+  <div class="dock-item"><i class="ti ti-settings"></i> Settings</div>
+</div>
+
+<!-- MAIN SHELL -->
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">Workspace</div>
+    <div class="nav-item active"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+    <div class="nav-item"><i class="ti ti-apps"></i> Applications</div>
+    <div class="nav-item"><i class="ti ti-folder"></i> Files</div>
+    <div class="nav-item"><i class="ti ti-bell"></i> Notifications <span class="nav-badge">3</span></div>
+    <div class="divider"></div>
+    <div class="sidebar-section">Islamic</div>
+    <div class="nav-item"><i class="ti ti-moon-stars"></i> Prayer Times</div>
+    <div class="nav-item"><i class="ti ti-book"></i> Quran Reader</div>
+    <div class="nav-item"><i class="ti ti-database"></i> Hadith</div>
+    <div class="nav-item"><i class="ti ti-compass"></i> Qibla</div>
+    <div class="nav-item"><i class="ti ti-calculator"></i> Zakat</div>
+    <div class="divider"></div>
+    <div class="sidebar-section">System</div>
+    <div class="nav-item"><i class="ti ti-shield"></i> Security</div>
+    <div class="nav-item"><i class="ti ti-settings"></i> Settings</div>
+    <div class="nav-item"><i class="ti ti-cloud"></i> Halal Cloud</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- TABS -->
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="tabs">
+        <div class="tab active" onclick="showPanel('overview')">Overview</div>
+        <div class="tab" onclick="showPanel('motion')">Motion system</div>
+        <div class="tab" onclick="showPanel('locale')">Localization</div>
+        <div class="tab" onclick="showPanel('setup')">Setup wizard</div>
+      </div>
+      <div class="status-bar">
+        <div class="status-dot status-green"></div><div class="status-label">All systems nominal</div>
+      </div>
+    </div>
+
+    <!-- PANEL: OVERVIEW -->
+    <div id="panel-overview">
+
+      <!-- AI Bar -->
+      <div>
+        <div class="ai-bar">
+          <i class="ti ti-sparkles" aria-hidden="true"></i>
+          <input type="text" placeholder="Ask Amina AI anything — or control your system…" id="ai-input">
+          <button class="btn btn-sm btn-primary" onclick="runAmina()"><i class="ti ti-send" aria-hidden="true"></i> Ask</button>
+        </div>
+        <div style="margin-top:8px" class="ai-chip-row">
+          <div class="ai-chip" onclick="setAI('What time is Asr prayer today?')"><i class="ti ti-moon-stars"></i> Prayer times</div>
+          <div class="ai-chip" onclick="setAI('Open Quran surah Al-Fatiha')"><i class="ti ti-book"></i> Open Quran</div>
+          <div class="ai-chip" onclick="setAI('Show security status')"><i class="ti ti-shield"></i> Security</div>
+          <div class="ai-chip" onclick="setAI('Translate this text to Arabic')"><i class="ti ti-language"></i> Translate</div>
+          <div class="ai-chip" onclick="setAI('How much Zakat do I owe?')"><i class="ti ti-calculator"></i> Zakat</div>
+        </div>
+        <div id="amina-response" style="display:none;margin-top:10px;background:var(--gl);border:1px solid #c8e6c9;border-radius:var(--rm);padding:12px 14px;font-size:13px;color:var(--g2);animation:fadeSlideIn 0.3s ease"></div>
+      </div>
+
+      <!-- Prayer widget -->
+      <div class="prayer-widget anim-fadein">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:12px;opacity:0.7;margin-bottom:2px">Prayer times — Cairo, Egypt</div>
+            <div style="font-size:20px;font-weight:700">Monday, 15 Dhul-Hijjah 1447</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;opacity:0.6">Next prayer</div>
+            <div style="font-size:16px;font-weight:700;color:var(--gold)">Dhuhr 12:00</div>
+          </div>
+        </div>
+        <div class="prayer-grid">
+          <div class="prayer-slot done"><div class="p-icon">🌅</div><div class="p-name">Fajr</div><div class="p-time">04:12</div></div>
+          <div class="prayer-slot done"><div class="p-icon">☀</div><div class="p-name">Shuruq</div><div class="p-time">05:43</div></div>
+          <div class="prayer-slot next"><div class="p-icon">🌞</div><div class="p-name">Dhuhr</div><div class="p-time">12:00</div></div>
+          <div class="prayer-slot"><div class="p-icon">🌤</div><div class="p-name">Asr</div><div class="p-time">15:28</div></div>
+          <div class="prayer-slot"><div class="p-icon">🌆</div><div class="p-name">Maghrib</div><div class="p-time">18:41</div></div>
+          <div class="prayer-slot"><div class="p-icon">🌙</div><div class="p-name">Isha</div><div class="p-time">20:06</div></div>
+        </div>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon green"><i class="ti ti-shield-check" aria-hidden="true"></i></div>
+          <div class="card-label">Security score</div>
+          <div class="card-value">98<span style="font-size:14px;font-weight:400;color:var(--sub)">/100</span></div>
+          <div class="card-sub" style="color:var(--g)">No threats detected</div>
+        </div>
+        <div class="card">
+          <div class="card-icon blue"><i class="ti ti-cloud" aria-hidden="true"></i></div>
+          <div class="card-label">Halal Cloud</div>
+          <div class="card-value">4.2<span style="font-size:14px;font-weight:400;color:var(--sub)"> GB</span></div>
+          <div class="card-sub">of 20 GB used</div>
+        </div>
+        <div class="card">
+          <div class="card-icon gold"><i class="ti ti-bolt" aria-hidden="true"></i></div>
+          <div class="card-label">AI tasks today</div>
+          <div class="card-value">34</div>
+          <div class="card-sub">All on-device</div>
+        </div>
+        <div class="card">
+          <div class="card-icon green"><i class="ti ti-package" aria-hidden="true"></i></div>
+          <div class="card-label">Updates</div>
+          <div class="card-value">3</div>
+          <div class="card-sub">Ready to install</div>
+        </div>
+      </div>
+
+      <!-- Recent apps -->
+      <div class="card" style="padding:16px 20px">
+        <div style="font-size:13px;font-weight:500;color:var(--sub);margin-bottom:12px">Recent apps</div>
+        <div class="app-row">
+          <div class="app-icon-btn"><div class="app-icon g"><i class="ti ti-book" style="color:var(--g)" aria-hidden="true"></i></div><div class="app-name">Quran</div></div>
+          <div class="app-icon-btn"><div class="app-icon b"><i class="ti ti-world" style="color:var(--b)" aria-hidden="true"></i></div><div class="app-name">Browser</div></div>
+          <div class="app-icon-btn"><div class="app-icon gold"><i class="ti ti-calculator" style="color:#8B6914" aria-hidden="true"></i></div><div class="app-name">Zakat</div></div>
+          <div class="app-icon-btn"><div class="app-icon teal"><i class="ti ti-mail" style="color:#00695C" aria-hidden="true"></i></div><div class="app-name">Mail</div></div>
+          <div class="app-icon-btn"><div class="app-icon red"><i class="ti ti-shield" style="color:#B71C1C" aria-hidden="true"></i></div><div class="app-name">Security</div></div>
+          <div class="app-icon-btn"><div class="app-icon purple"><i class="ti ti-code" style="color:#4527A0" aria-hidden="true"></i></div><div class="app-name">Terminal</div></div>
+          <div class="app-icon-btn"><div class="app-icon g"><i class="ti ti-compass" style="color:var(--g)" aria-hidden="true"></i></div><div class="app-name">Qibla</div></div>
+          <div class="app-icon-btn"><div class="app-icon b"><i class="ti ti-calendar" style="color:var(--b)" aria-hidden="true"></i></div><div class="app-name">Calendar</div></div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;font-weight:500;color:var(--sub)">Notifications</div>
+        <div class="notif"><div class="notif-icon">🕌</div><div><div class="notif-title">Adhan — Dhuhr prayer is due</div><div class="notif-sub">Tap to silence · Mosque finder available</div></div><div class="notif-time">now</div></div>
+        <div class="notif"><div class="notif-icon">🛡</div><div><div class="notif-title">halalguard blocked a suspicious script</div><div class="notif-sub">tracker.analytics.net — auto-quarantined</div></div><div class="notif-time">2 min</div></div>
+        <div class="notif"><div class="notif-icon">☁</div><div><div class="notif-title">Halal Cloud sync complete</div><div class="notif-sub">48 files synced · E2E encrypted</div></div><div class="notif-time">11 min</div></div>
+      </div>
+    </div>
+
+    <!-- PANEL: MOTION SYSTEM -->
+    <div id="panel-motion" style="display:none">
+      <div style="font-size:14px;color:var(--sub);margin-bottom:16px">Every animation in Halal OS follows four principles: <strong>purposeful</strong> (no decoration), <strong>fast</strong> (&lt;300ms), <strong>respectful</strong> (prefers-reduced-motion honored), and <strong>Islamic</strong> (calligraphy-inspired easing curves).</div>
+
+      <div class="motion-row" id="motion-demos">
+        <div class="motion-demo"><div class="motion-box anim-pulse" id="md-pulse"><i class="ti ti-sparkles"></i></div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Attention pulse</div><div class="motion-label">Prayer alerts, AI ready</div><div style="margin-top:8px"><button class="btn btn-sm" onclick="replay('md-pulse','anim-pulse')">Replay</button></div></div>
+        <div class="motion-demo"><div class="motion-box" id="md-fadein"><i class="ti ti-layout-dashboard"></i></div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Fade + slide in</div><div class="motion-label">Page transitions, cards</div><div style="margin-top:8px"><button class="btn btn-sm" onclick="replay('md-fadein','anim-fadein')">Replay</button></div></div>
+        <div class="motion-demo"><div class="motion-box" id="md-slide"><i class="ti ti-arrow-right"></i></div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Slide in (RTL-aware)</div><div class="motion-label">Sidebar, drawer open</div><div style="margin-top:8px"><button class="btn btn-sm" onclick="replay('md-slide','anim-slide')">Replay</button></div></div>
+        <div class="motion-demo"><div class="motion-box anim-shimmer" id="md-shimmer"><i class="ti ti-loader"></i></div><div style="font-size:13px;font-weight:500;margin-bottom:4px">Shimmer loader</div><div class="motion-label">AI inference, sync</div><div style="margin-top:8px"><button class="btn btn-sm" onclick="replay('md-shimmer','anim-shimmer')">Replay</button></div></div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:14px;font-weight:500">Easing tokens</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+          <div class="card" style="padding:12px 14px"><div style="font-size:12px;color:var(--sub);margin-bottom:4px">--ease-enter</div><div style="font-size:12px;font-family:monospace;color:var(--g)">cubic-bezier(0.0, 0.0, 0.2, 1)</div><div style="font-size:11px;color:var(--sub);margin-top:3px">Decelerate · elements entering</div></div>
+          <div class="card" style="padding:12px 14px"><div style="font-size:12px;color:var(--sub);margin-bottom:4px">--ease-exit</div><div style="font-size:12px;font-family:monospace;color:var(--g)">cubic-bezier(0.4, 0.0, 1.0, 1)</div><div style="font-size:11px;color:var(--sub);margin-top:3px">Accelerate · elements leaving</div></div>
+          <div class="card" style="padding:12px 14px"><div style="font-size:12px;color:var(--sub);margin-bottom:4px">--ease-spring</div><div style="font-size:12px;font-family:monospace;color:var(--g)">cubic-bezier(0.34, 1.56, 0.64, 1)</div><div style="font-size:11px;color:var(--sub);margin-top:3px">Spring · hover, cards, icons</div></div>
+          <div class="card" style="padding:12px 14px"><div style="font-size:12px;color:var(--sub);margin-bottom:4px">--ease-standard</div><div style="font-size:12px;font-family:monospace;color:var(--g)">cubic-bezier(0.4, 0.0, 0.2, 1)</div><div style="font-size:11px;color:var(--sub);margin-top:3px">Default · most transitions</div></div>
+        </div>
+
+        <div style="font-size:14px;font-weight:500;margin-top:8px">Duration scale</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="width:32px;height:4px;background:var(--g);border-radius:99px;opacity:0.3"></div>
+            <div style="font-size:11px;font-weight:500">50ms</div><div style="font-size:10px;color:var(--sub)">Micro</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="width:60px;height:4px;background:var(--g);border-radius:99px;opacity:0.5"></div>
+            <div style="font-size:11px;font-weight:500">100ms</div><div style="font-size:10px;color:var(--sub)">Fast</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="width:100px;height:4px;background:var(--g);border-radius:99px;opacity:0.7"></div>
+            <div style="font-size:11px;font-weight:500">200ms</div><div style="font-size:10px;color:var(--sub)">Standard</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="width:140px;height:4px;background:var(--g);border-radius:99px;opacity:0.85"></div>
+            <div style="font-size:11px;font-weight:500">300ms</div><div style="font-size:10px;color:var(--sub)">Emphasis</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="width:200px;height:4px;background:var(--g);border-radius:99px;opacity:1"></div>
+            <div style="font-size:11px;font-weight:500">500ms</div><div style="font-size:10px;color:var(--sub)">Page load</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL: LOCALIZATION -->
+    <div id="panel-locale" style="display:none">
+      <div style="font-size:14px;color:var(--sub);margin-bottom:14px">Click a locale to preview the UI direction and typography. All layouts flip automatically with CSS <code style="background:var(--gl);padding:1px 5px;border-radius:4px;font-size:12px">dir</code> attribute — no separate RTL stylesheet needed.</div>
+
+      <div class="locale-grid" id="locale-grid">
+        <div class="locale-card active" onclick="setLocale('ar','rtl','مرحباً بكم في Halal OS')"><div class="locale-flag">🇸🇦</div><div class="locale-name">العربية</div><div class="locale-dir">RTL · Arabic</div><div class="locale-sample">مرحباً</div></div>
+        <div class="locale-card" onclick="setLocale('en','ltr','Welcome to Halal OS')"><div class="locale-flag">🇬🇧</div><div class="locale-name">English</div><div class="locale-dir">LTR</div><div class="locale-sample">Welcome</div></div>
+        <div class="locale-card" onclick="setLocale('ur','rtl','Halal OS میں خوش آمدید')"><div class="locale-flag">🇵🇰</div><div class="locale-name">اردو</div><div class="locale-dir">RTL · Urdu</div><div class="locale-sample">خوش آمدید</div></div>
+        <div class="locale-card" onclick="setLocale('tr','ltr','Halal OS\'e hoş geldiniz')"><div class="locale-flag">🇹🇷</div><div class="locale-name">Türkçe</div><div class="locale-dir">LTR</div><div class="locale-sample">Hoş geldiniz</div></div>
+        <div class="locale-card" onclick="setLocale('ms','ltr','Selamat datang ke Halal OS')"><div class="locale-flag">🇲🇾</div><div class="locale-name">Bahasa Melayu</div><div class="locale-dir">LTR</div><div class="locale-sample">Selamat datang</div></div>
+        <div class="locale-card" onclick="setLocale('id','ltr','Selamat datang di Halal OS')"><div class="locale-flag">🇮🇩</div><div class="locale-name">Bahasa Indonesia</div><div class="locale-dir">LTR</div><div class="locale-sample">Selamat datang</div></div>
+        <div class="locale-card" onclick="setLocale('fr','ltr','Bienvenue dans Halal OS')"><div class="locale-flag">🇫🇷</div><div class="locale-name">Français</div><div class="locale-dir">LTR</div><div class="locale-sample">Bienvenue</div></div>
+        <div class="locale-card" onclick="setLocale('de','ltr','Willkommen bei Halal OS')"><div class="locale-flag">🇩🇪</div><div class="locale-name">Deutsch</div><div class="locale-dir">LTR</div><div class="locale-sample">Willkommen</div></div>
+        <div class="locale-card" onclick="setLocale('bn','ltr','Halal OS-এ স্বাগতম')"><div class="locale-flag">🇧🇩</div><div class="locale-name">বাংলা</div><div class="locale-dir">LTR · Bengali</div><div class="locale-sample">স্বাগতম</div></div>
+        <div class="locale-card" onclick="setLocale('so','ltr','Ku soo dhawoow Halal OS')"><div class="locale-flag">🇸🇴</div><div class="locale-name">Soomaali</div><div class="locale-dir">LTR · Somali</div><div class="locale-sample">Soo dhawoow</div></div>
+        <div class="locale-card" onclick="setLocale('sw','ltr','Karibu Halal OS')"><div class="locale-flag">🇹🇿</div><div class="locale-name">Kiswahili</div><div class="locale-dir">LTR</div><div class="locale-sample">Karibu</div></div>
+        <div class="locale-card" onclick="setLocale('ps','rtl','د Halal OS ښه راغلاست')"><div class="locale-flag">🇦🇫</div><div class="locale-name">پښتو</div><div class="locale-dir">RTL · Pashto</div><div class="locale-sample">ښه راغلاست</div></div>
+      </div>
+
+      <!-- Live preview -->
+      <div id="locale-preview" class="card" style="margin-top:16px;padding:20px;transition:all 0.25s">
+        <div style="font-size:11px;color:var(--sub);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">Live preview</div>
+        <div id="lp-greeting" style="font-size:24px;font-weight:700;color:var(--g);direction:rtl;text-align:right;transition:all 0.2s">مرحباً بكم في Halal OS</div>
+        <div id="lp-ui" class="rtl-preview" style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:32px;height:32px;border-radius:8px;background:var(--gl);display:flex;align-items:center;justify-content:center"><i class="ti ti-moon-stars" style="color:var(--g)"></i></div>
+            <div>
+              <div id="lp-label1" style="font-size:13px;font-weight:500">أوقات الصلاة</div>
+              <div id="lp-label2" style="font-size:11px;color:var(--sub)">القاهرة، مصر</div>
+            </div>
+            <div style="margin-right:0;margin-left:auto" id="lp-badge"><span class="tag tag-green">نشط</span></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px" id="lp-tags">
+          <span class="tag tag-green" id="lp-dir">اتجاه: RTL ←</span>
+          <span class="tag tag-blue" id="lp-font">خط: Arabic Unicode</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL: SETUP WIZARD -->
+    <div id="panel-setup" style="display:none">
+      <div style="font-size:14px;color:var(--sub);margin-bottom:16px">The Halal OS setup wizard completes in under 3 minutes. Each step is one decision — no configuration files, no terminal needed.</div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div id="step-indicator" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+          <div class="step-dot active-dot" data-step="0" style="width:28px;height:28px;border-radius:50%;background:var(--g);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">1</div>
+          <div style="flex:1;height:2px;background:var(--border);border-radius:99px;position:relative"><div id="prog1" style="width:0%;height:100%;background:var(--g);border-radius:99px;transition:width 0.4s ease"></div></div>
+          <div class="step-dot" data-step="1" style="width:28px;height:28px;border-radius:50%;background:var(--border);color:var(--sub);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">2</div>
+          <div style="flex:1;height:2px;background:var(--border);border-radius:99px;position:relative"><div id="prog2" style="width:0%;height:100%;background:var(--g);border-radius:99px;transition:width 0.4s ease"></div></div>
+          <div class="step-dot" data-step="2" style="width:28px;height:28px;border-radius:50%;background:var(--border);color:var(--sub);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">3</div>
+          <div style="flex:1;height:2px;background:var(--border);border-radius:99px;position:relative"><div id="prog3" style="width:0%;height:100%;background:var(--g);border-radius:99px;transition:width 0.4s ease"></div></div>
+          <div class="step-dot" data-step="3" style="width:28px;height:28px;border-radius:50%;background:var(--border);color:var(--sub);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">4</div>
+        </div>
+
+        <div id="setup-step-0" class="card" style="padding:20px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">Language & region</div>
+          <div style="font-size:13px;color:var(--sub);margin-bottom:14px">Your language determines the UI direction and prayer calculation method.</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px">
+            <div class="locale-card active" onclick="pickLocaleSetup(this)"><div class="locale-flag">🇸🇦</div><div class="locale-name">العربية</div></div>
+            <div class="locale-card" onclick="pickLocaleSetup(this)"><div class="locale-flag">🇬🇧</div><div class="locale-name">English</div></div>
+            <div class="locale-card" onclick="pickLocaleSetup(this)"><div class="locale-flag">🇵🇰</div><div class="locale-name">اردو</div></div>
+            <div class="locale-card" onclick="pickLocaleSetup(this)"><div class="locale-flag">🇩🇪</div><div class="locale-name">Deutsch</div></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="nextStep(0)">Continue <i class="ti ti-arrow-right"></i></button>
+        </div>
+
+        <div id="setup-step-1" class="card" style="padding:20px;opacity:0.4;pointer-events:none;transition:opacity 0.3s">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">Prayer calculation method</div>
+          <div style="font-size:13px;color:var(--sub);margin-bottom:14px">Choose the method used by scholars in your region.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:var(--rm)"><input type="radio" name="calc" checked> <span style="font-size:13px">Egyptian General Authority of Survey (recommended for Egypt)</span></label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:var(--rm)"><input type="radio" name="calc"> <span style="font-size:13px">Muslim World League (MWL)</span></label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border:1px solid var(--border);border-radius:var(--rm)"><input type="radio" name="calc"> <span style="font-size:13px">ISNA (North America)</span></label>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="nextStep(1)">Continue <i class="ti ti-arrow-right"></i></button>
+        </div>
+
+        <div id="setup-step-2" class="card" style="padding:20px;opacity:0.4;pointer-events:none;transition:opacity 0.3s">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">Privacy profile</div>
+          <div style="font-size:13px;color:var(--sub);margin-bottom:14px">Halal OS is privacy-first by default. Fine-tune here.</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" checked> <span style="font-size:13px">Block all trackers system-wide (halalfire)</span></label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" checked> <span style="font-size:13px">Enable Halal Cloud sync (E2E encrypted)</span></label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox"> <span style="font-size:13px">Share anonymous usage data to improve Halal OS</span></label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" checked> <span style="font-size:13px">Enable Amina AI (fully on-device, no cloud)</span></label>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="nextStep(2)">Continue <i class="ti ti-arrow-right"></i></button>
+        </div>
+
+        <div id="setup-step-3" class="card" style="padding:20px;opacity:0.4;pointer-events:none;transition:opacity 0.3s">
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">You're all set</div>
+          <div style="font-size:13px;color:var(--sub);margin-bottom:14px">Halal OS is configured and ready. Bismillah!</div>
+          <div style="background:var(--gl);border:1px solid #b2dfb2;border-radius:var(--rm);padding:14px;text-align:center">
+            <div style="font-size:28px;margin-bottom:6px">☪</div>
+            <div style="font-size:16px;font-weight:600;color:var(--g)">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+            <div style="font-size:12px;color:var(--sub);margin-top:4px">In the name of Allah, the Most Gracious, the Most Merciful</div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px;width:100%;justify-content:center">Launch Halal OS <i class="ti ti-rocket"></i></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const panels=['overview','motion','locale','setup'];
+function showPanel(id){
+  panels.forEach(p=>{
+    const el=document.getElementById('panel-'+p);
+    if(el){el.style.display=p===id?'flex':'none';if(p===id)el.style.flexDirection='column',el.style.gap='16px'}
+  });
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',['overview','motion','locale','setup'][i]===id);
+  });
+}
+showPanel('overview');
+
+function setLocale(code,dir,greeting){
+  document.querySelectorAll('.locale-card').forEach(c=>c.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const lp=document.getElementById('lp-greeting');
+  lp.textContent=greeting;
+  lp.style.direction=dir;
+  lp.style.textAlign=dir==='rtl'?'right':'left';
+  const ui=document.getElementById('lp-ui');
+  ui.style.direction=dir;
+  const isRTL=dir==='rtl';
+  document.getElementById('lp-dir').textContent='Dir: '+(isRTL?'RTL ←':'LTR →');
+  document.getElementById('lp-font').textContent='Script: '+({ar:'Arabic',ur:'Nastaliq',ps:'Pashto',en:'Latin',tr:'Latin',de:'Latin',fr:'Latin',ms:'Latin',id:'Latin',bn:'Bengali',so:'Latin',sw:'Latin'}[code]||'Unicode');
+  const labels={ar:['أوقات الصلاة','القاهرة، مصر','نشط'],ur:['نماز کے اوقات','قاہرہ، مصر','فعال'],ps:['د لمانځه وختونه','قاهره، مصر','فعال'],en:['Prayer times','Cairo, Egypt','Active'],tr:['Namaz vakitleri','Kahire, Mısır','Aktif'],de:['Gebetszeiten','Kairo, Ägypten','Aktiv'],fr:['Heures de prière','Le Caire, Égypte','Actif'],ms:['Waktu solat','Kairo, Mesir','Aktif'],id:['Waktu shalat','Kairo, Mesir','Aktif'],bn:['নামাজের সময়','কায়রো, মিসর','সক্রিয়'],so:['Wakhtiyada Salaadda','Kaayiro, Masar','Firfircoon'],sw:['Wakati wa Sala','Kairo, Misri','Amilifu']};
+  const l=labels[code]||labels.en;
+  document.getElementById('lp-label1').textContent=l[0];
+  document.getElementById('lp-label2').textContent=l[1];
+  document.getElementById('lp-badge').innerHTML=`<span class="tag tag-green">${l[2]}</span>`;
+}
+
+function replay(id,cls){
+  const el=document.getElementById(id);
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+}
+
+let currentStep=0;
+function nextStep(step){
+  const progs=['prog1','prog2','prog3'];
+  if(step<3){document.getElementById(progs[step]).style.width='100%'}
+  const next=step+1;
+  const nextEl=document.getElementById('setup-step-'+next);
+  if(nextEl){nextEl.style.opacity='1';nextEl.style.pointerEvents='auto'}
+  document.querySelectorAll('.step-dot').forEach((d,i)=>{
+    if(i<=next){d.style.background='var(--g)';d.style.color='#fff'}
+  });
+  setTimeout(()=>{nextEl&&nextEl.scrollIntoView({behavior:'smooth',block:'nearest'})},100);
+}
+
+function pickLocaleSetup(el){
+  el.closest('.card').querySelectorAll('.locale-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+const amina={
+  'What time is Asr prayer today?':'⏰ Asr prayer today is at 15:28 — that\'s in about 3 hours 11 minutes. Shall I set a reminder?',
+  'Open Quran surah Al-Fatiha':'📖 Opening Quran reader — Surah Al-Fatiha (1:1–7). Choose reciter: Mishary Rashid or Abdul Basit?',
+  'Show security status':'🛡 Security status: Excellent (98/100). halalfire blocked 14 trackers today. No threats detected. Last scan: 2 min ago.',
+  'Translate this text to Arabic':'🌐 Sure — paste or type the text you\'d like translated to Arabic (Modern Standard or Egyptian dialect?)',
+  'How much Zakat do I owe?':'🧮 Opening Zakat calculator. I\'ll need your total savings, gold, and other assets to calculate the 2.5% nisab obligation.',
+};
+function setAI(text){document.getElementById('ai-input').value=text}
+function runAmina(){
+  const v=document.getElementById('ai-input').value.trim();
+  const r=document.getElementById('amina-response');
+  const resp=amina[v]||'🤖 Amina AI: Processing your request on-device… (all data stays local)';
+  r.textContent=resp;r.style.display='block';
+  r.style.animation='none';void r.offsetWidth;r.style.animation='fadeSlideIn 0.3s ease';
+}
+
+setInterval(()=>{
+  const now=new Date();
+  document.getElementById('tb-clock').textContent=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+},10000);
+</script>

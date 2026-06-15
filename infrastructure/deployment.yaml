@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: halal-cloud-orchestrator
+  namespace: halal-cloud
+  labels:
+    app: cloud-orchestrator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cloud-orchestrator
+  template:
+    metadata:
+      labels:
+        app: cloud-orchestrator
+    spec:
+      containers:
+      - name: orchestrator
+        image: github.com/halalos/halal-cloud-orchestrator:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9000
+        env:
+        - name: DB_HOST
+          value: "database.halal-cloud.svc.cluster.local"
+        - name: KEYCLOAK_URL
+          value: "http://halal-cloud-auth.halal-cloud.svc.cluster.local:8080"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+        securityContext:
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: halal-cloud-orchestrator-srv
+  namespace: halal-cloud
+spec:
+  selector:
+    app: cloud-orchestrator
+  ports:
+  - protocol: TCP
+    port: 9000
+    targetPort: 9000
+  type: ClusterIP

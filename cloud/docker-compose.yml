@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: halal_cloud_db
+    environment:
+      POSTGRES_DB: halal_cloud
+      POSTGRES_USER: halalos_admin
+      POSTGRES_PASSWORD: bismillah_db_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - halal_net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0
+    container_name: halal_cloud_auth
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: bismillah_admin_password
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://database:5432/halal_cloud
+      KC_DB_USERNAME: halalos_admin
+      KC_DB_PASSWORD: bismillah_db_password
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    networks:
+      - halal_net
+
+  cloud-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: halal_cloud_orchestrator
+    ports:
+      - "9000:9000"
+    depends_on:
+      - database
+      - keycloak
+    networks:
+      - halal_net
+
+volumes:
+  pgdata:
+
+networks:
+  halal_net:
+    driver: bridge

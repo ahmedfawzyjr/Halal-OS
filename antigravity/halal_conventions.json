@@ -1,0 +1,5 @@
+{
+  "rust": "Edition 2024, #![forbid(unsafe_code)] where possible",
+  "go": "Strict linting, module-aware mode",
+  "python": "Type hints mandatory, strictly local execution"
+}

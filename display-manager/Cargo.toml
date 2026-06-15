@@ -1,0 +1,13 @@
+[package]
+name = "halaldm"
+version = "2.0.0"
+edition = "2021"
+authors = ["Halal OS contributors"]
+description = "Rust-based secure display manager featuring PAM authentication, FIDO2 hooks, and prayer schedule screensavers."
+
+[dependencies]
+pam-auth = "0.1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"
+tokio = { version = "1.0", features = ["full"] }
