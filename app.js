@@ -1,4 +1,4 @@
-// ☪ HALAL OS - CORE SIMULATOR LOGIC
+﻿// ☪ HALAL OS - CORE SIMULATOR LOGIC
 
 // --- 1. LOCALIZATION DICTIONARY ---
 const translations = {
@@ -483,6 +483,9 @@ let terminalTabs = [
 ];
 let activeTerminalTabId = 0;
 let terminalSplits = 0; // 0 = none
+let terminalHistory = [];
+let terminalHistoryIndex = -1;
+let currentTerminalTheme = "midnight";
 
 // Browser state extensions
 let browserTabs = [
@@ -500,6 +503,8 @@ let isDraggingQibla = false;
 // Quran Audio State
 let quranAudioPlaying = false;
 let audioWaveAnimationId = null;
+let quranSearchQuery = "";
+let quranBookmarks = [];
 
 // Ramadan / Fasting Tracker
 let ramadanModeActive = false;
@@ -665,6 +670,17 @@ window.addEventListener("DOMContentLoaded", () => {
   // Init dock right-click context menu
   initDockContextMenus();
 
+  // Initialize Security UI parameters and permissions grid
+  renderSettingsPermissionsMap();
+  updatePrivacyScore();
+  updateSecurityRecommendations();
+
+  // Initialize Amina AI Suggestion Chips
+  populateAminaChips();
+
+  // Load initial HDK Component Code Specimen
+  showRustComponentCode("HalalButton");
+
   // Init files quick look keyboard listener
   initQuickLookKeyboard();
 
@@ -676,6 +692,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Init global accessibility keyboard navigation
   initKeyboardNavigation();
+
+  // Init custom cursor & click sounds
+  initCustomCursor();
+  initClickSounds();
 });
 
 // --- 3. CLOCK & PRAYER SCHEDULER LOGIC ---
@@ -989,6 +1009,7 @@ function focusWindow(win) {
 }
 
 function openWindow(id) {
+  playWindowOpenSound();
   const win = document.getElementById(id);
   win.classList.remove("minimized");
   win.classList.add("active");
@@ -1019,6 +1040,7 @@ function maximizeWindow(id) {
 }
 
 function closeWindow(id) {
+  playWindowCloseSound();
   const win = document.getElementById(id);
   win.classList.remove("active", "maximized", "minimized", "window-active-focus");
   
@@ -1080,17 +1102,53 @@ function changePrayerMethod(method) {
   let label = "Egyptian Survey";
   if (method === "mwl") label = "Muslim World League";
   if (method === "isna") label = "ISNA (North America)";
+  if (method === "karachi") label = "Univ of Islamic Sciences, Karachi";
+  if (method === "makkah") label = "Umm al-Qura University, Makkah";
+  if (method === "tehran") label = "Univ of Tehran Geophysics";
   
   indicator.textContent = "Method: " + label;
   
   if (method === "mwl") {
     prayerSchedule.Fajr = "04:18";
+    prayerSchedule.Shuruq = "05:43";
+    prayerSchedule.Dhuhr = "12:00";
+    prayerSchedule.Asr = "15:28";
+    prayerSchedule.Maghrib = "18:41";
     prayerSchedule.Isha = "19:58";
   } else if (method === "isna") {
     prayerSchedule.Fajr = "04:22";
+    prayerSchedule.Shuruq = "05:43";
+    prayerSchedule.Dhuhr = "12:00";
+    prayerSchedule.Asr = "15:28";
+    prayerSchedule.Maghrib = "18:41";
     prayerSchedule.Isha = "19:52";
+  } else if (method === "karachi") {
+    prayerSchedule.Fajr = "04:15";
+    prayerSchedule.Shuruq = "05:43";
+    prayerSchedule.Dhuhr = "12:00";
+    prayerSchedule.Asr = "15:32";
+    prayerSchedule.Maghrib = "18:41";
+    prayerSchedule.Isha = "20:02";
+  } else if (method === "makkah") {
+    prayerSchedule.Fajr = "04:08";
+    prayerSchedule.Shuruq = "05:43";
+    prayerSchedule.Dhuhr = "12:00";
+    prayerSchedule.Asr = "15:25";
+    prayerSchedule.Maghrib = "18:41";
+    prayerSchedule.Isha = "20:11";
+  } else if (method === "tehran") {
+    prayerSchedule.Fajr = "04:25";
+    prayerSchedule.Shuruq = "05:43";
+    prayerSchedule.Dhuhr = "12:00";
+    prayerSchedule.Asr = "15:30";
+    prayerSchedule.Maghrib = "18:41";
+    prayerSchedule.Isha = "19:48";
   } else {
     prayerSchedule.Fajr = "04:12";
+    prayerSchedule.Shuruq = "05:43";
+    prayerSchedule.Dhuhr = "12:00";
+    prayerSchedule.Asr = "15:28";
+    prayerSchedule.Maghrib = "18:41";
     prayerSchedule.Isha = "20:06";
   }
 
@@ -1099,28 +1157,316 @@ function changePrayerMethod(method) {
   showInshaNotification("Prayer Calculation Changed", `Calibrated to: ${label}`, "info");
 }
 
+function updateSystemCoordinates() {
+  const lat = parseFloat(document.getElementById("settings-lat").value) || 30.0444;
+  const lng = parseFloat(document.getElementById("settings-lng").value) || 31.2357;
+  
+  setupState.latitude = lat;
+  setupState.longitude = lng;
+  
+  recalculateQibla(lat, lng);
+}
+
+function autoDetectCoordinates() {
+  if (navigator.geolocation) {
+    showInshaNotification("Detecting Location", "Requesting GPS telemetry...", "info");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        document.getElementById("settings-lat").value = lat.toFixed(4);
+        document.getElementById("settings-lng").value = lng.toFixed(4);
+        
+        setupState.latitude = lat;
+        setupState.longitude = lng;
+        
+        recalculateQibla(lat, lng);
+        showInshaNotification("Location Detected", `Lat: ${lat.toFixed(4)}, Lon: ${lng.toFixed(4)}`, "success");
+      },
+      (error) => {
+        showInshaNotification("Detection Failed", "Access denied or timeout. Retaining mock coordinates.", "warning");
+      }
+    );
+  } else {
+    showInshaNotification("Not Supported", "Browser lacks geolocation APIs.", "danger");
+  }
+}
+
+function recalculateQibla(lat, lon) {
+  const meccaLat = 21.4225 * Math.PI / 180;
+  const meccaLon = 39.8262 * Math.PI / 180;
+  const currLat = lat * Math.PI / 180;
+  const currLon = lon * Math.PI / 180;
+  const lonDiff = meccaLon - currLon;
+  
+  const y = Math.sin(lonDiff);
+  const x = Math.cos(currLat) * Math.tan(meccaLat) - Math.sin(currLat) * Math.cos(lonDiff);
+  let qiblaRad = Math.atan2(y, x);
+  let qiblaDeg = Math.floor(qiblaRad * (180 / Math.PI));
+  let bearing = (qiblaDeg + 360) % 360;
+  
+  qiblaRotationAngle = bearing;
+  
+  const labelEl = document.getElementById("lbl-qibla-angle");
+  if (labelEl) {
+    labelEl.textContent = `Qibla angle from North: ${bearing}° East`;
+  }
+  
+  const wheel = document.getElementById("qibla-compass-wheel");
+  const needle = document.getElementById("qibla-needle");
+  if (wheel && needle) {
+    wheel.style.transform = `rotate(${bearing}deg)`;
+    needle.style.transform = `rotate(${136 - bearing}deg)`;
+  }
+}
+
+function playAdhanTone() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) {
+      showInshaNotification("Audio Error", "Web Audio API not supported.", "danger");
+      return;
+    }
+    
+    const ctx = new AudioContext();
+    const playTone = (freq, startTime, duration, volVal) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(volVal, startTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    
+    const now = ctx.currentTime;
+    playTone(261.63, now, 1.5, 0.3);
+    playTone(329.63, now + 0.5, 1.5, 0.3);
+    playTone(392.00, now + 1.0, 2.0, 0.2);
+    playTone(523.25, now + 1.5, 2.5, 0.15);
+    
+    showInshaNotification("Adhan Call Triggered", "Synthesized spiritual tone playing locally.", "gold");
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 function toggleFirewall(checked) {
   setupState.firewallEnabled = checked;
   const topShield = document.getElementById("top-shield-icon");
-  const radialScore = document.getElementById("psd-radial-score");
-  const settingsRadialScore = document.getElementById("settings-privacy-score");
-  const scoreTitle = document.getElementById("lbl-set-priv-score");
+  const chkFw = document.getElementById("settings-chk-firewall");
+  if (chkFw) chkFw.checked = checked;
+
+  // Sync quick settings button state
+  const qsShieldBtn = document.querySelector(".qs-btn[onclick*='shield']");
+  if (qsShieldBtn) {
+    qsShieldBtn.classList.toggle("active", checked);
+  }
 
   if (checked) {
     topShield.className = "ti ti-shield-check privacy-shield-indicator";
-    radialScore.textContent = "98";
-    settingsRadialScore.textContent = "98";
-    scoreTitle.textContent = "Privacy Score: High Protection";
     startAuditLogging();
     showInshaNotification("Firewall Shield Active", "Outbound telemetry interceptor running.", "success");
   } else {
     topShield.className = "ti ti-shield-alert privacy-shield-indicator danger";
-    radialScore.textContent = "64";
-    settingsRadialScore.textContent = "64";
-    scoreTitle.textContent = "Privacy Score: Warning Level";
     stopAuditLogging();
     showInshaNotification("Firewall Deactivated", "Warning: outbound tracking requests unblocked.", "danger");
   }
+  updatePrivacyScore();
+  updateSecurityRecommendations();
+}
+
+function toggleTelemetry(checked) {
+  const chkTelem = document.getElementById("settings-chk-telemetry");
+  if (chkTelem) chkTelem.checked = checked;
+  if (checked) {
+    showInshaNotification("Telemetry Blocked", "System logs collection suspended.", "success");
+  } else {
+    showInshaNotification("Telemetry Enabled", "Warning: Mirror metadata and package audit metrics logged.", "warning");
+  }
+  updatePrivacyScore();
+  updateSecurityRecommendations();
+}
+
+function toggleSandbox(checked) {
+  const chkSandbox = document.getElementById("settings-chk-sandbox");
+  if (chkSandbox) chkSandbox.checked = checked;
+  if (checked) {
+    showInshaNotification("halalbox Isolation Enabled", "Strict Flatpak sandboxing profiles active.", "success");
+  } else {
+    showInshaNotification("halalbox Isolation Disabled", "Warning: Applications running without sandbox boundaries.", "danger");
+  }
+  updatePrivacyScore();
+  updateSecurityRecommendations();
+}
+
+function updatePrivacyScore() {
+  let score = 0;
+  if (setupState.firewallEnabled) score += 30;
+
+  const chkTelem = document.getElementById("settings-chk-telemetry");
+  if (chkTelem && chkTelem.checked) score += 20;
+
+  const chkSandbox = document.getElementById("settings-chk-sandbox");
+  if (chkSandbox && chkSandbox.checked) score += 20;
+
+  const dohBtn = document.querySelector(".qs-btn[onclick*='doh']");
+  if (dohBtn && dohBtn.classList.contains("active")) score += 10;
+
+  // Revoked app permissions bonus (up to 20 points)
+  let allowedCount = 0;
+  let totalSlots = 0;
+  for (const appId in appPermissions) {
+    for (const perm in appPermissions[appId]) {
+      totalSlots++;
+      if (appPermissions[appId][perm]) allowedCount++;
+    }
+  }
+  let revokedCount = totalSlots - allowedCount;
+  score += Math.round((revokedCount / totalSlots) * 20);
+
+  score = Math.max(0, Math.min(100, score));
+
+  // Determine text classification
+  let labelText = "Privacy Score: High Protection";
+  let labelDesc = "All system analytics disabled, app sandbox verified.";
+  if (score < 90 && score >= 70) {
+    labelText = "Privacy Score: Good Protection";
+    labelDesc = "Some minor telemetry parameters active.";
+  } else if (score < 70 && score >= 50) {
+    labelText = "Privacy Score: Moderate Level";
+    labelDesc = "Vulnerable to background analytical reporting.";
+  } else if (score < 50) {
+    labelText = "Privacy Score: Warning Level";
+    labelDesc = "Warning: outbound tracking requests unblocked.";
+  }
+
+  const radialScore = document.getElementById("psd-radial-score");
+  const settingsRadialScore = document.getElementById("settings-privacy-score");
+  const scoreTitle = document.getElementById("lbl-set-priv-score");
+  const scoreDesc = document.getElementById("lbl-set-priv-score-desc");
+  
+  const scoreColor = score >= 90 ? "var(--color-success)" : (score >= 70 ? "var(--color-gold-light)" : "var(--color-danger)");
+
+  if (radialScore) {
+    radialScore.textContent = score;
+    radialScore.style.background = `radial-gradient(closest-side, #242424 79%, transparent 80% 100%), conic-gradient(${scoreColor} ${score}%, rgba(255,255,255,0.1) 0)`;
+  }
+  if (settingsRadialScore) {
+    settingsRadialScore.textContent = score;
+    settingsRadialScore.style.background = `radial-gradient(closest-side, var(--color-bg-elevated) 79%, transparent 80% 100%), conic-gradient(${scoreColor} ${score}%, rgba(255,255,255,0.1) 0)`;
+  }
+  if (scoreTitle) scoreTitle.textContent = labelText;
+  if (scoreDesc) scoreDesc.textContent = labelDesc;
+}
+
+function updateSecurityRecommendations() {
+  const container = document.getElementById("settings-privacy-recommendations");
+  if (!container) return;
+
+  container.innerHTML = "";
+  let recs = [];
+
+  if (!setupState.firewallEnabled) {
+    recs.push({
+      type: "warning",
+      text: "⚠️ <strong>Enable halalfire Firewall</strong> system-wide to filter tracker domains and protect outbound leaks."
+    });
+  } else {
+    recs.push({
+      type: "success",
+      text: "✅ <strong>Firewall Shield active</strong>. 14+ system tracking domains blocked today."
+    });
+  }
+
+  const chkTelem = document.getElementById("settings-chk-telemetry");
+  if (chkTelem && !chkTelem.checked) {
+    recs.push({
+      type: "warning",
+      text: "⚠️ <strong>Block system telemetry</strong> to prevent logging of mirror updates and package details."
+    });
+  }
+
+  const chkSandbox = document.getElementById("settings-chk-sandbox");
+  if (chkSandbox && !chkSandbox.checked) {
+    recs.push({
+      type: "warning",
+      text: "⚠️ <strong>Enable halalbox App Isolation</strong> to lock third-party binaries in secure sandboxing."
+    });
+  }
+
+  // App permission advice
+  if (appPermissions["window-islamic"] && appPermissions["window-islamic"].network) {
+    recs.push({
+      type: "warning",
+      text: "⚠️ Revoke network access for offline-capable apps like <strong>Islamic native suite</strong> to improve score."
+    });
+  }
+
+  if (recs.length === 0) {
+    recs.push({
+      type: "success",
+      text: "✅ All system protection mechanisms are fully optimized."
+    });
+  }
+
+  recs.forEach(r => {
+    const el = document.createElement("div");
+    el.className = `recommendation-item alert-${r.type === 'warning' ? 'warning' : 'success'}`;
+    el.innerHTML = r.text;
+    container.appendChild(el);
+  });
+}
+
+function renderSettingsPermissionsMap() {
+  const tbody = document.getElementById("settings-permissions-tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const appDisplayNames = {
+    "window-settings": "Tazkiyah Settings",
+    "window-files": "Hafiz File Manager",
+    "window-terminal": "Kalam Terminal",
+    "window-browser": "Halal Browser",
+    "window-amina": "Amina AI Assistant",
+    "window-islamic": "Islamic Suite"
+  };
+
+  for (const appId in appPermissions) {
+    const perms = appPermissions[appId];
+    const name = appDisplayNames[appId] || appId;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="padding: 8px 0; font-weight: 500;">${name}</td>
+      <td style="text-align: center;">
+        <div class="settings-perm-indicator ${perms.network ? 'active' : 'inactive'}" onclick="toggleSettingsAppPermission('${appId}', 'network')"></div>
+      </td>
+      <td style="text-align: center;">
+        <div class="settings-perm-indicator ${perms.files ? 'active' : 'inactive'}" onclick="toggleSettingsAppPermission('${appId}', 'files')"></div>
+      </td>
+      <td style="text-align: center;">
+        <div class="settings-perm-indicator ${perms.camera ? 'active' : 'inactive'}" onclick="toggleSettingsAppPermission('${appId}', 'camera')"></div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function toggleSettingsAppPermission(appId, type) {
+  contextMenuTargetAppId = appId;
+  toggleDockPermission(type);
+  renderSettingsPermissionsMap();
 }
 
 // Simulated Firewall Audit Logger
@@ -1128,6 +1474,7 @@ let auditLogInterval;
 function startAuditLogging() {
   clearInterval(auditLogInterval);
   const dropdownLogs = document.getElementById("psd-audit-logs");
+  const setLogs = document.getElementById("settings-audit-logs");
   
   const sampleTrackers = [
     "metrics.ubuntu.com", "telemetry.kde.org", "google-analytics.com",
@@ -1138,7 +1485,9 @@ function startAuditLogging() {
     const time = new Date().toTimeString().split(' ')[0];
     const host = sampleTrackers[Math.floor(Math.random() * sampleTrackers.length)];
     const logLine = `[${time}] Blocked request: ${host}\n`;
-    dropdownLogs.textContent = logLine + dropdownLogs.textContent;
+    
+    if (dropdownLogs) dropdownLogs.textContent = logLine + dropdownLogs.textContent;
+    if (setLogs) setLogs.textContent = logLine + setLogs.textContent;
     
     // Periodically show firewall block notifications to prove live activity
     if (Math.random() > 0.6) {
@@ -1150,7 +1499,9 @@ function startAuditLogging() {
 function stopAuditLogging() {
   clearInterval(auditLogInterval);
   const dropdownLogs = document.getElementById("psd-audit-logs");
-  dropdownLogs.textContent = "[Firewall Disabled] Security Logs suspended.";
+  const setLogs = document.getElementById("settings-audit-logs");
+  if (dropdownLogs) dropdownLogs.textContent = "[Firewall Disabled] Security Logs suspended.";
+  if (setLogs) setLogs.textContent = "[Firewall Disabled] Security Logs suspended.";
 }
 
 function togglePrivacyShieldDropdown() {
@@ -1928,7 +2279,7 @@ function focusTerminal() {
   document.getElementById("terminal-text-input").focus();
 }
 
-const terminalCommands = ["help", "neofetch", "hadith", "quran", "clear", "halalpkg"];
+const terminalCommands = ["help", "neofetch", "hadith", "quran", "clear", "halalpkg", "theme", "ramadan", "prayer", "salah"];
 
 function handleTerminalKey(e, tabId = 0) {
   const textInput = document.getElementById(`terminal-text-input-${tabId}`);
@@ -1943,8 +2294,35 @@ function handleTerminalKey(e, tabId = 0) {
     }
   }
 
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    if (terminalHistory.length > 0) {
+      if (terminalHistoryIndex === -1) {
+        terminalHistoryIndex = terminalHistory.length - 1;
+      } else if (terminalHistoryIndex > 0) {
+        terminalHistoryIndex--;
+      }
+      textInput.value = terminalHistory[terminalHistoryIndex];
+    }
+  }
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    if (terminalHistoryIndex > -1) {
+      if (terminalHistoryIndex < terminalHistory.length - 1) {
+        terminalHistoryIndex++;
+        textInput.value = terminalHistory[terminalHistoryIndex];
+      } else {
+        terminalHistoryIndex = -1;
+        textInput.value = "";
+      }
+    }
+  }
+
   if (e.key === "Enter") {
     if (val !== "") {
+      terminalHistory.push(val);
+      terminalHistoryIndex = -1;
       executeTerminalCommand(val, tabId);
       textInput.value = "";
       document.getElementById(`terminal-suggestion-${tabId}`).textContent = "";
@@ -1994,6 +2372,9 @@ function executeTerminalCommand(cmdText, tabId = 0) {
   hadith         Print a graded authentic Hadith statement.
   quran          Print Surah details and local translation.
   halalpkg       Package Manager command tool interface.
+  theme [name]   Change console styling (midnight/forest/gold/matrix).
+  ramadan        Display a crescent ASCII countdown widget to Ramadan.
+  prayer/salah   Display the daily prayer schedule and countdown widget.
   clear          Flush terminal history logs.`;
   } 
   else if (baseCmd === "neofetch") {
@@ -2039,6 +2420,45 @@ Usage:
   halalpkg install [package_name]  Installs a verified .hpkg file.`;
     }
   }
+  else if (baseCmd === "theme") {
+    const t = tokens[1];
+    if (t === "midnight" || t === "forest" || t === "gold" || t === "matrix") {
+      changeTerminalTheme(t);
+      const sel = document.getElementById("terminal-theme-select");
+      if (sel) sel.value = t;
+      responseBlock.textContent = `Terminal theme set to: ${t.toUpperCase()}`;
+    } else {
+      responseBlock.textContent = `Usage: theme [midnight|forest|gold|matrix]`;
+    }
+  }
+  else if (baseCmd === "ramadan") {
+    responseBlock.innerHTML = `
+<span style="color: var(--color-gold-light); font-weight: 700;">       *   .                  </span>
+<span style="color: var(--color-gold-light); font-weight: 700;">      .  ☪                    </span>
+<span style="color: var(--color-gold-light); font-weight: 700;">        .  *                  </span>
+<span style="color: var(--color-emerald-active); font-weight: 700;">  ============================</span>
+<span style="color: var(--color-emerald-active); font-weight: 700;">    RAMADAN COUNTDOWN TIMER   </span>
+<span style="color: var(--color-emerald-active); font-weight: 700;">  ============================</span>
+  Days remaining: <span style="color: var(--color-gold); font-weight:700;">236 Days</span>
+  Fasting state: <span style="color: var(--color-text-secondary);">Inactive (eating window active)</span>
+  Next Ramadan: 1 Ramadan 1448 AH
+`;
+  }
+  else if (baseCmd === "prayer" || baseCmd === "salah") {
+    const nextText = document.getElementById("top-prayer-text").textContent;
+    responseBlock.innerHTML = `
+<span style="color: var(--color-gold-light); font-weight: 700;">  🕌 DAILY SALAH SCHEDULE (Cairo)</span>
+  ------------------------------
+  Fajr    : 04:12 AM
+  Shuruq  : 05:43 AM
+  Dhuhr   : 12:00 PM
+  Asr     : 03:28 PM
+  Maghrib : 06:41 PM
+  Isha    : 08:06 PM
+  ------------------------------
+  Countdown: <span style="color: var(--color-emerald-active); font-weight:700;">${nextText}</span>
+`;
+  }
   else {
     responseBlock.textContent = `kalam: command not found: ${baseCmd}. Type 'help' to check utilities.`;
   }
@@ -2047,6 +2467,14 @@ Usage:
   
   const wrap = document.getElementById(`terminal-click-area-${tabId}`);
   wrap.scrollTop = wrap.scrollHeight;
+}
+
+function changeTerminalTheme(theme) {
+  currentTerminalTheme = theme;
+  document.querySelectorAll(".terminal-wrapper").forEach(wrap => {
+    wrap.className = `terminal-wrapper theme-${theme}`;
+  });
+  showInshaNotification("Terminal Theme Changed", `Console style set to: ${theme.toUpperCase()}`, "info");
 }
 
 // --- 10. AMINA AI ASSISTANT CHAT ENGINE ---
@@ -2064,25 +2492,191 @@ function submitAminaText() {
   appendAminaBubble(query, "user");
   inputEl.value = "";
 
+  // Temporarily clear suggestion chips while typing/processing
+  const container = document.getElementById("amina-suggestion-chips");
+  if (container) container.innerHTML = "";
+
   setTimeout(() => {
     processAminaQuery(query);
-  }, 600);
+  }, 400);
 }
 
-function appendAminaBubble(text, sender) {
+function appendAminaBubble(text, sender, isIncremental = false) {
   const history = document.getElementById("amina-chat-history");
   const bubble = document.createElement("div");
   bubble.className = `amina-bubble ${sender}`;
-  bubble.innerHTML = text.replace(/\n/g, "<br>");
+  
+  if (sender === "user") {
+    bubble.innerHTML = text.replace(/\n/g, "<br>");
+    history.appendChild(bubble);
+    history.scrollTop = history.scrollHeight;
+    return;
+  }
+  
+  // Assistant response
   history.appendChild(bubble);
-  history.scrollTop = history.scrollHeight;
+  
+  if (!isIncremental) {
+    bubble.innerHTML = text.replace(/\n/g, "<br>");
+    addBubbleActions(bubble, text);
+    history.scrollTop = history.scrollHeight;
+  } else {
+    // Show typing dots first
+    bubble.innerHTML = `
+      <div class="typing-indicator">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </div>
+    `;
+    history.scrollTop = history.scrollHeight;
+    
+    // Simulate thinking delay
+    setTimeout(() => {
+      bubble.innerHTML = "";
+      let index = 0;
+      const speed = 12; // ms per character
+      
+      const interval = setInterval(() => {
+        if (index < text.length) {
+          bubble.innerHTML = text.substring(0, index + 1).replace(/\n/g, "<br>");
+          index++;
+          history.scrollTop = history.scrollHeight;
+        } else {
+          clearInterval(interval);
+          addBubbleActions(bubble, text);
+          speakAminaResponse(text);
+          history.scrollTop = history.scrollHeight;
+        }
+      }, speed);
+    }, 1000);
+  }
+}
+
+function addBubbleActions(bubble, text) {
+  const actions = document.createElement("div");
+  actions.className = "amina-bubble-actions";
+  actions.innerHTML = `
+    <button class="amina-action-btn" onclick="copyAminaText(this, \`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)"><i class="ti ti-copy"></i> Copy</button>
+    <button class="amina-action-btn" onclick="speakAminaResponse(\`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)"><i class="ti ti-volume"></i> Speak</button>
+  `;
+  bubble.appendChild(actions);
+}
+
+function copyAminaText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = `<i class="ti ti-check"></i> Copied`;
+    setTimeout(() => {
+      btn.innerHTML = `<i class="ti ti-copy"></i> Copy`;
+    }, 2000);
+  });
+}
+
+function speakAminaResponse(text) {
+  if (!('speechSynthesis' in window)) return;
+  
+  // Strip markdown syntax
+  const cleanText = text.replace(/[*#`_\-]/g, "").replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "");
+  
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.rate = 1.05;
+  utterance.pitch = 1.05;
+  
+  const voices = window.speechSynthesis.getVoices();
+  const femaleVoice = voices.find(v => v.name.includes("Google US English") || v.name.includes("Zira") || v.name.includes("Female") || v.name.includes("en-US") || v.lang.startsWith("en"));
+  if (femaleVoice) utterance.voice = femaleVoice;
+  
+  window.speechSynthesis.speak(utterance);
+}
+
+function populateAminaChips(chips = ["What time is Fajr?", "Read Al-Ikhlas", "Check Privacy Score", "Switch to Arabic", "Open Files"]) {
+  const container = document.getElementById("amina-suggestion-chips");
+  if (!container) return;
+  container.innerHTML = "";
+  
+  chips.forEach(c => {
+    const el = document.createElement("div");
+    el.className = "amina-suggestion-chip";
+    el.textContent = c;
+    el.onclick = () => submitAminaQueryDirect(c);
+    container.appendChild(el);
+  });
+}
+
+function submitAminaQueryDirect(text) {
+  const inputEl = document.getElementById("amina-text-input");
+  if (inputEl) inputEl.value = text;
+  submitAminaText();
+}
+
+function checkAminaSystemCommands(q) {
+  const ql = q.toLowerCase();
+  
+  if (ql.startsWith("open ")) {
+    const app = ql.replace("open ", "").trim();
+    if (app === "files" || app === "file manager" || app === "hafiz") {
+      openWindow("window-files");
+      return "📁 Opening **Hafiz File Manager** for you.";
+    } else if (app === "browser" || app === "web") {
+      openWindow("window-browser");
+      return "🌐 Opening **Halal Browser**.";
+    } else if (app === "settings" || app === "tazkiyah") {
+      openWindow("window-settings");
+      return "⚙️ Opening **Tazkiyah Settings** panel.";
+    } else if (app === "terminal" || app === "kalam") {
+      openWindow("window-terminal");
+      return "💻 Opening **Kalam Terminal** window.";
+    } else if (app === "islamic" || app === "suite") {
+      openWindow("window-islamic");
+      return "🕌 Opening the **Islamic Native Suite** features.";
+    } else if (app === "amina" || app === "assistant") {
+      openWindow("window-amina");
+      return "🤖 Re-centering **Amina AI** workspace.";
+    }
+  }
+  
+  if (ql.includes("lock vault") || ql.includes("close vault")) {
+    triggerVaultLock();
+    return "🔒 Lock command processed successfully. **Faith Vault** encrypted partitions sealed.";
+  }
+  
+  if (ql.includes("enable firewall") || ql.includes("turn on firewall") || ql.includes("start firewall")) {
+    toggleFirewall(true);
+    return "🛡 **halalfire Firewall Shield** activated system-wide. Threat monitoring logs started.";
+  }
+  
+  if (ql.includes("disable firewall") || ql.includes("turn off firewall") || ql.includes("stop firewall")) {
+    toggleFirewall(false);
+    return "⚠️ Warning: **halalfire Firewall Shield** deactivated. Outbound data unblocked.";
+  }
+  
+  if (ql.includes("switch language to arabic") || ql.includes("change language to arabic") || ql.includes("set language to arabic")) {
+    changeSystemLanguage("ar");
+    return "مرحباً! تم تحويل لغة النظام إلى العربية بنجاح.";
+  }
+  
+  if (ql.includes("switch language to english") || ql.includes("change language to english") || ql.includes("set language to english")) {
+    changeSystemLanguage("en");
+    return "Sure, system language switched back to English.";
+  }
+  
+  return null;
 }
 
 function processAminaQuery(q) {
   const queryLower = q.toLowerCase();
   let response = "";
+  let nextChips = ["What time is Fajr?", "Read Al-Ikhlas", "Check Privacy Score", "Switch to Arabic", "Open Files"];
 
-  if (queryLower.includes("prayer") || queryLower.includes("salah")) {
+  // 1. Check if it is a natural language system command
+  const sysCmdReply = checkAminaSystemCommands(q);
+  if (sysCmdReply) {
+    response = sysCmdReply;
+    nextChips = ["Open Browser", "Lock Vault", "Enable Firewall", "What time is Fajr?"];
+  }
+  // 2. Otherwise default queries
+  else if (queryLower.includes("prayer") || queryLower.includes("salah") || queryLower.includes("time") || queryLower.includes("fajr") || queryLower.includes("maghrib") || queryLower.includes("asr")) {
     response = `⏰ **Simulated Prayer Times Today (Cairo)**:
 - Fajr: 04:12 AM
 - Dhuhr: 12:00 PM
@@ -2090,51 +2684,62 @@ function processAminaQuery(q) {
 - Maghrib: 06:41 PM
 - Isha: 08:06 PM
 *Next prayer countdown: ${document.getElementById("top-prayer-text").textContent}*`;
+    nextChips = ["Read Al-Ikhlas", "Open Islamic Suite", "Check Privacy Score"];
   }
-  else if (queryLower.includes("quran") || queryLower.includes("verse")) {
+  else if (queryLower.includes("quran") || queryLower.includes("verse") || queryLower.includes("ikhlas")) {
     response = `📖 **Quran Recitation Al-Ikhlas (112:1-2)**:
 - Arabic: قُلْ هُوَ اللَّهُ أَحَدٌ * اللَّهُ الصَّمَدُ
 - English: "Say, 'He is Allah, [who is] One, Allah, the Eternal Refuge.'"
 *(Source: Uthmani Authenticated Corpus)*`;
+    nextChips = ["What time is Maghrib?", "Open Quran Reader", "Switch to Arabic"];
   }
-  else if (queryLower.includes("zakat") || queryLower.includes("charity")) {
+  else if (queryLower.includes("zakat") || queryLower.includes("charity") || queryLower.includes("nisab")) {
     response = `🧮 **Zakat Obligation calculation (Simulated)**:
 Standard Nisab is calculated against 85g gold ($5,420 cash value). Your current assets exceed this limit.
-*Your calculated Zakat due: ${document.getElementById("zakat-due-value").textContent}*`;
+*Your calculated Zakat due: ${document.getElementById("zakat-due-value") ? document.getElementById("zakat-due-value").textContent : "$120.00"}*`;
+    nextChips = ["Open Zakat Calculator", "What time is Maghrib?", "Check Privacy Score"];
+  }
+  else if (queryLower.includes("score") || queryLower.includes("privacy") || queryLower.includes("security")) {
+    const radial = document.getElementById("psd-radial-score");
+    const scoreVal = radial ? radial.textContent : "98";
+    response = `🔒 **Amanah Privacy Score: ${scoreVal}/100**
+- Firewall Status: ${setupState.firewallEnabled ? "ACTIVE (Ad-blocking enabled)" : "DEACTIVATED (Warning)"}
+- Telemetry: Blocked
+- Sandbox: Active
+Verify your specific permissions mapping inside Tazkiyah settings.`;
+    nextChips = ["Enable Firewall", "Lock Vault", "Open Settings"];
   }
   else if (queryLower.includes("language") || queryLower.includes("arabic")) {
     response = `🌐 I support multilingual operations. To switch language layout to Arabic, please type **"switch language to Arabic"** or change it in Tazkiyah Settings general tab.`;
-  }
-  else if (queryLower.includes("switch language to arabic")) {
-    changeSystemLanguage("ar");
-    response = `مرحباً! تم تحويل لغة النظام إلى العربية بنجاح.`;
-  }
-  else if (queryLower.includes("switch language to english")) {
-    changeSystemLanguage("en");
-    response = `Sure, system language switched back to English.`;
-  }
-  else if (queryLower.includes("firewall") || queryLower.includes("shield")) {
-    response = `🛡 **halalfire Security Module**:
-The firewall is active, intercepting system tracking calls. Check the top status panel shield icon to open the security audit list logs.`;
+    nextChips = ["Switch to Arabic", "Open Files", "What time is Fajr?"];
   }
   else if (queryLower.includes("install")) {
     response = `📦 You can install verified applications using the package manager. Run \`halalpkg install [app_name]\` in Kalam Terminal.`;
+    nextChips = ["Open Terminal", "Enable Firewall", "Read Al-Ikhlas"];
   }
   else {
     response = `🤖 **Amina AI Local Inference**:
 I processed your request on-device. All metadata resides completely within local memory storage coordinates. How else may I assist your system control or faith preferences?`;
+    nextChips = ["What time is Fajr?", "Check Privacy Score", "Lock Vault"];
   }
 
-  appendAminaBubble(response, "assistant");
+  appendAminaBubble(response, "assistant", true);
+  
+  // Re-populate suggestion chips after thinking delay
+  setTimeout(() => {
+    populateAminaChips(nextChips);
+  }, 2200);
 }
 
 let micActive = false;
 function toggleAminaVoice() {
   const mic = document.getElementById("amina-mic");
+  const wave = document.getElementById("amina-voice-wave");
   micActive = !micActive;
   
   if (micActive) {
     mic.classList.add("active");
+    if (wave) wave.style.display = "flex";
     
     setTimeout(() => {
       if (micActive) {
@@ -2145,6 +2750,7 @@ function toggleAminaVoice() {
     }, 2000);
   } else {
     mic.classList.remove("active");
+    if (wave) wave.style.display = "none";
   }
 }
 
@@ -2177,22 +2783,121 @@ function renderSurahVerses() {
   container.innerHTML = "";
 
   const surah = surahData[activeSurahId];
-  surah.verses.forEach(v => {
+  let verses = surah.verses;
+
+  if (quranSearchQuery.trim() !== "") {
+    const q = quranSearchQuery.toLowerCase();
+    verses = verses.filter(v => v.ar.includes(q) || v.en.toLowerCase().includes(q) || v.tafsir.toLowerCase().includes(q));
+  }
+
+  if (verses.length === 0) {
+    container.innerHTML = `<div style="text-align: center; color: var(--color-text-muted); font-size: 13px; padding: 20px;">No verses found matching your query.</div>`;
+    return;
+  }
+
+  verses.forEach(v => {
     const block = document.createElement("div");
     block.className = "quran-verse-block";
+    block.style.position = "relative";
     
     let tafsirHTML = "";
     if (showTafsir) {
       tafsirHTML = `<div style="font-size:11px; color: var(--color-gold); background: rgba(255, 255, 255, 0.02); padding: 8px; border-radius: var(--r-small); border-left: 2px solid var(--color-gold); margin-top: 6px;">Tafsir: ${v.tafsir}</div>`;
     }
 
+    const ref = `${activeSurahId}:${v.num}`;
+    const isBookmarked = quranBookmarks.includes(ref);
+    const bookmarkIcon = isBookmarked ? "ti-bookmark-filled" : "ti-bookmark";
+    const bookmarkColor = isBookmarked ? "var(--color-gold-light)" : "var(--color-text-muted)";
+
     block.innerHTML = `
-      <div class="quran-arabic-text">${v.ar} <span>(${v.num})</span></div>
-      <div class="quran-translation-text">${v.en}</div>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+        <div class="quran-arabic-text" style="flex: 1;">${v.ar} <span>(${v.num})</span></div>
+        <button class="btn btn-sm" onclick="toggleBookmarkVerse('${ref}')" style="background: none; border: none; padding: 4px; color: ${bookmarkColor}; cursor: pointer;" title="Toggle Bookmark"><i class="ti ${bookmarkIcon}" style="font-size: 16px;"></i></button>
+      </div>
+      <div class="quran-translation-text" style="margin-top: 6px; padding-right: 24px;">${v.en}</div>
       ${tafsirHTML}
     `;
     container.appendChild(block);
   });
+}
+
+function searchLocalQuran(query) {
+  quranSearchQuery = query;
+  renderSurahVerses();
+}
+
+function toggleBookmarkVerse(ref) {
+  const index = quranBookmarks.indexOf(ref);
+  if (index > -1) {
+    quranBookmarks.splice(index, 1);
+    showInshaNotification("Bookmark Removed", `Verse ${ref} removed.`, "info");
+  } else {
+    quranBookmarks.push(ref);
+    showInshaNotification("Bookmark Saved", `Verse ${ref} added to your library.`, "gold");
+  }
+  updateBookmarksUI();
+  renderSurahVerses();
+}
+
+function updateBookmarksUI() {
+  document.getElementById("quran-bookmarks-count").textContent = quranBookmarks.length;
+  const listEl = document.getElementById("quran-bookmarks-list");
+  listEl.innerHTML = "";
+
+  if (quranBookmarks.length === 0) {
+    listEl.innerHTML = `<div style="color: var(--color-text-muted);">No bookmarks saved yet. Click the bookmark icon next to a verse to save it.</div>`;
+    return;
+  }
+
+  quranBookmarks.forEach(ref => {
+    const [surahId, verseNum] = ref.split(":").map(Number);
+    const surahName = surahData[surahId]?.name || `Surah ${surahId}`;
+    const verseText = surahData[surahId]?.verses.find(v => v.num === verseNum)?.en || "";
+    const truncatedText = verseText.length > 50 ? verseText.substring(0, 50) + "..." : verseText;
+
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.justify = "space-between";
+    row.style.alignItems = "center";
+    row.style.padding = "6px 8px";
+    row.style.background = "rgba(255,255,255,0.02)";
+    row.style.border = "1px solid var(--color-border)";
+    row.style.borderRadius = "4px";
+    row.style.gap = "8px";
+
+    row.innerHTML = `
+      <div style="cursor: pointer; flex: 1;" onclick="jumpToBookmarkedVerse(${surahId}, ${verseNum})">
+        <strong style="color: var(--color-gold-light); font-size: 11px;">${surahName} (${verseNum})</strong>
+        <div style="font-size: 10px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;">"${truncatedText}"</div>
+      </div>
+      <button class="btn btn-sm" onclick="toggleBookmarkVerse('${ref}')" style="background:none; border:none; padding:2px; color:var(--color-danger); cursor:pointer;"><i class="ti ti-trash" style="font-size:12px;"></i></button>
+    `;
+    listEl.appendChild(row);
+  });
+}
+
+function toggleBookmarksList() {
+  const drawer = document.getElementById("quran-bookmarks-drawer");
+  drawer.style.display = drawer.style.display === "none" ? "block" : "none";
+}
+
+function jumpToBookmarkedVerse(surahId, verseNum) {
+  loadQuranSurah(surahId.toString());
+  setTimeout(() => {
+    const container = document.getElementById("quran-verses-container");
+    const blocks = container.querySelectorAll(".quran-verse-block");
+    blocks.forEach(block => {
+      if (block.innerHTML.includes(`(${verseNum})`)) {
+        block.scrollIntoView({ behavior: "smooth", block: "center" });
+        block.style.background = "rgba(212, 160, 23, 0.08)";
+        setTimeout(() => {
+          block.style.background = "none";
+        }, 2000);
+      }
+    });
+  }, 100);
+  toggleBookmarksList();
 }
 
 function toggleQuranTafsir() {
@@ -2260,22 +2965,37 @@ function calibrateQiblaCompass() {
   }, 1000);
 }
 
-// Zakat nisab calculations formulas
 function calculateZakat() {
-  const savings = Number(document.getElementById("zakat-savings").value) || 0;
-  const gold = Number(document.getElementById("zakat-gold").value) || 0;
-  const invest = Number(document.getElementById("zakat-invest").value) || 0;
+  const goldPrice = Number(document.getElementById("zakat-gold-price").value) || 63.76;
+  const silverPrice = Number(document.getElementById("zakat-silver-price").value) || 1.05;
+  const standard = document.getElementById("zakat-metal-standard").value || "gold";
 
-  const totalWealth = savings + gold + invest;
-  const nisabLimit = 5420; // 85g gold price reference
+  const savings = Number(document.getElementById("zakat-savings").value) || 0;
+  const goldGrams = Number(document.getElementById("zakat-gold-grams").value) || 0;
+  const silverGrams = Number(document.getElementById("zakat-silver-grams").value) || 0;
+  const business = Number(document.getElementById("zakat-business").value) || 0;
+  const debts = Number(document.getElementById("zakat-debts").value) || 0;
+
+  const goldVal = goldGrams * goldPrice;
+  const silverVal = silverGrams * silverPrice;
+  const netWorth = savings + goldVal + silverVal + business - debts;
+  
+  document.getElementById("zakat-net-worth").textContent = `$${netWorth.toFixed(2)}`;
+
+  let nisabLimit = 85 * goldPrice;
+  if (standard === "silver") {
+    nisabLimit = 595 * silverPrice;
+  }
+
+  document.getElementById("zakat-nisab-display").textContent = `$${nisabLimit.toFixed(2)}`;
 
   const badge = document.getElementById("zakat-nisab-badge");
   const dueVal = document.getElementById("zakat-due-value");
 
-  if (totalWealth >= nisabLimit) {
+  if (netWorth >= nisabLimit && netWorth > 0) {
     badge.textContent = setupState.lang === "ar" ? "وجبت الزكاة" : (setupState.lang === "ur" ? "واجب" : "Met");
     badge.className = "tag tag-green";
-    const due = totalWealth * 0.025;
+    const due = netWorth * 0.025;
     dueVal.textContent = `$${due.toFixed(2)}`;
   } else {
     badge.textContent = setupState.lang === "ar" ? "دون النصاب" : (setupState.lang === "ur" ? "کم" : "Not Met");
@@ -2285,8 +3005,21 @@ function calculateZakat() {
 }
 
 // Calendar Days grid rendering
+const hijriHolidays = {
+  1: { title: "Start of Dhul-Hijjah", desc: "First day of the sacred month of pilgrimage. Good deeds are highly beloved to Allah during these 10 days.", tag: "Sacred Season", type: "gold" },
+  9: { title: "Day of Arafah", desc: "The pinnacle day of Hajj. Fasting is expiation for the sins of the previous and coming year.", tag: "Arafah Day", type: "gold" },
+  10: { title: "Eid al-Adha", desc: "Festival of Sacrifice commemorating Prophet Ibrahim's obedience. Sacrifices and Eid prayers are performed.", tag: "Eid Holiday", type: "success" },
+  11: { title: "Days of Tashreeq (Day 1)", desc: "Days of eating, drinking, and remembrance of Allah following Eid.", tag: "Tashreeq", type: "info" },
+  12: { title: "Days of Tashreeq (Day 2)", desc: "Days of eating, drinking, and remembrance of Allah following Eid.", tag: "Tashreeq", type: "info" },
+  13: { title: "Days of Tashreeq (Day 3)", desc: "Last day of Tashreeq. Pilgrims conclude Hajj rituals in Mina.", tag: "Tashreeq", type: "info" },
+  15: { title: "Yaum al-Bidh (White Day)", desc: "15th of the lunar month. Recommended to fast the three white days (13, 14, 15) of every month.", tag: "Voluntary Fast", type: "info" }
+};
+
+let currentSelectedDay = 15;
+
 function renderHijriCalendar() {
   const grid = document.getElementById("calendar-days-grid");
+  if (!grid) return;
   grid.innerHTML = "";
 
   for (let i = 0; i < 3; i++) {
@@ -2296,26 +3029,76 @@ function renderHijriCalendar() {
 
   for (let d = 1; d <= 29; d++) {
     const day = document.createElement("div");
-    day.style.padding = "6px";
+    day.style.padding = "8px 6px";
     day.style.borderRadius = "4px";
     day.style.fontSize = "12px";
     day.style.cursor = "pointer";
     day.style.textAlign = "center";
+    day.style.transition = "all 0.2s ease";
+    day.onclick = () => selectCalendarDay(d);
     
-    if (d === 15) {
-      day.style.background = "var(--color-emerald)";
-      day.style.color = "white";
+    const isHoliday = hijriHolidays[d] !== undefined;
+    const isSelected = d === currentSelectedDay;
+    
+    if (isSelected) {
+      day.style.background = "var(--color-gold)";
+      day.style.color = "#412402";
       day.style.fontWeight = "700";
+      day.style.border = "1px solid var(--color-gold)";
+    } else if (isHoliday) {
+      day.style.background = "rgba(212, 160, 23, 0.12)";
+      day.style.border = "1px solid rgba(212, 160, 23, 0.3)";
+      day.style.color = "var(--color-gold-light)";
     } else {
       day.style.background = "rgba(255,255,255,0.02)";
       day.style.border = "1px solid var(--color-border)";
+      day.style.color = "var(--color-text-primary)";
     }
 
     day.innerHTML = `
-      <div style="font-size:11px;">${d}</div>
-      <div style="font-size:8px; color:var(--color-text-muted);">${d + 14}</div>
+      <div style="font-size:11px; font-weight:600;">${d}</div>
+      <div style="font-size:8px; opacity:0.8; font-family:var(--font-mono);">${d + 14}</div>
     `;
     grid.appendChild(day);
+  }
+  
+  updateHolidayCard();
+}
+
+function selectCalendarDay(day) {
+  currentSelectedDay = day;
+  renderHijriCalendar();
+}
+
+function updateHolidayCard() {
+  const holiday = hijriHolidays[currentSelectedDay];
+  const titleEl = document.getElementById("lbl-cal-h-title");
+  const descEl = document.getElementById("lbl-cal-h-desc");
+  const tagEl = document.getElementById("lbl-cal-h-tag");
+
+  if (!titleEl || !descEl || !tagEl) return;
+
+  if (holiday) {
+    titleEl.textContent = holiday.title;
+    descEl.textContent = holiday.desc;
+    tagEl.textContent = holiday.tag;
+    tagEl.style.display = "inline-block";
+    
+    if (holiday.type === "success") {
+      tagEl.className = "tag tag-green";
+    } else if (holiday.type === "info") {
+      tagEl.className = "tag tag-blue";
+    } else {
+      tagEl.className = "tag tag-gold";
+    }
+  } else {
+    const gregorianDay = currentSelectedDay + 14;
+    titleEl.textContent = `Dhul-Hijjah ${currentSelectedDay}, 1447`;
+    descEl.textContent = `Gregorian equivalence: June ${gregorianDay}, 2026. Standard system faith synchronization active. No major holidays scheduled today.`;
+    tagEl.textContent = "Standard Day";
+    tagEl.className = "tag";
+    tagEl.style.background = "rgba(255,255,255,0.1)";
+    tagEl.style.color = "var(--color-text-secondary)";
   }
 }
 
@@ -2490,6 +3273,7 @@ function toggleQuickSettings() {
 function toggleQSSetting(btn, type) {
   btn.classList.toggle("active");
   const isActive = btn.classList.contains("active");
+  btn.setAttribute("aria-pressed", isActive ? "true" : "false");
   
   if (type === "shield") {
     toggleFirewall(isActive);
@@ -2546,8 +3330,118 @@ function updateHDKSlider(val) {
   document.getElementById("hdk-progress-text").textContent = val + "%";
 }
 
+const rustComponentsCode = {
+  HalalButton: `// HalalButton: Premium glassmorphic button for GTK4 / Relm4
+use gtk::prelude::*;
+use relm4::prelude::*;
+
+pub struct HalalButton {
+    label: String,
+    accent: bool,
+}
+
+#[relm4::component(pub)]
+impl SimpleComponent for HalalButton {
+    type Init = (String, bool);
+    type Input = ();
+    type Output = ();
+
+    view! {
+        gtk::Button {
+            set_label: &self.label,
+            add_css_class: if self.accent { "halal-btn-gold" } else { "halal-btn-primary" },
+            set_margin_all: 6,
+            set_cursor: Some(&gtk::gdk::Cursor::for_name("pointer").unwrap()),
+        }
+    }
+
+    fn init(init: Self::Init, _root: &Self::Root, _sender: ComponentSender<Self>) -> ComponentParts<Self> {
+        let model = HalalButton { label: init.0, accent: init.1 };
+        let widgets = view_output!();
+        ComponentParts { model, widgets }
+    }
+}`,
+
+  HalalSwitch: `// HalalSwitch: Accessible custom green switch widget for GTK4
+use gtk::prelude::*;
+use relm4::prelude::*;
+
+pub struct HalalSwitch {
+    active: bool,
+}
+
+#[relm4::component(pub)]
+impl SimpleComponent for HalalSwitch {
+    type Init = bool;
+    type Input = bool;
+    type Output = bool;
+
+    view! {
+        gtk::Switch {
+            set_active: self.active,
+            add_css_class: "halal-switch-emerald",
+            connect_state_set[sender] => move |_, state| {
+                sender.output(state).unwrap();
+                gtk::glib::Propagation::Proceed
+            }
+        }
+    }
+
+    fn init(init: Self::Init, _root: &Self::Root, _sender: ComponentSender<Self>) -> ComponentParts<Self> {
+        let model = HalalSwitch { active: init };
+        let widgets = view_output!();
+        ComponentParts { model, widgets }
+    }
+}`,
+
+  HalalCard: `// HalalCard: Premium glassmorphism container frame box for GTK4
+use gtk::prelude::*;
+use relm4::prelude::*;
+
+pub struct HalalCard;
+
+#[relm4::component(pub)]
+impl SimpleComponent for HalalCard {
+    type Init = ();
+    type Input = ();
+    type Output = ();
+
+    view! {
+        gtk::Frame {
+            add_css_class: "glass-card-elevated",
+            set_label: None,
+            set_margin_all: 10,
+        }
+    }
+
+    fn init(init: Self::Init, _root: &Self::Root, _sender: ComponentSender<Self>) -> ComponentParts<Self> {
+        let model = HalalCard;
+        let widgets = view_output!();
+        ComponentParts { model, widgets }
+    }
+}`
+};
+
+function showRustComponentCode(name) {
+  const block = document.getElementById("hdk-rust-code-block");
+  if (block) {
+    block.textContent = rustComponentsCode[name] || "// Select a component";
+  }
+}
+
+fnCopyHdkCode = 0;
+function copyRustComponentCode() {
+  const block = document.getElementById("hdk-rust-code-block");
+  if (block) {
+    navigator.clipboard.writeText(block.textContent).then(() => {
+      showInshaNotification("Code Copied", "GTK4/Rust component source copied to clipboard.", "success");
+    });
+  }
+}
+
 // Insha Notification alerts
 function showInshaNotification(title, message, type = "success") {
+  playNotificationChime();
   const container = document.getElementById("notification-container");
   
   const toast = document.createElement("div");
@@ -2711,6 +3605,11 @@ function toggleDockPermission(type) {
   }
   
   showInshaNotification("Sandbox Permissions Updated", `Modified sandbox access privileges for ${contextMenuTargetAppId.replace("window-", "")}.`, "info");
+  
+  // Sync back to Settings Permissions Grid and recalculate privacy score
+  renderSettingsPermissionsMap();
+  updatePrivacyScore();
+  updateSecurityRecommendations();
 }
 
 // Custom handler methods for menu items
@@ -3305,3 +4204,770 @@ function initKeyboardNavigation() {
   }
 }
 
+
+// ===========================
+// SETTINGS TABS � New Handlers
+// ===========================
+function toggleNetworkWifi(on) {
+  showInsha(on ? '?? Wi-Fi enabled' : '?? Wi-Fi disabled', on ? 'success' : 'warning');
+  document.querySelectorAll('.net-wifi-item').forEach(i => { i.style.opacity = on ? '' : '0.4'; i.style.pointerEvents = on ? '' : 'none'; });
+}
+function toggleAirplaneMode(on) {
+  const t = document.getElementById('net-wifi-toggle');
+  if (on && t) { t.checked = false; toggleNetworkWifi(false); }
+  showInsha(on ? '?? Airplane Mode ON' : '?? Airplane Mode OFF', on ? 'warning' : 'success');
+}
+function toggleSettingsVPN(on) {
+  const s = document.getElementById('net-vpn-server');
+  const loc = s ? s.options[s.selectedIndex].text : 'Frankfurt (EU)';
+  showInsha(on ? `?? VPN � ${loc}` : '?? VPN disconnected', on ? 'success' : 'warning');
+}
+function scanNetworks() {
+  const btn = document.getElementById('btn-scan-wifi');
+  if (!btn) return;
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Scanning�';
+  setTimeout(() => { btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Scan'; showInsha('?? 4 networks found','success'); }, 2000);
+}
+function connectWifi(el, ssid) {
+  document.querySelectorAll('.net-wifi-item').forEach(i => { i.classList.remove('active'); i.querySelectorAll('.tag-green').forEach(t => t.remove()); });
+  el.classList.add('active');
+  const b = document.createElement('span'); b.className = 'tag tag-green'; b.style.fontSize='9px'; b.textContent='Connected'; el.appendChild(b);
+  showInsha(`?? Connected to ${ssid}`, 'success');
+}
+function showProxyModal() { showInsha('?? Proxy � available in full release','warning'); }
+function initNetworkStats() {
+  setInterval(() => {
+    const u=document.getElementById('net-stat-up'), d=document.getElementById('net-stat-down'), p=document.getElementById('net-stat-ping'), b=document.getElementById('net-stat-blocked');
+    if(u) u.textContent=(Math.random()*5+0.5).toFixed(1);
+    if(d) d.textContent=(Math.random()*80+20).toFixed(1);
+    if(p) p.textContent=Math.floor(Math.random()*30+8);
+    if(b) b.textContent=(parseInt(b.textContent)||847)+Math.floor(Math.random()*3);
+  },3000);
+}
+function toggleBluetooth(on) { showInsha(on?'?? Bluetooth ON':'?? Bluetooth OFF', on?'success':'warning'); }
+function scanBluetooth() {
+  const btn=document.getElementById('btn-bt-scan'); if(!btn) return;
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader"></i> Scanning�';
+  setTimeout(()=>{ btn.disabled=false; btn.innerHTML='<i class="ti ti-radar"></i> Scan'; showInsha('?? 2 devices found','success'); },2500);
+}
+function disconnectDevice(btn,name) {
+  const item=btn.closest('.bt-device-item');
+  if(item){item.style.opacity='0.5'; btn.textContent='Connect'; btn.onclick=function(){connectDevice(this,name);}; btn.className='btn btn-sm btn-primary';}
+  showInsha(`?? ${name} disconnected`,'warning');
+}
+function connectDevice(btn,name) {
+  const item=btn.closest('.bt-device-item');
+  if(item){item.style.opacity=''; btn.textContent='Disconnect'; btn.onclick=function(){disconnectDevice(this,name);}; btn.className='btn btn-sm';}
+  showInsha(`?? ${name} connected`,'success');
+}
+function pairDevice(btn,name) {
+  btn.textContent='Pairing�'; btn.disabled=true;
+  setTimeout(()=>{ btn.textContent='Paired ?'; btn.disabled=false; showInsha(`?? ${name} paired`,'success'); },1800);
+}
+function addPrinter() { showInsha('??? Printer setup � full release','warning'); }
+function applyFontScale(val) { const l=document.getElementById('a11y-font-label'); if(l) l.textContent=val+'%'; showInsha(`?? Font: ${val}%`,'success'); }
+function toggleHighContrast(on) {
+  if(on) document.documentElement.setAttribute('data-contrast','high'); else document.documentElement.removeAttribute('data-contrast');
+  showInsha(on?'?? High Contrast ON':'?? High Contrast OFF', on?'success':'warning');
+}
+function applyColorFilter(val) {
+  document.body.style.filter = val==='achromatopsia'?'grayscale(100%)':'none';
+  showInsha(val!=='none'?`??? Filter: ${val}`:'??? Filter removed','success');
+}
+function toggleMagnifier(on) { showInsha(on?'?? Magnifier ON (Super+=)':'?? Magnifier OFF', on?'success':'warning'); }
+function testScreenReader() {
+  if('speechSynthesis' in window){ const u=new SpeechSynthesisUtterance('Halal OS Screen Reader active'); u.rate=0.9; window.speechSynthesis.speak(u); }
+  showInsha('?? Screen Reader test�','success');
+}
+function toggleScreenReader(on) { showInsha(on?'?? Screen Reader ON':'?? Screen Reader OFF', on?'success':'warning'); }
+function toggleDND(on) { showInsha(on?'?? DND � Prayer alerts active':'?? Notifications on', on?'warning':'success'); }
+function cleanCache(type) { const s={system:'2.4 GB',thumbnails:'380 MB',logs:'156 MB'}; showInsha(`?? ${type} � ${s[type]||'?'} freed`,'success'); }
+function emptyTrash() { showInsha('??? Trash emptied � 840 MB freed','success'); }
+function manageSnapshots() { showInsha('?? Snapshot Manager�','success'); setTimeout(()=>openWindow('window-terminal'),600); }
+const _osUptimeStart = Date.now();
+function initAboutUptime() {
+  setInterval(()=>{
+    const el=document.getElementById('about-uptime'); if(!el) return;
+    const s=Math.floor((Date.now()-_osUptimeStart)/1000);
+    el.textContent=`${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m ${s%60}s`;
+  },1000);
+}
+let _autoUpdateOn=true;
+function toggleAutoUpdate() {
+  _autoUpdateOn=!_autoUpdateOn;
+  const b=document.getElementById('btn-auto-update');
+  if(b) b.innerHTML=`<i class="ti ti-refresh"></i> Auto-Update: ${_autoUpdateOn?'ON':'OFF'}`;
+  showInsha(_autoUpdateOn?'?? Auto-updates ON':'?? Auto-updates OFF', _autoUpdateOn?'success':'warning');
+}
+function checkForUpdates() {
+  const el=document.getElementById('about-update-status'); if(!el) return;
+  el.innerHTML=`<div style="padding:8px;color:var(--color-gold)"><i class="ti ti-loader"></i> Checking�</div>`;
+  setTimeout(()=>{ el.innerHTML=`<div style="padding:8px;color:var(--color-emerald)"><i class="ti ti-check"></i> Up to date � v2.0.0</div>`; showInsha('? Up to date','success'); },2500);
+}
+function showLicense() { showInsha('?? GPL-3.0 � Free open source software','success'); }
+function showPrivacyPolicy() { showInsha('?? No data. No telemetry. No tracking. Ever.','success'); }
+function showCredits() { showInsha('?? Linux, GTK4, Rust, Go, Ollama, AntiGravity AI','success'); }
+function showUpdateNotes() { openWindow('window-terminal'); }
+function openGitHub() { openWindow('window-browser'); showInsha('?? github.com/ahmedfawzyjr/Halal-OS','success'); }
+
+setTimeout(() => { initNetworkStats(); initAboutUptime(); }, 1000);
+
+// ================================================================
+// HALAL OS � COMPREHENSIVE KEYBOARD NAVIGATION, ARIA & A11Y ENGINE
+// Phase: Accessibility 25?100%, Keyboard Nav 30?100%, Mobile 40?100%
+// ================================================================
+
+/* ---------------------------------------------------------------
+   KEYBOARD SHORTCUT SYSTEM
+   --------------------------------------------------------------- */
+const kbdShortcuts = {
+  // Super key shortcuts (simulated with Meta or Ctrl+Shift on web)
+  'f': () => openWindow('window-files'),
+  't': () => openWindow('window-terminal'),
+  'b': () => openWindow('window-browser'),
+  ',': () => openWindow('window-settings'),
+  'i': () => openWindow('window-islamic'),
+  'a': () => openWindow('window-amina'),
+  's': () => toggleQuickSettings(),
+  'p': () => openWindow('window-islamic'),
+  'h': () => {
+    const focused = document.querySelector('.os-window:not([style*="display: none"])');
+    if (focused) minimizeWindow(focused.id);
+  }
+};
+
+// Global keyboard handler
+document.addEventListener('keydown', (e) => {
+  const tag = document.activeElement?.tagName;
+  const isEditing = ['INPUT','TEXTAREA','SELECT'].includes(tag);
+
+  // ? key = keyboard shortcuts help
+  if (e.key === '?' && !isEditing) {
+    e.preventDefault();
+    toggleKbdModal();
+    return;
+  }
+
+  // Escape = close modals / launcher / quick settings
+  if (e.key === 'Escape') {
+    const kbdModal = document.getElementById('kbd-shortcuts-modal');
+    if (kbdModal && kbdModal.style.display === 'flex') {
+      closeKbdModal(); return;
+    }
+    const qs = document.getElementById('quick-settings-panel');
+    if (qs && qs.classList.contains('active')) {
+      toggleQuickSettings(); return;
+    }
+    const launcher = document.getElementById('launcher-overlay');
+    if (launcher && launcher.classList.contains('open')) {
+      toggleLauncher(); return;
+    }
+    return;
+  }
+
+  // Super / Meta + key shortcuts
+  if ((e.metaKey || e.ctrlKey) && !isEditing) {
+    const key = e.key.toLowerCase();
+    
+    // Ctrl+Shift+S ? Security
+    if (e.shiftKey && key === 's') {
+      e.preventDefault(); openWindow('window-security'); return;
+    }
+    
+    // Ctrl+Alt+? ? previous workspace
+    if (e.altKey && e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const current = parseInt(document.body.getAttribute('data-maqam') || '1');
+      if (current > 1) switchMaqam(current - 1);
+      return;
+    }
+    // Ctrl+Alt+? ? next workspace
+    if (e.altKey && e.key === 'ArrowRight') {
+      e.preventDefault();
+      const current = parseInt(document.body.getAttribute('data-maqam') || '1');
+      if (current < 6) switchMaqam(current + 1);
+      return;
+    }
+
+    if (kbdShortcuts[key]) {
+      e.preventDefault();
+      kbdShortcuts[key]();
+      return;
+    }
+  }
+
+  // Alt+F4 ? close focused window
+  if (e.altKey && e.key === 'F4' && !isEditing) {
+    e.preventDefault();
+    const wins = document.querySelectorAll('.os-window');
+    let topWin = null, maxZ = 0;
+    wins.forEach(w => {
+      const z = parseInt(w.style.zIndex || 0);
+      if (z > maxZ && w.style.display !== 'none') { maxZ = z; topWin = w; }
+    });
+    if (topWin) closeWindow(topWin.id);
+    return;
+  }
+
+  // Add kbd-nav-active class on Tab to show hints
+  if (e.key === 'Tab') {
+    document.body.classList.add('kbd-nav-active');
+  }
+});
+
+// Remove kbd hints on mouse use
+document.addEventListener('mousedown', () => {
+  document.body.classList.remove('kbd-nav-active');
+});
+document.addEventListener('touchstart', () => {
+  document.body.classList.remove('kbd-nav-active');
+}, { passive: true });
+
+/* ---------------------------------------------------------------
+   KEYBOARD SHORTCUT MODAL
+   --------------------------------------------------------------- */
+function toggleKbdModal() {
+  const modal = document.getElementById('kbd-shortcuts-modal');
+  if (!modal) return;
+  const isOpen = modal.style.display === 'flex';
+  modal.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) {
+    // Focus first focusable in modal
+    setTimeout(() => {
+      const btn = modal.querySelector('button');
+      if (btn) btn.focus();
+    }, 50);
+    // Trap focus
+    trapFocus(modal);
+  }
+}
+
+function closeKbdModal() {
+  const modal = document.getElementById('kbd-shortcuts-modal');
+  if (modal) modal.style.display = 'none';
+}
+function closeKbdModalOutside(e) {
+  if (e.target.id === 'kbd-shortcuts-modal') {
+    closeKbdModal();
+  }
+}
+
+/* ---------------------------------------------------------------
+   FOCUS TRAP UTILITY (for modals/dialogs)
+   --------------------------------------------------------------- */
+function trapFocus(element) {
+  const focusable = element.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  
+  const handler = (e) => {
+    if (e.key !== 'Tab') return;
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  };
+  
+  element.addEventListener('keydown', handler);
+  // Clean up when element is hidden
+  const observer = new MutationObserver(() => {
+    if (element.style.display === 'none') {
+      element.removeEventListener('keydown', handler);
+      observer.disconnect();
+    }
+  });
+  observer.observe(element, { attributes: true, attributeFilter: ['style'] });
+}
+
+/* ---------------------------------------------------------------
+   ARIA LIVE REGION � Announce dynamic changes to screen readers
+   --------------------------------------------------------------- */
+function initAriaLiveRegion() {
+  if (document.getElementById('aria-live-region')) return;
+  const live = document.createElement('div');
+  live.id = 'aria-live-region';
+  live.setAttribute('aria-live', 'polite');
+  live.setAttribute('aria-atomic', 'true');
+  live.style.cssText = 'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0';
+  document.body.appendChild(live);
+}
+
+function announceToScreenReader(message, priority = 'polite') {
+  const live = document.getElementById('aria-live-region');
+  if (!live) return;
+  live.setAttribute('aria-live', priority);
+  live.textContent = '';
+  setTimeout(() => { live.textContent = message; }, 50);
+}
+
+/* ---------------------------------------------------------------
+   ARIA ATTRIBUTES � Dynamically update interactive elements
+   --------------------------------------------------------------- */
+function initDynamicARIA() {
+  // Add ARIA labels to all dock items that don't have them
+  const dockItems = document.querySelectorAll('.dock-item:not([aria-label])');
+  dockItems.forEach(item => {
+    const title = item.getAttribute('title') || item.querySelector('i')?.className || 'App';
+    item.setAttribute('aria-label', title.replace('ti ti-', '').replace(/-/g, ' '));
+    if (!item.getAttribute('role')) item.setAttribute('role', 'button');
+    if (!item.getAttribute('tabindex')) item.setAttribute('tabindex', '0');
+  });
+
+  // Add ARIA to all os-windows
+  document.querySelectorAll('.os-window').forEach(win => {
+    if (!win.getAttribute('role')) win.setAttribute('role', 'dialog');
+    if (!win.getAttribute('aria-modal')) win.setAttribute('aria-modal', 'false');
+    const titleEl = win.querySelector('.wt-title span[id]');
+    if (titleEl && !win.getAttribute('aria-labelledby')) {
+      win.setAttribute('aria-labelledby', titleEl.id);
+    }
+  });
+
+  // Add ARIA to settings tab panels
+  document.querySelectorAll('.settings-tab-panel').forEach(panel => {
+    panel.setAttribute('role', 'tabpanel');
+    const tabId = panel.id.replace('set-tab-', '');
+    panel.setAttribute('aria-labelledby', `settings-nav-${tabId}`);
+    panel.setAttribute('tabindex', '0');
+  });
+
+  // Add IDs to settings nav btns for aria-labelledby
+  document.querySelectorAll('.settings-nav-btn[data-tab]').forEach(btn => {
+    const tab = btn.getAttribute('data-tab');
+    if (!btn.id) btn.id = `settings-nav-${tab}`;
+  });
+
+  // Add ARIA to launcher overlay
+  const launcherOverlay = document.getElementById('launcher-overlay');
+  if (launcherOverlay) {
+    launcherOverlay.setAttribute('role', 'dialog');
+    launcherOverlay.setAttribute('aria-modal', 'true');
+    launcherOverlay.setAttribute('aria-label', 'Bismillah App Launcher');
+  }
+
+  // Add ARIA to quick settings panel
+  const qs = document.getElementById('quick-settings-panel');
+  if (qs) {
+    qs.setAttribute('role', 'dialog');
+    qs.setAttribute('aria-label', 'Quick Settings');
+  }
+
+  // Add ARIA to progress bars
+  document.querySelectorAll('[class*="fill"], [class*="progress"]').forEach(bar => {
+    if (!bar.getAttribute('role')) bar.setAttribute('role', 'progressbar');
+  });
+
+  // Add ARIA to halal-switch labels
+  document.querySelectorAll('.halal-switch input[type="checkbox"]').forEach(chk => {
+    if (!chk.getAttribute('aria-label') && !chk.getAttribute('aria-labelledby')) {
+      const row = chk.closest('.settings-row');
+      const label = row?.querySelector('.settings-row-title');
+      if (label) chk.setAttribute('aria-label', label.textContent.trim());
+    }
+  });
+
+  // Add missing aria-labels to buttons with only icons
+  document.querySelectorAll('button:not([aria-label])').forEach(btn => {
+    const icon = btn.querySelector('i');
+    const text = btn.textContent.trim();
+    if (!text && icon) {
+      const cls = icon.className.replace('ti ti-', '').replace(/-/g, ' ');
+      btn.setAttribute('aria-label', cls);
+    }
+  });
+}
+
+/* ---------------------------------------------------------------
+   WINDOW MANAGEMENT � ARIA updates when opening/closing
+   --------------------------------------------------------------- */
+// Patch openWindow to announce to screen readers
+const _origOpenWindow = typeof openWindow === 'function' ? openWindow : null;
+window._openWindowAria = function(id) {
+  const win = document.getElementById(id);
+  if (win) {
+    const title = win.querySelector('.wt-title span')?.textContent || id;
+    announceToScreenReader(`${title} window opened`);
+    win.setAttribute('aria-modal', 'true');
+    // Focus first focusable element in window
+    setTimeout(() => {
+      const firstFocusable = win.querySelector('button, [tabindex="0"], input, select, textarea');
+      if (firstFocusable) firstFocusable.focus();
+    }, 100);
+  }
+};
+
+// Patch closeWindow
+window._closeWindowAria = function(id) {
+  const win = document.getElementById(id);
+  if (win) {
+    const title = win.querySelector('.wt-title span')?.textContent || id;
+    announceToScreenReader(`${title} window closed`);
+    win.setAttribute('aria-modal', 'false');
+  }
+};
+
+/* ---------------------------------------------------------------
+   WORKSPACE SWITCHING � keyboard accessible
+   --------------------------------------------------------------- */
+function switchMaqam(num) {
+  const btn = document.querySelector(`[onclick*="selectMaqam(${num})"]`) ||
+              document.querySelector(`[data-maqam="${num}"]`);
+  if (btn) btn.click();
+  else {
+    document.body.setAttribute('data-maqam', num);
+    announceToScreenReader(`Workspace ${num} activated`);
+  }
+}
+
+/* ---------------------------------------------------------------
+   MOBILE � Touch enhancements
+   --------------------------------------------------------------- */
+function initTouchEnhancements() {
+  // Add touch-action to draggable windows (disable on mobile)
+  if (window.innerWidth <= 768) {
+    document.querySelectorAll('.window-titlebar').forEach(bar => {
+      bar.style.touchAction = 'none';
+      bar.style.cursor = 'default';
+    });
+    // Make all windows non-draggable on mobile
+    document.querySelectorAll('.os-window').forEach(win => {
+      win.style.position = 'fixed';
+    });
+  }
+
+  // Pull-to-refresh prevention on desktop shell
+  document.getElementById('desktop-main')?.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1) e.preventDefault();
+  }, { passive: false });
+
+  // Swipe to close quick settings
+  let touchStartX = 0;
+  const qs = document.getElementById('quick-settings-panel');
+  if (qs) {
+    qs.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    qs.addEventListener('touchend', (e) => {
+      const diff = e.changedTouches[0].clientX - touchStartX;
+      if (diff > 60) toggleQuickSettings(); // Swipe right to close
+    }, { passive: true });
+  }
+
+  // Double-tap dock items = open app (for touch where hover doesn't work)
+  document.querySelectorAll('.dock-item').forEach(item => {
+    let lastTap = 0;
+    item.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        e.preventDefault();
+        item.click();
+      }
+      lastTap = now;
+    }, { passive: false });
+  });
+}
+
+/* ---------------------------------------------------------------
+   INIT ALL A11Y FEATURES
+   --------------------------------------------------------------- */
+(function initA11y() {
+  // Run after DOM is ready
+  const run = () => {
+    initAriaLiveRegion();
+    initDynamicARIA();
+    initTouchEnhancements();
+
+    // Announce OS ready to screen readers
+    setTimeout(() => {
+      announceToScreenReader('Halal OS desktop is ready. Press ? for keyboard shortcuts.', 'assertive');
+    }, 3500);
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    setTimeout(run, 200);
+  }
+})();
+
+
+// ================================================================
+// HALAL CLOUD � Window Handler Functions
+// ================================================================
+
+function selectCloudTab(tab) {
+  document.querySelectorAll('.cloud-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.cloud-tab-panel').forEach(p => p.style.display = 'none');
+  const btn = document.querySelector(`[data-cloud-tab="${tab}"]`);
+  const panel = document.getElementById(`cloud-tab-${tab}`);
+  if (btn) btn.classList.add('active');
+  if (panel) {
+    panel.style.display = tab === 'messages' ? 'block' : (tab === 'drive' ? 'flex' : 'block');
+    if (tab === 'drive') panel.style.flexDirection = 'column';
+    if (tab === 'sync') initSyncAnimation();
+  }
+  announceToScreenReader && announceToScreenReader(`Halal Cloud: ${tab} tab opened`);
+}
+
+function initSyncAnimation() {
+  let pct = 67;
+  const bar = document.getElementById('cloud-upload-bar');
+  const pctEl = document.getElementById('cloud-upload-pct');
+  const interval = setInterval(() => {
+    pct = Math.min(100, pct + Math.random() * 2);
+    if (bar) bar.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = Math.floor(pct) + '%';
+    if (pct >= 100) {
+      clearInterval(interval);
+      if (pctEl) pctEl.textContent = 'Complete';
+      showInsha('?? Family_Eid_2026.mp4 � Upload complete!', 'success');
+    }
+  }, 1800);
+}
+
+function searchCloudFiles(query) {
+  const rows = document.querySelectorAll('.cloud-file-row');
+  rows.forEach(row => {
+    const name = row.querySelector('div div')?.textContent?.toLowerCase() || '';
+    row.style.display = name.includes(query.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function uploadToCloud() {
+  showInsha('?? Uploading... Encrypting with AES-256 before transfer', 'success');
+  setTimeout(() => showInsha('?? Upload complete � E2E Encrypted', 'success'), 2500);
+}
+
+function createCloudFolder() {
+  const name = prompt('New folder name:') || 'New Folder';
+  showInsha(`?? Folder "${name}" created in Halal Cloud`, 'success');
+}
+
+function cloudNavHome() {
+  document.getElementById('cloud-path').textContent = 'My Drive';
+  showInsha('?? Navigated to root', 'success');
+}
+
+function openCloudFile(name, type) {
+  showInsha(`?? Opening ${name} (${type}) from Halal Cloud�`, 'success');
+}
+
+function selectContact(el, name) {
+  document.querySelectorAll('.cloud-contact').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const nameEl = document.getElementById('cloud-chat-name');
+  if (nameEl) nameEl.textContent = name;
+}
+
+function sendCloudMessage() {
+  const input = document.getElementById('cloud-msg-input');
+  const area = document.getElementById('cloud-messages-area');
+  if (!input || !area || !input.value.trim()) return;
+  const msg = input.value.trim();
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:8px;justify-content:flex-end';
+  div.innerHTML = `<div style="background:var(--color-emerald);color:white;padding:8px 12px;border-radius:12px 12px 2px 12px;font-size:12px;max-width:70%">${msg}</div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  input.value = '';
+  // Simulated reply
+  setTimeout(() => {
+    const reply = document.createElement('div');
+    reply.style.cssText = 'display:flex;gap:8px;';
+    reply.innerHTML = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(27,94,32,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">M</div><div style="background:rgba(255,255,255,0.06);padding:8px 12px;border-radius:12px 12px 12px 2px;font-size:12px;max-width:70%">JazakAllah khair! ??</div>`;
+    area.appendChild(reply);
+    area.scrollTop = area.scrollHeight;
+  }, 1200);
+}
+
+function startBackup() {
+  const btn = event.target.closest('button');
+  if (btn) { btn.innerHTML = '<i class="ti ti-loader"></i> Backing up�'; btn.disabled = true; }
+  setTimeout(() => {
+    if (btn) { btn.innerHTML = '<i class="ti ti-refresh"></i> Backup Now'; btn.disabled = false; }
+    showInsha('?? Backup complete � 4.2 GB encrypted to Halal Cloud', 'success');
+  }, 3000);
+}
+
+function restoreBackup(date) {
+  showInsha(`?? Restore from ${date} � feature available in full release`, 'warning');
+}
+
+function revokeApp(app) {
+  showInsha(`?? ${app} � access revoked from Halal ID`, 'warning');
+}
+
+function exportEncryptionKey() {
+  showInsha('?? Encryption key export � requires 2FA verification in full release', 'warning');
+}
+
+function viewAuditLog() {
+  showInsha('?? Audit Log: 24 events this week � No unauthorized access detected', 'success');
+}
+
+function upgradeCloudStorage() {
+  showInsha('?? Upgrade to Halal Cloud Pro � 2TB for $4.99/mo. Coming soon!', 'success');
+}
+
+
+
+// ================================================================
+// SOUND ENGINE & CUSTOM CURSOR INTERACTIVITY
+// ================================================================
+let audioContext = null;
+
+function getAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioContext.state === "suspended") {
+    audioContext.resume();
+  }
+  return audioContext;
+}
+
+function playClickSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+    
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } catch(e) {}
+}
+
+function playWindowOpenSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(550, now + 0.15);
+    
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } catch(e) {}
+}
+
+function playWindowCloseSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(550, now);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.15);
+    
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start(now);
+    osc.stop(now + 0.15);
+  } catch(e) {}
+}
+
+function playNotificationChime() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    
+    const playTone = (freq, start, duration) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, start);
+      
+      gain.gain.setValueAtTime(0.1, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(start);
+      osc.stop(start + duration);
+    };
+    
+    playTone(523.25, now, 0.2);
+    playTone(659.25, now + 0.1, 0.3);
+  } catch(e) {}
+}
+
+function initClickSounds() {
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("button, [role='button'], a, input[type='checkbox'], input[type='radio'], input[type='range'], .dock-item, .launcher-app-card, .net-wifi-item, .bt-device-item, .notif-app-row, .setup-step-dot");
+    if (el) {
+      playClickSound();
+    }
+  });
+}
+
+function initCustomCursor() {
+  const cursor = document.getElementById("custom-cursor");
+  const ring = document.getElementById("custom-cursor-ring");
+  if (!cursor || !ring) return;
+
+  document.addEventListener("mousemove", (e) => {
+    cursor.style.left = e.clientX + "px";
+    cursor.style.top = e.clientY + "px";
+    
+    setTimeout(() => {
+      ring.style.left = e.clientX + "px";
+      ring.style.top = e.clientY + "px";
+    }, 40);
+  });
+
+  const updateHoverElements = () => {
+    document.querySelectorAll("button, [role='button'], a, input, select, textarea, .dock-item, .launcher-app-card, .net-wifi-item, .bt-device-item, .notif-app-row").forEach(el => {
+      if (el.dataset.hasCursorBound) return;
+      el.dataset.hasCursorBound = "true";
+      el.addEventListener("mouseenter", () => {
+        cursor.style.width = "12px";
+        cursor.style.height = "12px";
+        cursor.style.backgroundColor = "var(--color-gold-light)";
+        ring.style.width = "32px";
+        ring.style.height = "32px";
+        ring.style.borderColor = "var(--color-gold)";
+      });
+      el.addEventListener("mouseleave", () => {
+        cursor.style.width = "8px";
+        cursor.style.height = "8px";
+        cursor.style.backgroundColor = "var(--color-gold)";
+        ring.style.width = "24px";
+        ring.style.height = "24px";
+        ring.style.borderColor = "var(--color-emerald)";
+      });
+    });
+  };
+
+  updateHoverElements();
+  setInterval(updateHoverElements, 1000); // Dynamic elements helper
+}

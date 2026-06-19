@@ -1,4 +1,4 @@
-/* ☪ HALAL OS - COMPREHENSIVE DESIGN SYSTEM & STYLESHEET */
+﻿/* ☪ HALAL OS - COMPREHENSIVE DESIGN SYSTEM & STYLESHEET */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
@@ -1044,6 +1044,58 @@ html[dir="rtl"] .halal-switch input:checked + .switch-slider:before {
   overflow-y: auto;
 }
 
+.settings-perms-table th {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.settings-perms-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.settings-perm-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 0 auto;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.settings-perm-indicator.active {
+  background-color: var(--color-emerald);
+  box-shadow: 0 0 6px var(--color-emerald-active);
+}
+
+.settings-perm-indicator.inactive {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-small);
+  font-size: 11px;
+  line-height: 1.4;
+  border: 1px solid transparent;
+}
+
+.recommendation-item.alert-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: var(--color-gold-light);
+}
+
+.recommendation-item.alert-success {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: var(--color-emerald-active);
+}
+
 /* --- APP: HAFIZ (FILE MANAGER) --- */
 .files-layout {
   display: flex;
@@ -1315,6 +1367,54 @@ html[dir="rtl"] .files-column {
   gap: 12px;
   overflow-y: auto;
   cursor: text;
+  transition: all 0.25s ease;
+}
+
+/* Terminal Custom Themes */
+.terminal-wrapper.theme-midnight {
+  background: #060806;
+  color: #E4E4E4;
+}
+.terminal-wrapper.theme-midnight .terminal-banner {
+  color: var(--color-gold-light);
+}
+
+.terminal-wrapper.theme-forest {
+  background: #051509;
+  color: #a5d6a7;
+}
+.terminal-wrapper.theme-forest .terminal-banner {
+  color: #FAC775;
+}
+.terminal-wrapper.theme-forest .terminal-prompt-symbol {
+  color: #66BB6A;
+}
+
+.terminal-wrapper.theme-gold {
+  background: #150e05;
+  color: #FAC775;
+}
+.terminal-wrapper.theme-gold .terminal-banner {
+  color: #D4A017;
+}
+.terminal-wrapper.theme-gold .terminal-prompt-symbol {
+  color: #FAC775;
+}
+
+.terminal-wrapper.theme-matrix {
+  background: #000000;
+  color: #00FF00;
+  text-shadow: 0 0 2px #00FF00;
+}
+.terminal-wrapper.theme-matrix .terminal-banner {
+  color: #00FF00;
+}
+.terminal-wrapper.theme-matrix .terminal-prompt-symbol {
+  color: #00FF00;
+}
+.terminal-wrapper.theme-matrix .terminal-input {
+  color: #00FF00;
+  text-shadow: 0 0 2px #00FF00;
 }
 
 .terminal-banner {
@@ -1550,6 +1650,110 @@ html[dir="rtl"] .amina-bubble.assistant {
 
 .amina-voice-visualizer.active {
   animation: pulse-border 1.5s infinite;
+}
+
+/* Suggestion Chips Style */
+.amina-suggestion-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 16px 12px 16px;
+}
+
+.amina-suggestion-chip {
+  background: rgba(27, 94, 32, 0.08);
+  border: 1px solid rgba(27, 94, 32, 0.3);
+  color: var(--color-emerald-active);
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.amina-suggestion-chip:hover {
+  background: var(--color-emerald);
+  color: white;
+  border-color: var(--color-emerald);
+  box-shadow: 0 2px 8px rgba(27, 94, 32, 0.25);
+}
+
+/* Typing Indicator Animation */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-text-secondary);
+  border-radius: 50%;
+  animation: amina-bounce 1.3s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes amina-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+/* Voice Wave Visualizer */
+.amina-voice-wave {
+  height: 32px;
+  transition: all 0.3s ease;
+}
+
+.voice-wave-bar {
+  width: 3px;
+  background: var(--color-emerald-active);
+  border-radius: 99px;
+  animation: voice-pulse 1s infinite ease-in-out alternate;
+}
+
+.voice-wave-bar:nth-child(1) { animation-delay: 0.1s; animation-duration: 0.8s; }
+.voice-wave-bar:nth-child(2) { animation-delay: 0.2s; animation-duration: 1.1s; }
+.voice-wave-bar:nth-child(3) { animation-delay: 0.3s; animation-duration: 1.3s; }
+.voice-wave-bar:nth-child(4) { animation-delay: 0.4s; animation-duration: 0.9s; }
+.voice-wave-bar:nth-child(5) { animation-delay: 0.5s; animation-duration: 0.7s; }
+
+@keyframes voice-pulse {
+  0% { height: 6px; opacity: 0.4; }
+  100% { height: 26px; opacity: 1; }
+}
+
+/* Bubble Actions */
+.amina-bubble-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 6px;
+}
+
+.amina-action-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.amina-action-btn:hover {
+  color: var(--color-gold-light);
 }
 
 /* --- APP: ISLAMIC SUITE --- */
@@ -3392,3 +3596,714 @@ html[dir="rtl"] .browser-tabs-sidebar {
   }
 }
 
+/* ===== NEW SETTINGS TABS: Network, Bluetooth, Accessibility, Notifications, Storage, About ===== */
+
+/* --- Network Tab --- */
+.net-wifi-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-small);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.net-wifi-item:hover {
+  background: rgba(27, 94, 32, 0.08);
+  border-color: var(--color-emerald-dark);
+}
+.net-wifi-item.active {
+  background: rgba(27, 94, 32, 0.12);
+  border-color: var(--color-emerald);
+}
+
+/* --- Bluetooth Tab --- */
+.bt-device-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-small);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.15s ease;
+}
+.bt-device-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.bt-device-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(27, 94, 32, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-emerald);
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+/* --- Notifications Tab --- */
+.notif-app-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-small);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.15s ease;
+}
+.notif-app-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.notif-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  padding: 3px 6px;
+  border-radius: var(--r-small);
+  font-size: 10px;
+  outline: none;
+  cursor: pointer;
+  min-width: 90px;
+}
+
+/* --- About Tab --- */
+.about-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+}
+.about-info-row:last-child { border-bottom: none; }
+.about-info-key {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  flex-shrink: 0;
+  min-width: 100px;
+}
+.about-info-val {
+  color: var(--color-text-primary);
+  text-align: right;
+  word-break: break-all;
+}
+
+
+/* ================================================================
+   HALAL OS � COMPREHENSIVE ACCESSIBILITY, KEYBOARD NAV & MOBILE
+   Phase: Accessibility 25%?100%, Keyboard Nav 30%?100%, Mobile 40%?100%
+   ================================================================ */
+
+/* ---------------------------------------------------------------
+   1. ACCESSIBILITY � Focus Ring System (Full WCAG 2.1 AA)
+   --------------------------------------------------------------- */
+
+/* Remove browser default, use our own consistent ring */
+* { outline: none; }
+
+/* Keyboard focus ring: gold/emerald dual-ring for max visibility */
+*:focus-visible {
+  outline: 2px solid var(--color-gold) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 4px rgba(212, 160, 23, 0.18) !important;
+  border-radius: inherit;
+  transition: outline 0.1s ease, box-shadow 0.1s ease !important;
+}
+
+/* Stronger focus ring on dark backgrounds */
+.os-window *:focus-visible,
+.glass-panel-elevated *:focus-visible {
+  outline-color: var(--color-gold) !important;
+  box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.25) !important;
+}
+
+/* Skip-to-main link for screen readers */
+.skip-to-main {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: 9999;
+  background: var(--color-emerald);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--r-small);
+  font-size: 13px;
+  font-weight: 600;
+  transition: top 0.2s;
+}
+.skip-to-main:focus {
+  top: 12px;
+}
+
+/* High Contrast Mode */
+[data-contrast="high"] {
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e0e0e0;
+  --color-text-muted: #c0c0c0;
+  --color-border: rgba(255,255,255,0.25);
+  --color-bg-base: #000000;
+  --color-bg-surface: rgba(0, 0, 0, 0.95);
+  --color-bg-elevated: rgba(10, 10, 10, 0.98);
+  filter: contrast(1.25);
+}
+
+[data-contrast="high"] *:focus-visible {
+  outline: 3px solid #ffff00 !important;
+  box-shadow: 0 0 0 5px rgba(255, 255, 0, 0.3) !important;
+}
+
+/* Reduce Motion � respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .boot-logo, .boot-progress-fill { animation: none !important; }
+}
+
+/* ---------------------------------------------------------------
+   2. KEYBOARD NAVIGATION � Interactive element improvements
+   --------------------------------------------------------------- */
+
+/* All interactive elements must be clearly tab-able */
+button, [role="button"], [role="tab"], a, input, select, textarea,
+.dock-item, .launcher-app-card, .settings-nav-btn, .quran-nav-btn,
+.files-nav-btn, .menu-cat-btn, .brand-locale-card,
+.net-wifi-item, .bt-device-item, .notif-app-row {
+  position: relative;
+}
+
+/* Dock items keyboard navigation */
+.dock-item:focus-visible {
+  outline: 2px solid var(--color-gold) !important;
+  outline-offset: 4px !important;
+  border-radius: var(--r-medium) !important;
+  transform: scale(1.12) translateY(-6px) !important;
+}
+
+/* Settings nav buttons */
+.settings-nav-btn:focus-visible,
+.quran-nav-btn:focus-visible,
+.files-nav-btn:focus-visible,
+.menu-cat-btn:focus-visible {
+  outline: 2px solid var(--color-gold) !important;
+  outline-offset: 2px !important;
+  background: rgba(212, 160, 23, 0.1) !important;
+}
+
+/* Launcher app cards */
+.launcher-app-card:focus-visible {
+  outline: 2px solid var(--color-gold) !important;
+  outline-offset: 3px !important;
+  transform: translateY(-4px) scale(1.04) !important;
+  background: rgba(27,94,32,0.12) !important;
+}
+
+/* Window controls (minimize/maximize/close) */
+.window-dot:focus-visible {
+  outline: 2px solid var(--color-gold) !important;
+  outline-offset: 2px !important;
+  transform: scale(1.3) !important;
+}
+
+/* Quick settings buttons */
+.qs-btn:focus-visible,
+.hp-icon-btn:focus-visible {
+  outline: 2px solid var(--color-gold) !important;
+  outline-offset: 2px !important;
+  background: rgba(212,160,23,0.12) !important;
+}
+
+/* Keyboard shortcut hints overlay (show on Tab press) */
+.kbd-hint {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  color: var(--color-gold);
+  font-size: 9px;
+  font-family: var(--font-mono);
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+.kbd-nav-active .kbd-hint {
+  opacity: 1;
+}
+
+/* Keyboard shortcut badge (Ctrl+K etc.) */
+kbd {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------
+   3. MOBILE RESPONSIVE � 1024px, 768px, 480px, 360px breakpoints
+   --------------------------------------------------------------- */
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .os-window {
+    min-width: min(90vw, 600px) !important;
+  }
+
+  /* Reduce topbar clutter */
+  .hp-prayer-widget { 
+    font-size: 11px !important; 
+  }
+  
+  /* Dock items slightly smaller */
+  .dock-item {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 20px !important;
+  }
+
+  /* Settings / Quran sidebar narrower */
+  .settings-sidebar, .quran-sidebar, .files-sidebar {
+    width: 160px !important;
+  }
+
+  /* Bismillah launcher grid 3 col */
+  .menu-app-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+  }
+}
+
+/* Mobile (768px) � already had some, extend it */
+@media (max-width: 768px) {
+
+  /* --- Topbar --- */
+  .hifz-panel { padding: 0 8px !important; gap: 6px !important; }
+  .hp-prayer-widget, #top-hijri-date { display: none !important; }
+  .hp-center { gap: 8px !important; }
+  .hp-icon-btn { width: 28px !important; height: 28px !important; font-size: 14px !important; }
+
+  /* --- Windows � full viewport --- */
+  .os-window {
+    position: fixed !important;
+    width: 100vw !important;
+    height: calc(100dvh - var(--topbar-h) - var(--dock-h)) !important;
+    left: 0 !important;
+    top: var(--topbar-h) !important;
+    border-radius: 0 !important;
+    min-width: unset !important;
+    min-height: unset !important;
+  }
+  .window-titlebar {
+    cursor: default !important;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .wt-controls button.maximize { display: none !important; }
+
+  /* --- Dock --- */
+  .amal-bar-container {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+    height: var(--dock-h) !important;
+    justify-content: center !important;
+    padding: 0 8px !important;
+    background: var(--color-bg-surface) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: 1px solid var(--color-border) !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    transform: none !important;
+  }
+  .amal-bar { gap: 4px !important; overflow-x: auto !important; padding: 0 !important; }
+  .dock-item { width: 42px !important; height: 42px !important; font-size: 18px !important; }
+  .dock-sep { height: 24px !important; margin: 0 2px !important; }
+
+  /* --- Sidebar layouts ? horizontal scroll nav --- */
+  .settings-layout, .quran-layout, .files-layout {
+    flex-direction: column !important;
+    height: 100% !important;
+  }
+  .settings-sidebar, .quran-sidebar, .files-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    border-right: none !important;
+    border-left: none !important;
+    border-bottom: 1px solid var(--color-border) !important;
+    padding: 6px 8px !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    scrollbar-width: none !important;
+  }
+  .settings-sidebar::-webkit-scrollbar,
+  .quran-sidebar::-webkit-scrollbar,
+  .files-sidebar::-webkit-scrollbar { display: none !important; }
+
+  .settings-nav-btn, .quran-nav-btn, .files-nav-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+  .settings-nav-btn i, .quran-nav-btn i, .files-nav-btn i {
+    font-size: 14px !important;
+  }
+
+  /* Settings main content scrolls */
+  .settings-main { overflow-y: auto !important; padding: 12px !important; }
+
+  /* --- Settings card rows stack vertically --- */
+  .settings-row { flex-wrap: wrap !important; gap: 8px !important; }
+  .settings-row-info { flex: 1 1 100% !important; }
+  .settings-row > label.halal-switch,
+  .settings-row > button { align-self: flex-start !important; }
+
+  /* --- Islamic suite: prayer grid 2-col --- */
+  .prayer-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* --- Launcher --- */
+  .menu-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: calc(100dvh - var(--topbar-h) - var(--dock-h)) !important;
+    border-radius: 0 !important;
+  }
+  .menu-body { flex-direction: column !important; }
+  .menu-sidebar {
+    width: 100% !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--color-border) !important;
+    padding: 6px 8px !important;
+    gap: 4px !important;
+  }
+  .menu-sidebar::-webkit-scrollbar { display: none !important; }
+  .menu-cat-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    font-size: 11px !important;
+    padding: 5px 10px !important;
+  }
+  .menu-app-grid {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+  .launcher-app-card { padding: 10px 6px !important; gap: 6px !important; }
+  .app-icon { font-size: 24px !important; }
+  .app-name { font-size: 10px !important; }
+
+  /* --- Maqam switcher --- */
+  .maqam-switcher {
+    bottom: calc(var(--dock-h) + 8px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 24px) !important;
+    max-width: 340px !important;
+  }
+
+  /* --- Quick Settings Panel --- */
+  #quick-settings-panel {
+    right: 8px !important;
+    left: 8px !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+  .qs-toggle-row { 
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  /* --- Terminal adjustments --- */
+  .terminal-tabs { overflow-x: auto !important; scrollbar-width: none !important; }
+  .term-tab { flex-shrink: 0 !important; font-size: 11px !important; }
+  .kalam-controls { gap: 4px !important; }
+  .kalam-controls button { font-size: 10px !important; padding: 3px 6px !important; }
+
+  /* --- Islamic Suite responsive --- */
+  .islamic-suite-tabs { overflow-x: auto !important; scrollbar-width: none !important; }
+  .suite-tab { flex-shrink: 0 !important; font-size: 11px !important; padding: 5px 10px !important; }
+
+  /* --- Browser Tab Bar --- */
+  .browser-tab-bar { overflow-x: auto !important; scrollbar-width: none !important; }
+  .browser-tab { flex-shrink: 0 !important; min-width: 100px !important; }
+
+  /* --- Amina AI --- */
+  .amina-layout { flex-direction: column !important; }
+  .amina-sidebar { 
+    width: 100% !important; 
+    height: 60px !important; 
+    border-right: none !important;
+    border-bottom: 1px solid var(--color-border) !important;
+    overflow-x: auto !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 0 8px !important;
+  }
+
+  /* --- Fasting tracker --- */
+  .fasting-tracker-widget {
+    top: calc(var(--topbar-h) + 4px) !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 32px) !important;
+    max-width: 300px !important;
+  }
+
+  /* --- Security/Privacy Dashboard --- */
+  .security-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .privacy-score-widget { flex-direction: column !important; text-align: center !important; align-items: center !important; }
+
+  /* --- Halal Cloud --- */
+  .cloud-app-grid { grid-template-columns: 1fr !important; }
+
+  /* --- Notification toast position --- */
+  .insha-notification {
+    right: 8px !important;
+    left: 8px !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Small phones (480px) */
+@media (max-width: 480px) {
+  :root { --topbar-h: 36px; --dock-h: 58px; }
+  
+  .wt-title { font-size: 11px !important; }
+  .wt-title span { max-width: 120px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+  
+  .dock-item { width: 36px !important; height: 36px !important; font-size: 16px !important; }
+  .dock-sep { display: none !important; }
+  
+  .wt-controls { gap: 3px !important; }
+  .window-dot { width: 10px !important; height: 10px !important; }
+  
+  .settings-nav-btn span, .quran-nav-btn span, .files-nav-btn span {
+    display: none !important; /* Icon only on tiny screens */
+  }
+  .settings-nav-btn, .quran-nav-btn, .files-nav-btn {
+    padding: 6px 8px !important;
+    min-width: 36px !important;
+    justify-content: center !important;
+  }
+
+  .prayer-grid { grid-template-columns: 1fr 1fr !important; gap: 6px !important; }
+  .menu-app-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  
+  .setup-card h2 { font-size: 18px !important; }
+  .setup-lang-grid { grid-template-columns: 1fr 1fr !important; }
+  
+  .brand-color-row { gap: 4px !important; }
+  .brand-swatch { width: 28px !important; height: 28px !important; }
+}
+
+/* Very small (360px - small Androids) */
+@media (max-width: 360px) {
+  .dock-item { width: 32px !important; height: 32px !important; font-size: 14px !important; }
+  .menu-app-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .settings-nav-btn, .quran-nav-btn, .files-nav-btn { min-width: 30px !important; }
+  .brand-swatch { width: 22px !important; height: 22px !important; }
+}
+
+/* Landscape phone */
+@media (max-width: 768px) and (orientation: landscape) {
+  :root { --dock-h: 50px; }
+  .dock-item { width: 34px !important; height: 34px !important; font-size: 15px !important; }
+  .os-window { height: calc(100dvh - var(--topbar-h) - var(--dock-h)) !important; }
+}
+
+/* Touch-specific improvements */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase tap targets to minimum 44�44px (WCAG 2.5.5) */
+  .dock-item { min-width: 44px !important; min-height: 44px !important; }
+  .window-dot { width: 14px !important; height: 14px !important; }
+  .hp-icon-btn { min-width: 36px !important; min-height: 36px !important; }
+  .btn { min-height: 36px !important; }
+  .btn-sm { min-height: 30px !important; }
+  .settings-nav-btn { min-height: 40px !important; }
+  .halal-switch { min-width: 44px !important; }
+  
+  /* Remove hover effects that don't apply on touch */
+  .dock-item:hover { transform: none !important; }
+  .launcher-app-card:hover { transform: none !important; }
+}
+
+
+/* ================================================================
+   HALAL CLOUD WINDOW COMPONENTS
+   ================================================================ */
+
+.cloud-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-left: 2px solid transparent;
+}
+.cloud-nav-btn:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-primary);
+}
+.cloud-nav-btn.active {
+  background: rgba(27,94,32,0.1);
+  color: var(--color-emerald-active);
+  border-left-color: var(--color-emerald);
+}
+.cloud-nav-btn i { font-size: 14px; }
+
+.cloud-file-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: var(--r-small);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.02);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.cloud-file-card:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--color-emerald-dark);
+  transform: translateY(-2px);
+}
+
+.cloud-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--r-small);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.02);
+  transition: background 0.1s;
+  font-size: 12px;
+}
+.cloud-file-row:hover { background: rgba(255,255,255,0.04); }
+.cloud-file-row > i { font-size: 18px; flex-shrink: 0; }
+
+.cloud-sync-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 99px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+.cloud-sync-badge.synced { background: rgba(27,94,32,0.15); color: var(--color-emerald-active); }
+.cloud-sync-badge.syncing { background: rgba(212,160,23,0.15); color: var(--color-gold); }
+.cloud-sync-badge.pending { background: rgba(255,255,255,0.07); color: var(--color-text-secondary); }
+
+.cloud-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid var(--color-border);
+}
+.cloud-contact:hover { background: rgba(255,255,255,0.03); }
+.cloud-contact.active { background: rgba(27,94,32,0.08); }
+
+.cloud-contact-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Mobile adjustments for cloud */
+@media (max-width: 768px) {
+  #window-cloud > .window-content > div {
+    flex-direction: column !important;
+  }
+  #window-cloud .cloud-nav-btn-wrap {
+    width: 100% !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--color-border) !important;
+  }
+  .cloud-tab-panel#cloud-tab-messages > div {
+    flex-direction: column !important;
+  }
+}
+
+
+/* ===== CUSTOM SPRING CURSOR ===== */
+@media (hover: hover) and (pointer: fine) {
+  /* Hide standard cursor for premium interactive feel */
+  *, html, body, button, a, [role="button"], input, select, textarea, .dock-item, .launcher-app-card, .net-wifi-item, .bt-device-item, .notif-app-row {
+    cursor: none !important;
+  }
+
+  .custom-cursor {
+    display: block !important;
+    width: 8px;
+    height: 8px;
+    background: var(--color-gold);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 100000;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 8px var(--color-gold);
+    transition: width 0.15s, height 0.15s, background-color 0.15s;
+  }
+
+  .custom-cursor-ring {
+    display: block !important;
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid var(--color-emerald);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s ease-out, width 0.2s, height 0.2s, border-color 0.2s;
+  }
+}
+
+/* Default display none for touch/mobile devices to avoid phantom cursors */
+.custom-cursor, .custom-cursor-ring {
+  display: none;
+}

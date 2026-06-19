@@ -58,7 +58,7 @@
         <div class="setup-slide" id="slide-prayer">
           <h2 style="font-size: 20px; font-weight: 700;" id="txt-setup-p-title">Prayer Calculation</h2>
           <p style="font-size: 13px; color: var(--color-text-secondary);" id="txt-setup-p-desc">Configure the method used for calculating daily prayer times according to local conventions.</p>
-          <div class="setup-checkbox-list" role="radiogroup" aria-label="Prayer time calculation method options">
+          <div class="setup-checkbox-list" role="radiogroup" aria-label="Prayer time calculation method options" style="max-height: 220px; overflow-y: auto; padding-right: 4px;">
             <div class="setup-checkbox-item" onclick="selectSetupPrayerMethod(this, 'egypt')" role="radio" aria-checked="true" tabindex="0" aria-label="Egyptian General Authority of Survey calculation method. Standard in Egypt, Sudan, parts of Middle East">
               <input type="radio" name="prayer-method" checked id="pm-egypt" tabindex="-1">
               <div>
@@ -78,6 +78,27 @@
               <div>
                 <div style="font-size: 13px; font-weight: 600;">Islamic Society of North America (ISNA)</div>
                 <div style="font-size: 11px; color: var(--color-text-muted);">Standard in USA, Canada</div>
+              </div>
+            </div>
+            <div class="setup-checkbox-item" onclick="selectSetupPrayerMethod(this, 'karachi')" role="radio" aria-checked="false" tabindex="0" aria-label="University of Islamic Sciences, Karachi calculation method. Standard in Pakistan, India, Bangladesh">
+              <input type="radio" name="prayer-method" id="pm-karachi" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">University of Islamic Sciences, Karachi</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Standard in Pakistan, India, Bangladesh</div>
+              </div>
+            </div>
+            <div class="setup-checkbox-item" onclick="selectSetupPrayerMethod(this, 'makkah')" role="radio" aria-checked="false" tabindex="0" aria-label="Umm al-Qura University, Makkah calculation method. Standard in Saudi Arabia">
+              <input type="radio" name="prayer-method" id="pm-makkah" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">Umm al-Qura University, Makkah</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Standard in Saudi Arabia</div>
+              </div>
+            </div>
+            <div class="setup-checkbox-item" onclick="selectSetupPrayerMethod(this, 'tehran')" role="radio" aria-checked="false" tabindex="0" aria-label="Institute of Geophysics, University of Tehran calculation method. Standard in Iran, parts of Shia communities">
+              <input type="radio" name="prayer-method" id="pm-tehran" tabindex="-1">
+              <div>
+                <div style="font-size: 13px; font-weight: 600;">Institute of Geophysics, University of Tehran</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Standard in Iran, parts of Shia communities</div>
               </div>
             </div>
           </div>
@@ -194,29 +215,29 @@
       </div>
 
       <!-- Quick Settings Panel -->
-      <div id="quick-settings-panel" class="glass-panel-elevated">
+      <div id="quick-settings-panel" class="glass-panel-elevated" role="dialog" aria-label="Quick Settings">
         <div class="qs-header">
           <div style="font-weight: 700;" id="lbl-qs-title">Quick Settings</div>
         </div>
         <div class="qs-slider-group">
           <div class="qs-slider-item">
             <i class="ti ti-volume" style="width: 16px;"></i>
-            <input type="range" class="hdk-slider" min="0" max="100" value="80" style="flex: 1;">
+            <input type="range" class="hdk-slider" min="0" max="100" value="80" style="flex: 1;" aria-label="Volume Level" id="qs-volume-slider">
           </div>
           <div class="qs-slider-item">
             <i class="ti ti-brightness-up" style="width: 16px;"></i>
-            <input type="range" class="hdk-slider" min="0" max="100" value="90" style="flex: 1;">
+            <input type="range" class="hdk-slider" min="0" max="100" value="90" style="flex: 1;" aria-label="Screen Brightness" id="qs-brightness-slider">
           </div>
         </div>
-        <div class="qs-grid">
-          <button class="qs-btn active" onclick="toggleQSSetting(this, 'wifi')"><i class="ti ti-wifi"></i> <span>Wi-Fi</span></button>
-          <button class="qs-btn active" onclick="toggleQSSetting(this, 'shield')"><i class="ti ti-shield-check"></i> <span id="lbl-qs-fw">Firewall</span></button>
-          <button class="qs-btn" onclick="toggleQSSetting(this, 'bluetooth')"><i class="ti ti-bluetooth"></i> <span>Bluetooth</span></button>
-          <button class="qs-btn active" onclick="toggleQSSetting(this, 'doh')"><i class="ti ti-lock-square"></i> <span id="lbl-qs-dns">Secure DNS</span></button>
+        <div class="qs-grid" role="group" aria-label="Quick Setting Toggles">
+          <button class="qs-btn active" onclick="toggleQSSetting(this, 'wifi')" aria-pressed="true" aria-label="Toggle Wi-Fi"><i class="ti ti-wifi"></i> <span>Wi-Fi</span></button>
+          <button class="qs-btn active" onclick="toggleQSSetting(this, 'shield')" aria-pressed="true" aria-label="Toggle Firewall"><i class="ti ti-shield-check"></i> <span id="lbl-qs-fw">Firewall</span></button>
+          <button class="qs-btn" onclick="toggleQSSetting(this, 'bluetooth')" aria-pressed="false" aria-label="Toggle Bluetooth"><i class="ti ti-bluetooth"></i> <span>Bluetooth</span></button>
+          <button class="qs-btn active" onclick="toggleQSSetting(this, 'doh')" aria-pressed="true" aria-label="Toggle Secure DNS"><i class="ti ti-lock-square"></i> <span id="lbl-qs-dns">Secure DNS</span></button>
         </div>
         <div class="qs-footer">
-          <div style="font-size: 11px; color: var(--color-text-secondary);"><i class="ti ti-battery-4"></i> Battery: 94%</div>
-          <button class="btn btn-sm" onclick="openWindow('window-settings'); selectSettingsSubTab('general')" id="lbl-qs-set-btn">Settings</button>
+          <div style="font-size: 11px; color: var(--color-text-secondary);" aria-label="Battery status 94 percent"><i class="ti ti-battery-4"></i> Battery: 94%</div>
+          <button class="btn btn-sm" onclick="openWindow('window-settings'); selectSettingsSubTab('general')" id="lbl-qs-set-btn" aria-label="Open Tazkiyah Settings General panel">Settings</button>
         </div>
       </div>
     </header>
@@ -259,6 +280,24 @@
               </div>
               <div class="settings-nav-btn" data-tab="brand" onclick="selectSettingsSubTab('brand')" role="tab" tabindex="0" aria-selected="false">
                 <i class="ti ti-brand-mastercard"></i> <span>Brand System</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="network" onclick="selectSettingsSubTab('network')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-wifi"></i> <span>Network</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="bluetooth" onclick="selectSettingsSubTab('bluetooth')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-bluetooth"></i> <span>Bluetooth</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="accessibility" onclick="selectSettingsSubTab('accessibility')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-accessible"></i> <span>Accessibility</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="notifications" onclick="selectSettingsSubTab('notifications')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-bell"></i> <span>Notifications</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="storage" onclick="selectSettingsSubTab('storage')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-device-floppy"></i> <span>Storage</span>
+              </div>
+              <div class="settings-nav-btn" data-tab="about" onclick="selectSettingsSubTab('about')" role="tab" tabindex="0" aria-selected="false">
+                <i class="ti ti-info-circle"></i> <span>About</span>
               </div>
             </aside>
             <main class="settings-main">
@@ -316,7 +355,7 @@
                       <div class="settings-row-desc" id="lbl-set-priv-telemetry-desc">Intercept and deny metadata collection by package mirrors</div>
                     </div>
                     <label class="halal-switch">
-                      <input type="checkbox" checked id="settings-chk-telemetry">
+                      <input type="checkbox" checked id="settings-chk-telemetry" onchange="toggleTelemetry(this.checked)">
                       <span class="switch-slider"></span>
                     </label>
                   </div>
@@ -326,9 +365,45 @@
                       <div class="settings-row-desc" id="lbl-set-priv-sandbox-desc">Strictly isolate third-party apps in security sandboxes</div>
                     </div>
                     <label class="halal-switch">
-                      <input type="checkbox" checked>
+                      <input type="checkbox" checked id="settings-chk-sandbox" onchange="toggleSandbox(this.checked)">
                       <span class="switch-slider"></span>
                     </label>
+                  </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="settings-card-group" style="padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase;">Security Recommendations</div>
+                  <div id="settings-privacy-recommendations" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Dynamically populated -->
+                  </div>
+                </div>
+
+                <!-- App Sandbox Permissions Map -->
+                <div class="settings-card-group" style="padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase;">App Sandbox Permissions Map</div>
+                  <div style="overflow-x: auto;">
+                    <table class="settings-perms-table" style="width: 100%; border-collapse: collapse; font-size: 11px; color: var(--color-text-primary);">
+                      <thead>
+                        <tr style="border-bottom: 1px solid var(--color-border); text-align: left; opacity: 0.8;">
+                          <th style="padding: 6px 0;">Application</th>
+                          <th style="padding: 6px 0; text-align: center;">Network WAN</th>
+                          <th style="padding: 6px 0; text-align: center;">Local Files</th>
+                          <th style="padding: 6px 0; text-align: center;">Camera/Mic</th>
+                        </tr>
+                      </thead>
+                      <tbody id="settings-permissions-tbody">
+                        <!-- Dynamically populated -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Live Network Audit Logs -->
+                <div class="settings-card-group" style="padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+                  <div style="font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase;">Live Network Activity Logs</div>
+                  <div class="privacy-audit-logs" id="settings-audit-logs" style="height: 120px; font-size: 10px;">
+                    [System Initialized] Live network packet audit feed active.
                   </div>
                 </div>
               </div>
@@ -344,8 +419,11 @@
                     </div>
                     <select id="settings-prayer-select" onchange="changePrayerMethod(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 6px 12px; border-radius: var(--r-small); outline: none;">
                       <option value="egypt">Egyptian Authority of Survey</option>
-                      <option value="mwl">Muslim World League</option>
-                      <option value="isna">Islamic Society of North America</option>
+                      <option value="mwl">Muslim World League (MWL)</option>
+                      <option value="isna">Islamic Society of North America (ISNA)</option>
+                      <option value="karachi">University of Islamic Sciences, Karachi</option>
+                      <option value="makkah">Umm al-Qura University, Makkah</option>
+                      <option value="tehran">Institute of Geophysics, University of Tehran</option>
                     </select>
                   </div>
                   <div class="settings-row">
@@ -353,10 +431,13 @@
                       <div class="settings-row-title" id="lbl-set-isl-adhan">System Adhan Sound</div>
                       <div class="settings-row-desc" id="lbl-set-isl-adhan-desc">Play full Adhan call during prayer times</div>
                     </div>
-                    <label class="halal-switch">
-                      <input type="checkbox" checked id="settings-chk-adhan">
-                      <span class="switch-slider"></span>
-                    </label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <button class="btn btn-sm" onclick="playAdhanTone()" id="btn-test-adhan" style="display: flex; align-items: center; gap: 4px; border-color: var(--color-gold); color: var(--color-gold-light);"><i class="ti ti-volume"></i> Test</button>
+                      <label class="halal-switch">
+                        <input type="checkbox" checked id="settings-chk-adhan">
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
                   </div>
                   <div class="settings-row">
                     <div class="settings-row-info">
@@ -368,12 +449,18 @@
                       <span class="switch-slider"></span>
                     </label>
                   </div>
-                  <div class="settings-row">
-                    <div class="settings-row-info">
+                  <div class="settings-row" style="flex-wrap: wrap; gap: 10px;">
+                    <div class="settings-row-info" style="flex: 1; min-width: 150px;">
                       <div class="settings-row-title" id="lbl-set-isl-loc">Mock GPS Coordinates</div>
                       <div class="settings-row-desc" id="lbl-set-isl-loc-desc">Set system latitude/longitude for Qibla calculation</div>
                     </div>
-                    <span style="font-family: var(--font-mono); font-size: 12px; color: var(--color-gold-light);">30.0444° N, 31.2357° E (Cairo)</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <input type="number" step="0.0001" id="settings-lat" class="zakat-text-input" style="width: 80px; padding: 4px 8px; font-size: 12px; margin: 0; text-align: center;" value="30.0444" oninput="updateSystemCoordinates()">
+                      <span style="font-size: 12px; color: var(--color-text-secondary);">°N</span>
+                      <input type="number" step="0.0001" id="settings-lng" class="zakat-text-input" style="width: 80px; padding: 4px 8px; font-size: 12px; margin: 0; text-align: center;" value="31.2357" oninput="updateSystemCoordinates()">
+                      <span style="font-size: 12px; color: var(--color-text-secondary);">°E</span>
+                      <button class="btn btn-sm" onclick="autoDetectCoordinates()" style="border-color: var(--color-emerald); color: var(--color-emerald-active); display: flex; align-items: center; gap: 4px;"><i class="ti ti-gps"></i> Auto</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -454,6 +541,22 @@
                       <span style="font-size: 11px; color: var(--color-text-secondary);" id="lbl-hdk-crescent-desc">Crescent shape maps remaining intervals prior to Adhan alerts.</span>
                     </div>
                   </div>
+                </div>
+
+                <!-- GTK4 / Rust Production Exporter -->
+                <div class="settings-card-group" style="padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase;">GTK4 / Rust Component Source Code</div>
+                    <select id="hdk-rust-comp-select" onchange="showRustComponentCode(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 2px 6px; border-radius: var(--r-small); font-size: 11px; outline: none; cursor: pointer;">
+                      <option value="HalalButton">HalalButton (Rust)</option>
+                      <option value="HalalSwitch">HalalSwitch (Rust)</option>
+                      <option value="HalalCard">HalalCard (Rust)</option>
+                    </select>
+                  </div>
+                  <div class="privacy-audit-logs" id="hdk-rust-code-block" style="height: 180px; font-size: 10px; white-space: pre; overflow-x: auto; color: #a5d6a7;">
+                    <!-- Code loaded here -->
+                  </div>
+                  <button class="btn btn-sm btn-primary" onclick="copyRustComponentCode()" style="align-self: flex-end;"><i class="ti ti-copy"></i> Copy Rust Source</button>
                 </div>
               </div>
 
@@ -767,6 +870,672 @@
 
               </div>
 
+              <!-- Tab: Network -->
+              <div class="settings-tab-panel" id="set-tab-network" style="display: none;">
+                <h3 class="settings-section-title">Network &amp; Internet</h3>
+
+                <!-- Connection Status -->
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Wi-Fi</div>
+                      <div class="settings-row-desc">Halal-Home-5GHz — Connected</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <span class="tag tag-green" style="font-size:10px">Connected</span>
+                      <label class="halal-switch"><input type="checkbox" checked id="net-wifi-toggle" onchange="toggleNetworkWifi(this.checked)"><span class="switch-slider"></span></label>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Airplane Mode</div>
+                      <div class="settings-row-desc">Disable all wireless radios</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" id="net-airplane-toggle" onchange="toggleAirplaneMode(this.checked)"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Hotspot / Tethering</div>
+                      <div class="settings-row-desc">Share your connection with other devices</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" id="net-hotspot-toggle"><span class="switch-slider"></span></label>
+                  </div>
+                </div>
+
+                <!-- Nearby Networks -->
+                <div class="settings-card-group" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase">Available Networks</div>
+                    <button class="btn btn-sm" onclick="scanNetworks()" id="btn-scan-wifi"><i class="ti ti-refresh"></i> Scan</button>
+                  </div>
+                  <div id="wifi-networks-list" style="display:flex;flex-direction:column;gap:6px">
+                    <div class="net-wifi-item active" onclick="connectWifi(this,'Halal-Home-5GHz')">
+                      <i class="ti ti-wifi" style="color:var(--color-emerald)"></i>
+                      <div style="flex:1">
+                        <div style="font-size:12px;font-weight:500">Halal-Home-5GHz</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">WPA3 · 5 GHz · -42 dBm</div>
+                      </div>
+                      <i class="ti ti-lock" style="font-size:11px;opacity:0.5"></i>
+                      <span class="tag tag-green" style="font-size:9px">Connected</span>
+                    </div>
+                    <div class="net-wifi-item" onclick="connectWifi(this,'Islamic_Center_Wifi')">
+                      <i class="ti ti-wifi" style="opacity:0.7"></i>
+                      <div style="flex:1">
+                        <div style="font-size:12px;font-weight:500">Islamic_Center_Wifi</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">WPA2 · 2.4 GHz · -68 dBm</div>
+                      </div>
+                      <i class="ti ti-lock" style="font-size:11px;opacity:0.5"></i>
+                    </div>
+                    <div class="net-wifi-item" onclick="connectWifi(this,'OpenNet_Cafe')">
+                      <i class="ti ti-wifi-2" style="opacity:0.5"></i>
+                      <div style="flex:1">
+                        <div style="font-size:12px;font-weight:500">OpenNet_Cafe</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">Open · 2.4 GHz · -81 dBm</div>
+                      </div>
+                      <span class="tag" style="font-size:9px;border-color:var(--color-gold);color:var(--color-gold-light)">⚠ Open</span>
+                    </div>
+                    <div class="net-wifi-item" onclick="connectWifi(this,'Masjid_AlNoor')">
+                      <i class="ti ti-wifi-2" style="opacity:0.6"></i>
+                      <div style="flex:1">
+                        <div style="font-size:12px;font-weight:500">Masjid_AlNoor</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">WPA2 · 5 GHz · -74 dBm</div>
+                      </div>
+                      <i class="ti ti-lock" style="font-size:11px;opacity:0.5"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DNS & Privacy -->
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">DNS over HTTPS (DoH)</div>
+                      <div class="settings-row-desc">Cloudflare 1.1.1.1 — encrypted DNS queries</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" checked id="net-doh-toggle"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Halal VPN</div>
+                      <div class="settings-row-desc">End-to-end encrypted tunnel — zero-log policy</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <select id="net-vpn-server" style="background:rgba(255,255,255,0.05);border:1px solid var(--color-border);color:var(--color-text-primary);padding:4px 8px;border-radius:var(--r-small);font-size:11px;outline:none">
+                        <option>🇩🇪 Frankfurt (EU)</option>
+                        <option>🇸🇬 Singapore (AS)</option>
+                        <option>🇦🇪 Dubai (ME)</option>
+                        <option>🇺🇸 New York (US)</option>
+                      </select>
+                      <label class="halal-switch"><input type="checkbox" id="net-vpn-toggle" onchange="toggleSettingsVPN(this.checked)"><span class="switch-slider"></span></label>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Proxy Settings</div>
+                      <div class="settings-row-desc">HTTP/SOCKS5 proxy configuration</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="showProxyModal()"><i class="ti ti-adjustments"></i> Configure</button>
+                  </div>
+                </div>
+
+                <!-- Network Stats -->
+                <div class="settings-card-group" style="padding:14px">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;margin-bottom:10px">Network Statistics</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
+                    <div style="background:rgba(27,94,32,0.1);border-radius:var(--r-small);padding:10px;text-align:center">
+                      <div style="font-size:18px;font-weight:700;color:var(--color-emerald)" id="net-stat-up">2.4</div>
+                      <div style="font-size:10px;color:var(--color-text-muted)">Mbps ↑ Upload</div>
+                    </div>
+                    <div style="background:rgba(27,94,32,0.1);border-radius:var(--r-small);padding:10px;text-align:center">
+                      <div style="font-size:18px;font-weight:700;color:var(--color-emerald)" id="net-stat-down">45.2</div>
+                      <div style="font-size:10px;color:var(--color-text-muted)">Mbps ↓ Download</div>
+                    </div>
+                    <div style="background:rgba(212,160,23,0.1);border-radius:var(--r-small);padding:10px;text-align:center">
+                      <div style="font-size:18px;font-weight:700;color:var(--color-gold)" id="net-stat-ping">14</div>
+                      <div style="font-size:10px;color:var(--color-text-muted)">ms Ping</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.05);border-radius:var(--r-small);padding:10px;text-align:center">
+                      <div style="font-size:18px;font-weight:700;color:var(--color-text-primary)" id="net-stat-blocked">847</div>
+                      <div style="font-size:10px;color:var(--color-text-muted)">Trackers Blocked</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Bluetooth -->
+              <div class="settings-tab-panel" id="set-tab-bluetooth" style="display: none;">
+                <h3 class="settings-section-title">Bluetooth &amp; Devices</h3>
+
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Bluetooth</div>
+                      <div class="settings-row-desc">Halal OS — Visible to nearby devices</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" checked id="bt-main-toggle" onchange="toggleBluetooth(this.checked)"><span class="switch-slider"></span></label>
+                  </div>
+                </div>
+
+                <!-- Paired Devices -->
+                <div class="settings-card-group" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;margin-bottom:4px">Paired Devices</div>
+                  <div class="bt-device-item">
+                    <div class="bt-device-icon"><i class="ti ti-headphones"></i></div>
+                    <div style="flex:1">
+                      <div style="font-size:12px;font-weight:500">Sony WH-1000XM5</div>
+                      <div style="font-size:10px;color:var(--color-text-muted)">Headphones · Connected · 🔋 78%</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="disconnectDevice(this,'Sony WH-1000XM5')">Disconnect</button>
+                  </div>
+                  <div class="bt-device-item">
+                    <div class="bt-device-icon"><i class="ti ti-keyboard"></i></div>
+                    <div style="flex:1">
+                      <div style="font-size:12px;font-weight:500">Keychron K3 Pro</div>
+                      <div style="font-size:10px;color:var(--color-text-muted)">Keyboard · Connected · 🔋 91%</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="disconnectDevice(this,'Keychron K3 Pro')">Disconnect</button>
+                  </div>
+                  <div class="bt-device-item" style="opacity:0.6">
+                    <div class="bt-device-icon"><i class="ti ti-device-watch"></i></div>
+                    <div style="flex:1">
+                      <div style="font-size:12px;font-weight:500">Garmin Forerunner</div>
+                      <div style="font-size:10px;color:var(--color-text-muted)">Smartwatch · Not connected</div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="connectDevice(this,'Garmin Forerunner')">Connect</button>
+                  </div>
+                </div>
+
+                <!-- Nearby Devices Scan -->
+                <div class="settings-card-group" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase">Nearby Devices</div>
+                    <button class="btn btn-sm" onclick="scanBluetooth()" id="btn-bt-scan"><i class="ti ti-radar"></i> Scan</button>
+                  </div>
+                  <div id="bt-nearby-list" style="display:flex;flex-direction:column;gap:6px">
+                    <div class="bt-device-item" style="opacity:0.7">
+                      <div class="bt-device-icon"><i class="ti ti-device-mobile"></i></div>
+                      <div style="flex:1">
+                        <div style="font-size:12px;font-weight:500">Ahmed's iPhone</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">Phone · -55 dBm</div>
+                      </div>
+                      <button class="btn btn-sm btn-primary" onclick="pairDevice(this,"Ahmed's iPhone")">Pair</button>
+                    </div>
+                    <div class="bt-device-item" style="opacity:0.6">
+                      <div class="bt-device-icon"><i class="ti ti-bluetooth"></i></div>
+                      <div style="flex:1">
+                        <div style="font-size:12px;font-weight:500">Unknown Device #3A2F</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">BLE · -79 dBm</div>
+                      </div>
+                      <button class="btn btn-sm" onclick="pairDevice(this,'Unknown #3A2F')">Pair</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Other Devices -->
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Display &amp; Monitors</div>
+                      <div class="settings-row-desc">1× Primary — 1920×1080 @ 144 Hz · HDR</div>
+                    </div>
+                    <button class="btn btn-sm"><i class="ti ti-adjustments"></i> Configure</button>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Printer / Scanner</div>
+                      <div class="settings-row-desc">No printer configured</div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="addPrinter()"><i class="ti ti-plus"></i> Add</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Accessibility -->
+              <div class="settings-tab-panel" id="set-tab-accessibility" style="display: none;">
+                <h3 class="settings-section-title">Accessibility</h3>
+                <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:16px">Halal OS is built to be inclusive. These settings adjust the experience to your needs and preferences.</div>
+
+                <!-- Vision -->
+                <div class="settings-card-group">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;padding:12px 14px 0">Vision</div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Font Size</div>
+                      <div class="settings-row-desc">Adjust system-wide text size</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <span style="font-size:11px;color:var(--color-text-muted)">A</span>
+                      <input type="range" class="hdk-slider" id="a11y-font-size" min="80" max="150" value="100" oninput="applyFontScale(this.value)" style="width:90px">
+                      <span style="font-size:14px;font-weight:600">A</span>
+                      <span style="font-family:var(--font-mono);font-size:11px;min-width:30px" id="a11y-font-label">100%</span>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">High Contrast Mode</div>
+                      <div class="settings-row-desc">Increase contrast for better readability</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" id="a11y-contrast" onchange="toggleHighContrast(this.checked)"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Color Blindness Filter</div>
+                      <div class="settings-row-desc">Apply accessible color filters</div>
+                    </div>
+                    <select id="a11y-color-filter" onchange="applyColorFilter(this.value)" style="background:rgba(255,255,255,0.05);border:1px solid var(--color-border);color:var(--color-text-primary);padding:6px 12px;border-radius:var(--r-small);outline:none;font-size:12px">
+                      <option value="none">None</option>
+                      <option value="protanopia">Protanopia (Red-blind)</option>
+                      <option value="deuteranopia">Deuteranopia (Green-blind)</option>
+                      <option value="tritanopia">Tritanopia (Blue-blind)</option>
+                      <option value="achromatopsia">Achromatopsia (Monochrome)</option>
+                    </select>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Screen Magnifier</div>
+                      <div class="settings-row-desc">Zoom into any area using keyboard shortcut (Super + =)</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" id="a11y-magnifier" onchange="toggleMagnifier(this.checked)"><span class="switch-slider"></span></label>
+                  </div>
+                </div>
+
+                <!-- Hearing -->
+                <div class="settings-card-group">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;padding:12px 14px 0">Hearing</div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Visual Alerts</div>
+                      <div class="settings-row-desc">Flash screen instead of playing sounds for alerts</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" id="a11y-visual-alert"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Mono Audio</div>
+                      <div class="settings-row-desc">Combine stereo channels for single-ear listening</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" id="a11y-mono-audio"><span class="switch-slider"></span></label>
+                  </div>
+                </div>
+
+                <!-- Motor / Interaction -->
+                <div class="settings-card-group">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;padding:12px 14px 0">Motor &amp; Interaction</div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Keyboard Navigation</div>
+                      <div class="settings-row-desc">Full keyboard control of all UI elements (Tab, Arrow keys)</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" checked id="a11y-keyboard-nav"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Sticky Keys</div>
+                      <div class="settings-row-desc">Press modifier keys sequentially instead of simultaneously</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" id="a11y-sticky-keys"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Pointer Speed</div>
+                      <div class="settings-row-desc">Adjust cursor movement speed</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <i class="ti ti-mouse" style="opacity:0.5;font-size:13px"></i>
+                      <input type="range" class="hdk-slider" id="a11y-pointer-speed" min="1" max="10" value="5" style="width:100px">
+                      <i class="ti ti-mouse" style="font-size:16px"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Screen Reader -->
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Screen Reader (Orca)</div>
+                      <div class="settings-row-desc">Text-to-speech navigation for all UI elements (Super + Alt + S)</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <button class="btn btn-sm" onclick="testScreenReader()" style="border-color:var(--color-emerald);color:var(--color-emerald)"><i class="ti ti-volume"></i> Test</button>
+                      <label class="halal-switch"><input type="checkbox" id="a11y-screen-reader" onchange="toggleScreenReader(this.checked)"><span class="switch-slider"></span></label>
+                    </div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Focus Ring</div>
+                      <div class="settings-row-desc">Show visible focus indicator on all interactive elements</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" checked id="a11y-focus-ring"><span class="switch-slider"></span></label>
+                  </div>
+                </div>
+
+                <!-- Accessibility Score -->
+                <div class="settings-card-group" style="padding:14px">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;margin-bottom:10px">Accessibility Score</div>
+                  <div style="display:flex;align-items:center;gap:14px">
+                    <div class="ps-radial" style="font-size:18px;width:56px;height:56px;flex-shrink:0">72</div>
+                    <div>
+                      <div style="font-size:13px;font-weight:600">Good — Some features can be improved</div>
+                      <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Enable High Contrast and Screen Reader to reach 100%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Notifications -->
+              <div class="settings-tab-panel" id="set-tab-notifications" style="display: none;">
+                <h3 class="settings-section-title">Notifications</h3>
+
+                <!-- Global -->
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Do Not Disturb</div>
+                      <div class="settings-row-desc">Suppress all notifications except prayer alerts</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" id="notif-dnd" onchange="toggleDND(this.checked)"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">DND Schedule</div>
+                      <div class="settings-row-desc">Auto-enable during prayer times</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" checked id="notif-dnd-prayer"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Notification Sound</div>
+                      <div class="settings-row-desc">Play audio for incoming notifications</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" checked id="notif-sound"><span class="switch-slider"></span></label>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Notification Badges</div>
+                      <div class="settings-row-desc">Show count badges on taskbar icons</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" checked id="notif-badges"><span class="switch-slider"></span></label>
+                  </div>
+                </div>
+
+                <!-- Per-App Notifications -->
+                <div class="settings-card-group" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;margin-bottom:4px">Per-App Settings</div>
+                  <div id="notif-app-list" style="display:flex;flex-direction:column;gap:6px">
+                    <div class="notif-app-row">
+                      <div style="display:flex;align-items:center;gap:10px;flex:1">
+                        <div style="width:28px;height:28px;border-radius:6px;background:rgba(27,94,32,0.2);display:flex;align-items:center;justify-content:center"><i class="ti ti-moon-stars" style="color:var(--color-emerald);font-size:14px"></i></div>
+                        <div>
+                          <div style="font-size:12px;font-weight:500">Islamic Suite</div>
+                          <div style="font-size:10px;color:var(--color-text-muted)">Prayer alerts, Adhan, Quran</div>
+                        </div>
+                      </div>
+                      <select class="notif-select"><option>All</option><option>Important only</option><option>None</option></select>
+                      <label class="halal-switch"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                    </div>
+                    <div class="notif-app-row">
+                      <div style="display:flex;align-items:center;gap:10px;flex:1">
+                        <div style="width:28px;height:28px;border-radius:6px;background:rgba(212,160,23,0.15);display:flex;align-items:center;justify-content:center"><i class="ti ti-robot" style="color:var(--color-gold);font-size:14px"></i></div>
+                        <div>
+                          <div style="font-size:12px;font-weight:500">Amina AI</div>
+                          <div style="font-size:10px;color:var(--color-text-muted)">Assistant responses, reminders</div>
+                        </div>
+                      </div>
+                      <select class="notif-select"><option>All</option><option>Important only</option><option>None</option></select>
+                      <label class="halal-switch"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                    </div>
+                    <div class="notif-app-row">
+                      <div style="display:flex;align-items:center;gap:10px;flex:1">
+                        <div style="width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center"><i class="ti ti-shield" style="color:var(--color-text-secondary);font-size:14px"></i></div>
+                        <div>
+                          <div style="font-size:12px;font-weight:500">Amanah Security</div>
+                          <div style="font-size:10px;color:var(--color-text-muted)">Threat alerts, permission requests</div>
+                        </div>
+                      </div>
+                      <select class="notif-select"><option>All</option><option>Important only</option><option>None</option></select>
+                      <label class="halal-switch"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                    </div>
+                    <div class="notif-app-row">
+                      <div style="display:flex;align-items:center;gap:10px;flex:1">
+                        <div style="width:28px;height:28px;border-radius:6px;background:rgba(33,150,243,0.15);display:flex;align-items:center;justify-content:center"><i class="ti ti-world" style="color:#42a5f5;font-size:14px"></i></div>
+                        <div>
+                          <div style="font-size:12px;font-weight:500">Halal Browser</div>
+                          <div style="font-size:10px;color:var(--color-text-muted)">Downloads, blocked sites</div>
+                        </div>
+                      </div>
+                      <select class="notif-select"><option>All</option><option>Important only</option><option selected>None</option></select>
+                      <label class="halal-switch"><input type="checkbox"><span class="switch-slider"></span></label>
+                    </div>
+                    <div class="notif-app-row">
+                      <div style="display:flex;align-items:center;gap:10px;flex:1">
+                        <div style="width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center"><i class="ti ti-folder" style="color:var(--color-text-secondary);font-size:14px"></i></div>
+                        <div>
+                          <div style="font-size:12px;font-weight:500">Hafiz File Manager</div>
+                          <div style="font-size:10px;color:var(--color-text-muted)">Copy/move completions, warnings</div>
+                        </div>
+                      </div>
+                      <select class="notif-select"><option>All</option><option selected>Important only</option><option>None</option></select>
+                      <label class="halal-switch"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                    </div>
+                    <div class="notif-app-row">
+                      <div style="display:flex;align-items:center;gap:10px;flex:1">
+                        <div style="width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center"><i class="ti ti-cloud" style="color:var(--color-text-secondary);font-size:14px"></i></div>
+                        <div>
+                          <div style="font-size:12px;font-weight:500">Halal Cloud</div>
+                          <div style="font-size:10px;color:var(--color-text-muted)">Sync status, backup alerts</div>
+                        </div>
+                      </div>
+                      <select class="notif-select"><option>All</option><option>Important only</option><option>None</option></select>
+                      <label class="halal-switch"><input type="checkbox" checked><span class="switch-slider"></span></label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Storage -->
+              <div class="settings-tab-panel" id="set-tab-storage" style="display: none;">
+                <h3 class="settings-section-title">Storage &amp; Disk</h3>
+
+                <!-- Disk Overview -->
+                <div class="settings-card-group" style="padding:14px">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;margin-bottom:12px">Disk Usage — Samsung 970 EVO (512 GB NVMe)</div>
+                  <!-- Storage Bar -->
+                  <div style="background:rgba(255,255,255,0.07);border-radius:6px;height:18px;overflow:hidden;position:relative;margin-bottom:12px">
+                    <div style="display:flex;height:100%">
+                      <div style="width:28%;background:var(--color-emerald-dark);transition:width 0.5s" title="System"></div>
+                      <div style="width:19%;background:var(--color-gold);transition:width 0.5s" title="Documents"></div>
+                      <div style="width:14%;background:#42a5f5;transition:width 0.5s" title="Media"></div>
+                      <div style="width:6%;background:#ef5350;transition:width 0.5s" title="Apps"></div>
+                    </div>
+                  </div>
+                  <!-- Legend -->
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:10px;height:10px;border-radius:2px;background:var(--color-emerald-dark);flex-shrink:0"></div>
+                      <div>
+                        <div style="font-size:11px;font-weight:500">System</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">144 GB</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:10px;height:10px;border-radius:2px;background:var(--color-gold);flex-shrink:0"></div>
+                      <div>
+                        <div style="font-size:11px;font-weight:500">Documents</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">98 GB</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:10px;height:10px;border-radius:2px;background:#42a5f5;flex-shrink:0"></div>
+                      <div>
+                        <div style="font-size:11px;font-weight:500">Media</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">72 GB</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:10px;height:10px;border-radius:2px;background:#ef5350;flex-shrink:0"></div>
+                      <div>
+                        <div style="font-size:11px;font-weight:500">Applications</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">31 GB</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,0.15);flex-shrink:0"></div>
+                      <div>
+                        <div style="font-size:11px;font-weight:500">Free</div>
+                        <div style="font-size:10px;color:var(--color-text-muted)">167 GB</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center">
+                    <div style="font-size:12px;color:var(--color-text-secondary)">345 GB used of 512 GB <span style="color:var(--color-emerald)">(33% free)</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono);color:var(--color-text-muted)">Btrfs · Encrypted · LUKS2</div>
+                  </div>
+                </div>
+
+                <!-- Cleanup Tools -->
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">System Cache</div>
+                      <div class="settings-row-desc">2.4 GB — Package manager caches</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="cleanCache('system')" style="border-color:#ef5350;color:#ef5350"><i class="ti ti-trash"></i> Clean</button>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Thumbnail Cache</div>
+                      <div class="settings-row-desc">380 MB — File previews and icons</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="cleanCache('thumbnails')" style="border-color:#ef5350;color:#ef5350"><i class="ti ti-trash"></i> Clean</button>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Trash</div>
+                      <div class="settings-row-desc">840 MB — Files awaiting deletion</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="emptyTrash()" style="border-color:#ef5350;color:#ef5350"><i class="ti ti-trash-x"></i> Empty</button>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Log Files</div>
+                      <div class="settings-row-desc">156 MB — System and app logs</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="cleanCache('logs')" style="border-color:#ef5350;color:#ef5350"><i class="ti ti-trash"></i> Clean</button>
+                  </div>
+                </div>
+
+                <!-- Snapshots -->
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Btrfs Snapshots</div>
+                      <div class="settings-row-desc">3 snapshots — 12 GB protected restore points</div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="manageSnapshots()"><i class="ti ti-camera"></i> Manage</button>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Auto-Snapshot</div>
+                      <div class="settings-row-desc">Automatically snapshot before system updates</div>
+                    </div>
+                    <label class="halal-switch"><input type="checkbox" checked id="storage-auto-snap"><span class="switch-slider"></span></label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: About -->
+              <div class="settings-tab-panel" id="set-tab-about" style="display: none;">
+                <h3 class="settings-section-title">About Halal OS</h3>
+
+                <!-- OS Identity -->
+                <div class="settings-card-group" style="padding:20px;text-align:center">
+                  <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style="margin:0 auto 12px">
+                    <circle cx="26" cy="26" r="24" stroke="var(--color-emerald)" stroke-width="2"/>
+                    <path d="M26 8 A18 18 0 1 1 8 26 A14 14 0 1 0 26 8Z" fill="var(--color-emerald)"/>
+                    <path d="M33 16 L34.4 19.6 L38 21 L34.4 22.4 L33 26 L31.6 22.4 L28 21 L31.6 19.6Z" fill="var(--color-gold)"/>
+                  </svg>
+                  <div style="font-size:22px;font-weight:700;letter-spacing:-0.5px">Halal OS</div>
+                  <div style="font-size:13px;color:var(--color-emerald);margin-top:2px">Version 2.0.0 — Alpha Simulator</div>
+                  <div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;line-height:1.5">Privacy First. Faith Forward.<br>Built for the Ummah. Open to the World.</div>
+                  <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                    <button class="btn btn-sm btn-primary" onclick="checkForUpdates()"><i class="ti ti-refresh"></i> Check for Updates</button>
+                    <button class="btn btn-sm" onclick="openWindow('window-terminal')"><i class="ti ti-terminal"></i> View Changelog</button>
+                  </div>
+                </div>
+
+                <!-- System Info -->
+                <div class="settings-card-group" style="padding:14px;display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;margin-bottom:6px">System Information</div>
+                  <div class="about-info-row"><span class="about-info-key">OS Name</span><span class="about-info-val">Halal OS 2.0</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Build</span><span class="about-info-val" style="font-family:var(--font-mono);font-size:11px">halal-os-2.0.0-alpha-20260619</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Base</span><span class="about-info-val">Debian 12 (Bookworm) Fork [Planned]</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Kernel</span><span class="about-info-val">halal-kernel 6.6.0-halal-1 [Web Simulator]</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Desktop</span><span class="about-info-val">Maqam Shell 2.0 (Web Simulator)</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Architecture</span><span class="about-info-val">x86_64 (amd64)</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Package Manager</span><span class="about-info-val">halalpkg [Rust — Planned]</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Memory</span><span class="about-info-val">16 GB DDR5 @ 6000 MHz</span></div>
+                  <div class="about-info-row"><span class="about-info-key">CPU</span><span class="about-info-val">Intel Core i7-13700H (20 cores)</span></div>
+                  <div class="about-info-row"><span class="about-info-key">GPU</span><span class="about-info-val">NVIDIA RTX 4060 (8 GB VRAM)</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Storage</span><span class="about-info-val">512 GB NVMe · Btrfs · LUKS2</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Uptime</span><span class="about-info-val" id="about-uptime">Loading...</span></div>
+                  <div class="about-info-row"><span class="about-info-key">Halal ID</span><span class="about-info-val" style="color:var(--color-text-muted)">Not configured</span></div>
+                </div>
+
+                <!-- Update Status -->
+                <div class="settings-card-group" style="padding:14px">
+                  <div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;margin-bottom:10px">System Update</div>
+                  <div id="about-update-status" style="display:flex;align-items:center;gap:12px">
+                    <div style="width:36px;height:36px;border-radius:50%;background:rgba(27,94,32,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                      <i class="ti ti-check" style="color:var(--color-emerald);font-size:16px"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:12px;font-weight:500">Your system is up to date</div>
+                      <div style="font-size:10px;color:var(--color-text-muted)">Last checked: Just now · Next automatic check: Daily</div>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px;display:flex;gap:8px">
+                    <button class="btn btn-sm" onclick="toggleAutoUpdate()" id="btn-auto-update" style="border-color:var(--color-emerald);color:var(--color-emerald)"><i class="ti ti-refresh"></i> Auto-Update: ON</button>
+                    <button class="btn btn-sm" onclick="showUpdateNotes()"><i class="ti ti-file-text"></i> Release Notes</button>
+                  </div>
+                </div>
+
+                <!-- Legal -->
+                <div class="settings-card-group">
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">License</div>
+                      <div class="settings-row-desc">GNU General Public License v3.0 (GPL-3)</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="showLicense()"><i class="ti ti-license"></i> View</button>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Privacy Policy</div>
+                      <div class="settings-row-desc">No data collection. No telemetry. Ever.</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="showPrivacyPolicy()"><i class="ti ti-file-text"></i> View</button>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Open Source Credits</div>
+                      <div class="settings-row-desc">Debian, Linux kernel, GTK4, Rust, Go and more</div>
+                    </div>
+                    <button class="btn btn-sm" onclick="showCredits()"><i class="ti ti-award"></i> Credits</button>
+                  </div>
+                  <div class="settings-row">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Contribute</div>
+                      <div class="settings-row-desc">This OS is built by the community, for the Ummah</div>
+                    </div>
+                    <button class="btn btn-sm btn-primary" onclick="openGitHub()"><i class="ti ti-brand-github"></i> GitHub</button>
+                  </div>
+                </div>
+
+                <!-- Bismillah footer -->
+                <div style="text-align:center;padding:16px 0 8px;font-family:var(--font-quran);font-size:18px;color:var(--color-gold);opacity:0.8">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+                <div style="text-align:center;font-size:11px;color:var(--color-text-muted)">Made with ♥ for 1.8 billion people. Built with Google AntiGravity AI IDE.</div>
+              </div>
+
             </main>
           </div>
         </div>
@@ -928,8 +1697,16 @@
             <div class="terminal-tab-add" onclick="addNewTerminalTab()"><i class="ti ti-plus"></i></div>
           </div>
           <!-- Toolbar with splits control -->
-          <div class="terminal-toolbar">
-            <span style="font-size: 10px; color: var(--color-text-muted);" id="lbl-term-info">Interactive Kalam Console</span>
+          <div class="terminal-toolbar" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 10px; color: var(--color-text-muted);" id="lbl-term-info">Interactive Kalam Console</span>
+              <select id="terminal-theme-select" onchange="changeTerminalTheme(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-secondary); padding: 2px 6px; border-radius: var(--r-small); outline: none; font-size: 10px; cursor: pointer;">
+                <option value="midnight">Midnight Theme</option>
+                <option value="forest">Forest Green Theme</option>
+                <option value="gold">Gold Amber Theme</option>
+                <option value="matrix">Matrix Hack Theme</option>
+              </select>
+            </div>
             <div style="display: flex; gap: 6px;">
               <button class="terminal-toolbar-btn" onclick="splitTerminal('vertical')"><i class="ti ti-columns"></i> Split Vertically</button>
               <button class="terminal-toolbar-btn" onclick="splitTerminal('horizontal')"><i class="ti ti-layout-rows"></i> Split Horizontally</button>
@@ -939,7 +1716,7 @@
           <!-- Panes Container -->
           <div class="terminal-panes-container" id="terminal-panes-container">
             <div class="terminal-pane" id="terminal-pane-0">
-              <div class="terminal-wrapper" id="terminal-click-area-0" onclick="focusTerminal(0)">
+              <div class="terminal-wrapper theme-midnight" id="terminal-click-area-0" onclick="focusTerminal(0)">
                 <div class="terminal-banner" id="terminal-banner-text-0">☪ KALAM TERMINAL v2.0.0 (Tab-1)
 Base: Debian GNU/Linux 13 (trixie) x86_64
 System load: 0.12 | Network shield: ACTIVE
@@ -1119,6 +1896,21 @@ LAN status: sandbox Isolated
                 I run completely on-device without cloud transmission. Ask me system controls or Islamic queries.
               </div>
             </div>
+            
+            <!-- Voice Wave Visualizer Bars -->
+            <div id="amina-voice-wave" class="amina-voice-wave" style="display: none; justify-content: center; align-items: center; gap: 4px; padding: 6px; background: rgba(0,0,0,0.1); border-radius: var(--r-small); margin: 0 16px;">
+              <span class="voice-wave-bar" style="height: 8px;"></span>
+              <span class="voice-wave-bar" style="height: 16px;"></span>
+              <span class="voice-wave-bar" style="height: 24px;"></span>
+              <span class="voice-wave-bar" style="height: 14px;"></span>
+              <span class="voice-wave-bar" style="height: 8px;"></span>
+            </div>
+
+            <!-- Suggestion Chips Container -->
+            <div class="amina-suggestion-container" id="amina-suggestion-chips">
+              <!-- Dynamically populated -->
+            </div>
+
             <div class="amina-input-panel">
               <input type="text" class="amina-input" id="amina-text-input" placeholder="Type message or instruction..." onkeyup="handleAminaKeyUp(event)">
               <div class="amina-voice-visualizer" id="amina-mic" onclick="toggleAminaVoice()">
@@ -1185,6 +1977,23 @@ LAN status: sandbox Isolated
                     </select>
                   </div>
                 </div>
+                <div class="quran-search-bar-row" style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
+                  <div style="position: relative; flex: 1;">
+                    <i class="ti ti-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); font-size: 14px;"></i>
+                    <input type="text" id="quran-local-search" placeholder="Search current surah verses..." class="files-search-bar" style="padding-left: 32px; width: 100%; border-radius: var(--r-small); background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: white;" oninput="searchLocalQuran(this.value)">
+                  </div>
+                  <button class="btn btn-sm" onclick="toggleBookmarksList()" id="btn-quran-bookmarks" style="display: flex; align-items: center; gap: 4px; border-color: var(--color-gold); color: var(--color-gold-light);"><i class="ti ti-bookmark"></i> Bookmarks (<span id="quran-bookmarks-count">0</span>)</button>
+                </div>
+                <!-- Bookmarks list drawer -->
+                <div id="quran-bookmarks-drawer" style="display: none; background: rgba(10, 15, 10, 0.95); border: 1px solid var(--color-border); border-radius: var(--r-small); padding: 12px; margin-top: 8px; max-height: 200px; overflow-y: auto; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                  <div style="font-weight: 700; font-size: 12px; color: var(--color-gold-light); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>Saved Bookmarked Verses</span>
+                    <button class="btn btn-sm" onclick="toggleBookmarksList()" style="padding: 2px 6px; font-size: 10px; border: none; background: rgba(255,255,255,0.05);">Close</button>
+                  </div>
+                  <div id="quran-bookmarks-list" style="font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="color: var(--color-text-muted);">No bookmarks saved yet. Click the bookmark icon next to a verse to save it.</div>
+                  </div>
+                </div>
                 <canvas class="audio-waveform-canvas" id="quran-audio-wave"></canvas>
                 <div class="quran-reader-pane" style="margin-top: 10px;">
                   <div id="quran-verses-container">
@@ -1225,24 +2034,59 @@ LAN status: sandbox Isolated
               <!-- Tab: Zakat Calculator -->
               <div class="islamic-tab-panel" id="isl-tab-zakat" style="display: none;">
                 <h3 style="font-size: 15px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;" id="lbl-zakat-title">Zakat Nisab Obligation Calculator</h3>
-                <div class="zakat-calc-form">
-                  <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(212, 160, 23, 0.08); border: 1px solid rgba(212, 160, 23, 0.2); border-radius: var(--r-small); font-size: 11px;">
-                    <div><span id="lbl-zakat-nisab-val">Live Nisab threshold (85g Gold):</span> <span style="font-family: var(--font-mono); font-weight: 600; color: var(--color-gold-light);">$5,420.00</span></div>
-                    <div><span id="lbl-zakat-gold-val">Gold price per gram:</span> <span style="font-family: var(--font-mono); font-weight: 600; color: var(--color-gold-light);">$63.76</span></div>
+                <div class="zakat-calc-form" style="max-height: 380px; overflow-y: auto; padding-right: 4px;">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; padding: 10px; background: rgba(212, 160, 23, 0.08); border: 1px solid rgba(212, 160, 23, 0.2); border-radius: var(--r-small); font-size: 11px; margin-bottom: 10px;">
+                    <div>
+                      <span id="lbl-zakat-nisab-val">Nisab Limit:</span>
+                      <strong id="zakat-nisab-display" style="font-family: var(--font-mono); color: var(--color-gold-light);">$5,420.00</strong>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                      <div>Gold/g: <input type="number" id="zakat-gold-price" value="63.76" style="width: 50px; background: none; border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); font-size: 10px; text-align: center; border-radius: 3px;" oninput="calculateZakat()"></div>
+                      <div>Silver/g: <input type="number" id="zakat-silver-price" value="1.05" style="width: 50px; background: none; border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); font-size: 10px; text-align: center; border-radius: 3px;" oninput="calculateZakat()"></div>
+                    </div>
                   </div>
+                  
+                  <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                    <div style="flex: 1;">
+                      <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; display: block;">Nisab Standard Metal</label>
+                      <select id="zakat-metal-standard" onchange="calculateZakat()" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: white; padding: 6px; border-radius: var(--r-small); font-size: 12px; outline: none;">
+                        <option value="gold">Gold (85g Standard)</option>
+                        <option value="silver">Silver (595g Standard)</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div class="zakat-input-group">
                     <label id="lbl-zakat-i-savings">Total Savings / Cash (held for 1 full Lunar year)</label>
                     <input type="number" id="zakat-savings" class="zakat-text-input" value="12000" oninput="calculateZakat()">
                   </div>
-                  <div class="zakat-input-group">
-                    <label id="lbl-zakat-i-gold">Value of owned Gold &amp; Silver assets</label>
-                    <input type="number" id="zakat-gold" class="zakat-text-input" value="1500" oninput="calculateZakat()">
+                  
+                  <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div style="flex: 1;">
+                      <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; display: block;">Gold holdings (grams)</label>
+                      <input type="number" id="zakat-gold-grams" class="zakat-text-input" style="width: 100%; margin: 0;" value="24" oninput="calculateZakat()">
+                    </div>
+                    <div style="flex: 1;">
+                      <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; display: block;">Silver holdings (grams)</label>
+                      <input type="number" id="zakat-silver-grams" class="zakat-text-input" style="width: 100%; margin: 0;" value="150" oninput="calculateZakat()">
+                    </div>
                   </div>
+
                   <div class="zakat-input-group">
-                    <label id="lbl-zakat-i-invest">Value of investment funds and stocks</label>
-                    <input type="number" id="zakat-invest" class="zakat-text-input" value="3000" oninput="calculateZakat()">
+                    <label>Value of business assets (merchandise, inventory)</label>
+                    <input type="number" id="zakat-business" class="zakat-text-input" value="2500" oninput="calculateZakat()">
                   </div>
+                  
+                  <div class="zakat-input-group">
+                    <label>Liabilities, debts, and immediate expenses due</label>
+                    <input type="number" id="zakat-debts" class="zakat-text-input" value="1000" oninput="calculateZakat()">
+                  </div>
+
                   <div class="zakat-result-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 4px; color: var(--color-text-secondary);">
+                      <span>Total Net Worth:</span>
+                      <span id="zakat-net-worth" style="font-family: var(--font-mono); font-weight: 600;">$15,000.00</span>
+                    </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                       <span style="font-size: 12px; font-weight: 600;" id="lbl-zakat-res-nisab">Nisab Obligation Status</span>
                       <span class="tag tag-green" id="zakat-nisab-badge">Met</span>
@@ -1448,6 +2292,84 @@ LAN status: sandbox Isolated
     </div>
   </div>
 
+  <!-- Keyboard Shortcuts Modal -->
+  <div id="kbd-shortcuts-modal" class="quick-look-overlay" style="display: none;" onclick="closeKbdModalOutside(event)">
+    <div class="quick-look-card" role="dialog" aria-modal="true" aria-labelledby="kbd-modal-title">
+      <div class="ql-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+        <h2 id="kbd-modal-title" style="margin: 0; font-size: 18px; color: var(--color-gold-light); display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-keyboard"></i> <span>Keyboard Shortcuts (اختصارات لوحة المفاتيح)</span>
+        </h2>
+        <button onclick="closeKbdModal()" class="btn btn-sm btn-ghost" style="padding: 4px; min-width: unset; height: unset;" aria-label="Close keyboard shortcuts dialog">
+          <i class="ti ti-x" style="font-size: 18px;"></i>
+        </button>
+      </div>
+      <div class="ql-body" style="max-height: 350px; overflow-y: auto; padding-right: 4px;">
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--color-border); padding-bottom: 6px; color: var(--color-text-muted);">
+            <span><strong>Shortcut (الاختصار)</strong></span>
+            <span><strong>Action (الإجراء)</strong></span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">?</kbd></span>
+            <span>Toggle Shortcuts Help (مساعدة الاختصارات)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Super / Ctrl + Space</kbd></span>
+            <span>Bismillah Menu (قائمة بسم الله)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Super / Ctrl + F</kbd></span>
+            <span>File Manager (مدير الملفات)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Super / Ctrl + T</kbd></span>
+            <span>Terminal (الطرفية)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Super / Ctrl + B</kbd></span>
+            <span>Browser (المتصفح)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Super / Ctrl + ,</kbd></span>
+            <span>Settings (الإعدادات)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Super / Ctrl + I</kbd></span>
+            <span>Islamic Native Suite (البرامج الإسلامية)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Super / Ctrl + A</kbd></span>
+            <span>Amina AI Assistant (المساعد الذكي)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Super / Ctrl + S</kbd></span>
+            <span>Quick Settings (الإعدادات السريعة)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Ctrl + Shift + S</kbd></span>
+            <span>Security Shield (لوحة الأمان والخصوصية)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Ctrl + Alt + ←/→</kbd></span>
+            <span>Switch Workspace (تبديل مساحة العمل)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Alt + Q</kbd></span>
+            <span>Cycle Windows (التنقل بين النوافذ)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Alt + F4</kbd></span>
+            <span>Close Focused Window (إغلاق النافذة الحالية)</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><kbd style="background: rgba(255,255,255,0.1); border: 1px solid var(--color-border); padding: 2px 6px; border-radius: 4px; font-family: monospace;">Escape</kbd></span>
+            <span>Close Modal / Menu (إغلاق القوائم والنوافذ المنبثقة)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== 5. INSHA NOTIFICATION TOAST CONTAINER ==================== -->
   <div id="notification-container"></div>
 
@@ -1472,6 +2394,10 @@ LAN status: sandbox Isolated
     <div class="dcm-item" id="dcm-pin" onclick="toggleDockPin()"><span id="lbl-dcm-pin">Unpin from Dock</span> <i class="ti ti-pin"></i></div>
     <div class="dcm-item" id="dcm-close" onclick="dockMenuClose()"><span id="lbl-dcm-close" style="color: var(--color-danger);">Quit Process</span> <i class="ti ti-x" style="color: var(--color-danger);"></i></div>
   </div>
+
+  <!-- Custom interactive cursor elements -->
+  <div id="custom-cursor" class="custom-cursor"></div>
+  <div id="custom-cursor-ring" class="custom-cursor-ring"></div>
 
   <script src="app.js"></script>
 </body>

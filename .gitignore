@@ -7,3 +7,7 @@
 *.log
 tmp/
 temp/
+
+# Exclude antigravity workspace metadata and project plan documents
+antigravity/
+Project Plan/
