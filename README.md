@@ -82,6 +82,17 @@ The Halal OS Web Simulator and concept files are structured as follows:
 
 ---
 
+## ⚙️ Development Status & ISO Packaging (حالة التطوير والتثبيت)
+
+> [!IMPORTANT]
+> **Halal OS Architecture Structure (بنية نظام هلال):**
+> 1. **Web Simulator (محاكي الويب):** A fully-featured client-side simulator representing the frontend workspace desktop, Islamic native suite, settings, and interactive voice tools. Ready for immediate testing in any modern web browser.
+> 2. **Production Blueprints (أكواد النواة والأنظمة الخلفية):** Real backend daemons, modules, and configurations written in Rust, Go, C, and Python. These form the base architecture of the actual operating system.
+> 
+> *Note:* These modules are **not yet packaged into a bootable ISO file** (system image file for VirtualBox/VMware or USB burning). To build a complete system image, a developer must compile these modules and integrate them with a base Debian system using build tools.
+
+---
+
 ## 🚀 Getting Started
 
 To run the Halal OS Web Simulator locally on your computer:
