@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
@@ -477,6 +477,9 @@
                     <select id="settings-theme-select" onchange="changeSystemTheme(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 6px 12px; border-radius: var(--r-small); outline: none;">
                       <option value="dark">Midnight Dark (Standard)</option>
                       <option value="light">Pearl White Light</option>
+                      <option value="forest">Emerald Forest (الأخضر العشبي)</option>
+                      <option value="kaaba">Kaaba Golden (الذهبي الكعبي)</option>
+                      <option value="ramadan">Ramadan Glow (النمط الرمضاني)</option>
                     </select>
                   </div>
                   <div class="settings-row">
@@ -488,6 +491,19 @@
                       <input type="checkbox" checked id="settings-chk-adaptive-wp" onchange="toggleAdaptiveWallpaper(this.checked)">
                       <span class="switch-slider"></span>
                     </label>
+                  </div>
+                  <div class="settings-row" id="row-custom-wp">
+                    <div class="settings-row-info">
+                      <div class="settings-row-title">Static Wallpaper</div>
+                      <div class="settings-row-desc">Choose a static premium background gradient</div>
+                    </div>
+                    <select id="settings-wallpaper-select" onchange="changeSystemWallpaper(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 6px 12px; border-radius: var(--r-small); outline: none;">
+                      <option value="adaptive">Dynamic Sky (Adaptive)</option>
+                      <option value="mecca">Mecca Gold (الذهبي المكي)</option>
+                      <option value="medina">Medina Green (الأخضر النبوي)</option>
+                      <option value="space">Deep Space (الفضاء الحافظ)</option>
+                      <option value="lavender">Royal Lavender (اللافندر الملكي)</option>
+                    </select>
                   </div>
                   <div class="settings-row">
                     <div class="settings-row-info">

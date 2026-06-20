@@ -1,4 +1,4 @@
-﻿/* ☪ HALAL OS - COMPREHENSIVE DESIGN SYSTEM & STYLESHEET */
+/* ☪ HALAL OS - COMPREHENSIVE DESIGN SYSTEM & STYLESHEET */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
@@ -4306,4 +4306,53 @@ kbd {
 /* Default display none for touch/mobile devices to avoid phantom cursors */
 .custom-cursor, .custom-cursor-ring {
   display: none;
+}
+
+/* --- CUSTOM THEMES --- */
+[data-theme="forest"] {
+  --color-bg-base: #061408;
+  --color-bg-surface: rgba(14, 38, 20, 0.75);
+  --color-bg-elevated: rgba(22, 58, 30, 0.85);
+  --color-text-primary: #eef7f0;
+  --color-text-secondary: #a3d9a9;
+  --color-text-muted: #5e9c67;
+  --color-border: rgba(102, 187, 106, 0.25);
+  --color-border-focused: rgba(102, 187, 106, 0.55);
+  --color-emerald-dark: #072a0f;
+  --color-emerald: #2e7d32;
+  --color-emerald-light: #4caf50;
+  --color-emerald-hover: #81c784;
+  --color-emerald-active: #a5d6a7;
+  --color-shadow: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="kaaba"] {
+  --color-bg-base: #0a0907;
+  --color-bg-surface: rgba(26, 24, 20, 0.8);
+  --color-bg-elevated: rgba(38, 35, 29, 0.9);
+  --color-text-primary: #fffbf0;
+  --color-text-secondary: #d4a017;
+  --color-text-muted: #8b7355;
+  --color-border: rgba(212, 160, 23, 0.3);
+  --color-border-focused: rgba(212, 160, 23, 0.6);
+  --color-emerald-dark: #503d09;
+  --color-emerald: #d4a017;
+  --color-emerald-light: #fac775;
+  --color-emerald-hover: #fce2b3;
+  --color-emerald-active: #fff6e0;
+  --color-shadow: rgba(0, 0, 0, 0.7);
+}
+
+/* --- STATIC WALLPAPERS --- */
+body.wp-mecca {
+  background: linear-gradient(135deg, #8b6914 0%, #d4a017 40%, #fac775 80%, #faeeda 100%) !important;
+}
+body.wp-medina {
+  background: linear-gradient(135deg, #0a3d12 0%, #1b5e20 40%, #2e7d32 80%, #a5d6a7 100%) !important;
+}
+body.wp-space {
+  background: linear-gradient(135deg, #020205 0%, #080b18 40%, #11172a 80%, #1e293b 100%) !important;
+}
+body.wp-lavender {
+  background: linear-gradient(135deg, #1a0f30 0%, #311b92 40%, #512da8 80%, #7e57c2 100%) !important;
 }

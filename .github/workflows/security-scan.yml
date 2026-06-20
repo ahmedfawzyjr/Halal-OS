@@ -1,0 +1,111 @@
+name: 🔐 Security Scanning
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  rust-audit:
+    name: Rust Dependency Audit
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [security, browser, display-manager, package-manager, filesystems]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Audit ${{ matrix.module }} dependencies
+        working-directory: ${{ matrix.module }}
+        run: cargo audit || true
+        # 'or true' allows audit to report without failing the build
+        # Remove '|| true' once you want to enforce zero-vulnerability policy
+
+  go-vulnerability-scan:
+    name: Go Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Scan cloud/
+        working-directory: cloud
+        run: govulncheck ./... || true
+
+      - name: Scan app-store/
+        working-directory: app-store
+        run: govulncheck ./... || true
+
+  python-safety:
+    name: Python Safety Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install safety
+        run: pip install safety
+
+      - name: Check ai/ dependencies
+        run: |
+          if [ -f ai/requirements.txt ]; then
+            safety check -r ai/requirements.txt || true
+          fi
+
+  secret-scanning:
+    name: Detect Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect secrets with trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --only-verified
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      matrix:
+        language: [javascript, python]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

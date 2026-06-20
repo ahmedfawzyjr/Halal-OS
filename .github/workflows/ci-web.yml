@@ -1,0 +1,81 @@
+name: 🔄 CI — Web Simulator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'index.css'
+      - 'app.js'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'index.css'
+      - 'app.js'
+
+jobs:
+  validate-html:
+    name: Validate HTML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install html-validate
+        run: npm install -g html-validate
+
+      - name: Validate index.html
+        run: html-validate index.html || true
+        # 'or true' because we want warnings, not failures, for now
+
+  validate-css:
+    name: Lint CSS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install stylelint
+        run: npm install -g stylelint stylelint-config-standard
+
+      - name: Lint index.css
+        run: stylelint index.css --config '{"extends": "stylelint-config-standard"}' || true
+
+  validate-js:
+    name: Lint JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ESLint
+        run: npm install -g eslint
+
+      - name: Lint app.js
+        run: eslint app.js --env browser,es2022 --parser-options=ecmaVersion:2022 || true
+
+  file-size-check:
+    name: File Size Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check file sizes
+        run: |
+          echo "=== File Sizes ==="
+          ls -lh index.html index.css app.js
+          echo "=== Total Size ==="
+          du -sh index.html index.css app.js

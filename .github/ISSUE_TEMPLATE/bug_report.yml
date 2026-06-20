@@ -1,0 +1,94 @@
+---
+name: 🐛 Bug Report
+description: Report a bug in Halal OS
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **جزاكم الله خيراً for taking the time to report this bug.**
+        Please fill out this form as completely as possible to help us fix it quickly.
+
+  - type: checkboxes
+    id: existing-search
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate
+          required: true
+        - label: I checked the FAQ in README.md
+          required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component is affected?
+      options:
+        - Web Simulator (index.html / app.js / index.css)
+        - Kernel Module (kernel/)
+        - Security Daemons (security/ — halalfire/halalguard)
+        - Browser Engine (browser/)
+        - Cloud API (cloud/)
+        - App Store (app-store/)
+        - AI Module (ai/)
+        - Islamic Module (islamic/)
+        - Filesystem (filesystems/)
+        - Display Manager (display-manager/)
+        - Package Manager (package-manager/)
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clear description of the bug
+      placeholder: What happened? What did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce the bug
+      placeholder: |
+        1. Open the Web Simulator at http://localhost:8888
+        2. Click on '...'
+        3. See error in console
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Your setup
+      value: |
+        - OS: [e.g., Windows 11, Ubuntu 22.04, macOS 14]
+        - Browser (for Web Simulator): [e.g., Chrome 120, Firefox 121]
+        - Rust version (if applicable): [e.g., 1.75.0]
+        - Go version (if applicable): [e.g., 1.21.0]
+        - Python version (if applicable): [e.g., 3.11.0]
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs / Screenshots
+      description: Paste any relevant error messages, console output, or screenshots
+      render: shell

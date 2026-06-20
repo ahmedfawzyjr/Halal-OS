@@ -1,0 +1,129 @@
+name: 🦀 CI — Rust Modules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'security/**'
+      - 'browser/**'
+      - 'display-manager/**'
+      - 'package-manager/**'
+      - 'filesystems/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'security/**'
+      - 'browser/**'
+      - 'display-manager/**'
+      - 'package-manager/**'
+      - 'filesystems/**'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  security-daemon:
+    name: Build & Test — security/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('security/Cargo.lock') }}
+
+      - name: Check formatting
+        working-directory: security
+        run: cargo fmt -- --check
+
+      - name: Clippy lint
+        working-directory: security
+        run: cargo clippy -- -D warnings
+
+      - name: Build
+        working-directory: security
+        run: cargo build --verbose
+
+      - name: Run tests
+        working-directory: security
+        run: cargo test --verbose
+
+  browser-engine:
+    name: Build & Test — browser/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-browser-${{ hashFiles('browser/Cargo.lock') }}
+
+      - name: Check formatting
+        working-directory: browser
+        run: cargo fmt -- --check
+
+      - name: Clippy lint
+        working-directory: browser
+        run: cargo clippy -- -D warnings
+
+      - name: Build
+        working-directory: browser
+        run: cargo build --verbose
+
+      - name: Run tests
+        working-directory: browser
+        run: cargo test --verbose
+
+  display-manager:
+    name: Build & Test — display-manager/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        working-directory: display-manager
+        run: cargo build --verbose
+
+  package-manager:
+    name: Build & Test — package-manager/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        working-directory: package-manager
+        run: cargo build --verbose
+
+  filesystems:
+    name: Build & Test — filesystems/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        working-directory: filesystems
+        run: cargo build --verbose

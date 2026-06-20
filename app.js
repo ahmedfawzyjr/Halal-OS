@@ -1,4 +1,4 @@
-﻿// ☪ HALAL OS - CORE SIMULATOR LOGIC
+// ☪ HALAL OS - CORE SIMULATOR LOGIC
 
 // --- 1. LOCALIZATION DICTIONARY ---
 const translations = {
@@ -1075,12 +1075,28 @@ function changeSystemTheme(theme) {
 
 function toggleAdaptiveWallpaper(enabled) {
   setupState.adaptiveWp = enabled;
+  const select = document.getElementById("settings-wallpaper-select");
   if (!enabled) {
     document.body.className = "";
     document.body.style.background = "#0B2B11";
   } else {
     document.body.removeAttribute("style");
+    if (select) select.value = "adaptive";
     updateTopClock();
+  }
+}
+
+function changeSystemWallpaper(val) {
+  const chk = document.getElementById("settings-chk-adaptive-wp");
+  if (val === "adaptive") {
+    if (chk) chk.checked = true;
+    toggleAdaptiveWallpaper(true);
+  } else {
+    if (chk) chk.checked = false;
+    setupState.adaptiveWp = false;
+    document.body.removeAttribute("style");
+    document.body.className = "wp-" + val;
+    showInshaNotification("Wallpaper Switched", `Desktop background configured to: ${val}`, "info");
   }
 }
 

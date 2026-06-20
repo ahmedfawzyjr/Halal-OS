@@ -1,0 +1,62 @@
+name: 🐍 CI — Python Modules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ai/**'
+      - 'islamic/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ai/**'
+      - 'islamic/**'
+
+jobs:
+  ai-module:
+    name: Lint & Test — ai/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install black flake8 mypy
+          if [ -f ai/requirements.txt ]; then pip install -r ai/requirements.txt; fi
+
+      - name: Black formatting check
+        working-directory: ai
+        run: black --check . || true
+
+      - name: Flake8 lint
+        working-directory: ai
+        run: flake8 . --max-line-length=100 --ignore=E501 || true
+
+      - name: Syntax check
+        working-directory: ai
+        run: python -m py_compile voice_assistant.py && echo "Syntax OK"
+
+  islamic-module:
+    name: Lint & Test — islamic/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install black flake8
+          if [ -f islamic/requirements.txt ]; then pip install -r islamic/requirements.txt; fi
+
+      - name: Syntax check all Python files
+        working-directory: islamic
+        run: find . -name "*.py" -exec python -m py_compile {} \; && echo "All Python files OK"

@@ -1,0 +1,79 @@
+version: 2
+updates:
+  # Rust dependencies — security module
+  - package-ecosystem: "cargo"
+    directory: "/security"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "rust"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Rust dependencies — browser module
+  - package-ecosystem: "cargo"
+    directory: "/browser"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "rust"
+
+  # Rust dependencies — display-manager
+  - package-ecosystem: "cargo"
+    directory: "/display-manager"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "rust"
+
+  # Rust dependencies — package-manager
+  - package-ecosystem: "cargo"
+    directory: "/package-manager"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "rust"
+
+  # Rust dependencies — filesystems
+  - package-ecosystem: "cargo"
+    directory: "/filesystems"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "rust"
+
+  # Go dependencies — cloud
+  - package-ecosystem: "gomod"
+    directory: "/cloud"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "go"
+
+  # Go dependencies — app-store
+  - package-ecosystem: "gomod"
+    directory: "/app-store"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "go"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"

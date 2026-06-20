@@ -1,0 +1,67 @@
+name: 📚 Documentation Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'SECURITY.md'
+      - 'GOVERNANCE.md'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-docs:
+    name: Build Documentation Site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdown tools
+        run: |
+          npm install -g markdownlint-cli
+          pip install mkdocs mkdocs-material
+
+      - name: Lint all markdown files
+        run: markdownlint '**/*.md' --ignore node_modules || true
+
+      - name: Build docs site (if mkdocs.yml exists)
+        run: |
+          if [ -f mkdocs.yml ]; then
+            mkdocs build
+          else
+            echo "No mkdocs.yml found — skipping site build"
+            mkdir -p site
+            cp README.md site/index.md
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  deploy-docs:
+    name: Deploy to GitHub Pages
+    needs: build-docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

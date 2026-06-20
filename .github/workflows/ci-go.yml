@@ -1,0 +1,66 @@
+name: 🐹 CI — Go Modules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cloud/**'
+      - 'app-store/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cloud/**'
+      - 'app-store/**'
+
+jobs:
+  cloud-api:
+    name: Build & Test — cloud/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('cloud/go.sum') }}
+
+      - name: Tidy modules
+        working-directory: cloud
+        run: go mod tidy
+
+      - name: Vet
+        working-directory: cloud
+        run: go vet ./...
+
+      - name: Build
+        working-directory: cloud
+        run: go build -v ./...
+
+      - name: Test
+        working-directory: cloud
+        run: go test -v ./...
+
+  app-store:
+    name: Build & Test — app-store/
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build
+        working-directory: app-store
+        run: go build -v ./...
+
+      - name: Test
+        working-directory: app-store
+        run: go test -v ./...
