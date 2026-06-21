@@ -1,0 +1,77 @@
+name: Pull Shark Badge Generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_count:
+        description: 'Number of pull requests to create and merge (recommendation: 2 for base tier, 16 for bronze)'
+        required: true
+        default: '2'
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  pull-shark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and Merge Pull Requests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_COUNT=${{ github.event.inputs.pr_count }}
+          echo "Generating $PR_COUNT pull request(s)..."
+          
+          for i in $(seq 1 $PR_COUNT); do
+            echo "----------------------------------------"
+            echo "Processing Pull Request #$i of $PR_COUNT"
+            
+            # Generate a unique branch name and timestamp
+            TIMESTAMP=$(date +%s%N)
+            BRANCH_NAME="pull-shark-trigger-$TIMESTAMP-$i"
+            
+            # Ensure we are starting from the latest main branch
+            git checkout main
+            git pull origin main
+            
+            # Create a new branch
+            git checkout -b "$BRANCH_NAME"
+            
+            # Make a dummy change to a tracker file
+            mkdir -p .github/pull-shark
+            echo "Trigger #$i executed at $(date)" > .github/pull-shark/trigger.txt
+            
+            # Stage, commit, and push changes
+            git add .github/pull-shark/trigger.txt
+            git commit -m "chore: pull shark trigger #$i"
+            git push origin "$BRANCH_NAME"
+            
+            # Create Pull Request using GitHub CLI
+            echo "Creating Pull Request..."
+            PR_URL=$(gh pr create \
+              --title "chore: Pull Shark trigger #$i" \
+              --body "This is an automated pull request to trigger the Pull Shark achievement badge." \
+              --head "$BRANCH_NAME" \
+              --base main)
+            echo "Pull Request created: $PR_URL"
+            
+            # Brief delay to allow GitHub to register the PR
+            sleep 3
+            
+            # Merge Pull Request and delete branch
+            echo "Merging Pull Request..."
+            gh pr merge "$PR_URL" --merge --delete-branch --admin || gh pr merge "$PR_URL" --merge --delete-branch
+            echo "Pull Request #$i merged successfully."
+          done

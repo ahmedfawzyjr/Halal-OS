@@ -20,6 +20,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)](CONTRIBUTING.md)
 [![Hacktoberfest](https://img.shields.io/badge/Hacktoberfest-participating-orange?style=for-the-badge)](https://hacktoberfest.com)
 [![Good First Issues](https://img.shields.io/github/issues/ahmedfawzyjr/Halal-OS/good%20first%20issue?style=for-the-badge&color=7057ff)](https://github.com/ahmedfawzyjr/Halal-OS/issues?q=is%3Aopen+label%3A%22good+first+issue%22)
+[![Pull Shark](https://img.shields.io/badge/Pull_Shark-Automated-blue?style=for-the-badge&logo=github)](https://github.com/ahmedfawzyjr/Halal-OS/actions/workflows/pull-shark.yml)
 
 <br/>
 
@@ -513,6 +514,18 @@ git push origin feature/my-islamic-feature
 - 🎃 [**Hacktoberfest**](https://github.com/ahmedfawzyjr/Halal-OS/issues?q=is%3Aopen+label%3Ahacktoberfest) — Participating in October!
 
 👉 Read the full guide: **[CONTRIBUTING.md](CONTRIBUTING.md)**
+
+### 🦈 GitHub Pull Shark Badge Generator
+
+This repository includes a GitHub Actions workflow to help you quickly earn the **GitHub Pull Shark** achievement badge!
+
+To run it:
+1. Navigate to the **Actions** tab of your repository on GitHub.
+2. Select the **Pull Shark Badge Generator** workflow from the sidebar.
+3. Click **Run workflow**, set the number of Pull Requests you want to create and merge (typically `2` for Level 1, `16` for Bronze, etc.), and click the run button.
+
+> [!NOTE]
+> Ensure that your repository's actions permissions allow workflows to create/approve pull requests (under **Settings > Actions > General > Workflow permissions**, select **Read and write permissions** and check **Allow GitHub Actions to create and approve pull requests**).
 
 ---
 
