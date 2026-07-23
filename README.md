@@ -27,6 +27,7 @@
 [![Website](https://img.shields.io/badge/🌐_Live_Demo-halalos.vercel.app-emerald?style=for-the-badge)](https://halal-os.vercel.app)
 [![Discord](https://img.shields.io/badge/💬_Community-Discord-5865F2?style=for-the-badge)](https://discord.gg/halalos)
 [![Discussions](https://img.shields.io/badge/🗣_Discussions-GitHub-181717?style=for-the-badge)](https://github.com/ahmedfawzyjr/Halal-OS/discussions)
+[![Documentation](https://img.shields.io/badge/📚_Docs-Updated-blueviolet?style=for-the-badge)](docs/)
 
 </div>
 
