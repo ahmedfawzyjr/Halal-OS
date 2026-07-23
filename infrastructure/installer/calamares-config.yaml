@@ -1,0 +1,45 @@
+# ☪ Halal OS - Calamares GUI Installer Configuration
+---
+modules-search: [ local, /usr/lib/x86_64-linux-gnu/calamares/modules ]
+
+instances:
+  - id:       halal_setup
+    module:   welcome
+    config:   welcome.conf
+
+sequence:
+  - show:
+    - welcome
+    - locale
+    - keyboard
+    - partition
+    - users
+    - summary
+  - exec:
+    - partition
+    - mount
+    - unpackfs
+    - machineid
+    - fstab
+    - locale
+    - keyboard
+    - localecfg
+    - users
+    - displaymanager
+    - networkcfg
+    - hwclock
+    - services-systemd
+    - initramfs
+    - grubcfg
+    - bootloader
+    - umount
+  - show:
+    - finished
+
+branding: halalos
+
+prompt-install: true
+
+dont-chroot: false
+
+oem-setup: false
