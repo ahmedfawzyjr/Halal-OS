@@ -79,6 +79,11 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libyara-dev pkg-config libsqlite3-dev libssl-dev
+
       - name: Build release binary
         working-directory: ${{ matrix.module }}
         run: cargo build --release

@@ -686,18 +686,29 @@ const halalSystemBridge = {
     }
 
     // 4. Check Desktop Bridge
-    try {
-      const t0 = performance.now();
-      const res = await fetch(this.endpoints.bridge, { signal: AbortSignal.timeout(1000) });
-      if (res.ok) {
+    if (window.__TAURI__ && window.__TAURI__.invoke) {
+      try {
+        await window.__TAURI__.invoke('get_system_status');
         this.services.bridge.status = "online";
-        this.services.bridge.latency = Math.round(performance.now() - t0);
+        this.services.bridge.latency = 1;
         onlineCount++;
-      } else {
+      } catch {
         this.services.bridge.status = "offline";
       }
-    } catch {
-      this.services.bridge.status = "offline";
+    } else {
+      try {
+        const t0 = performance.now();
+        const res = await fetch(this.endpoints.bridge, { signal: AbortSignal.timeout(1000) });
+        if (res.ok) {
+          this.services.bridge.status = "online";
+          this.services.bridge.latency = Math.round(performance.now() - t0);
+          onlineCount++;
+        } else {
+          this.services.bridge.status = "offline";
+        }
+      } catch {
+        this.services.bridge.status = "offline";
+      }
     }
 
     this.isDualModeActive = onlineCount > 0;
