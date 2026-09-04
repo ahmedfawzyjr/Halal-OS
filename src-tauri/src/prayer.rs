@@ -9,6 +9,7 @@ pub enum CalculationMethod {
     Karachi,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct PrayerSchedule {
     pub fajr: String,

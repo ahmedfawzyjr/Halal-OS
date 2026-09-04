@@ -116,7 +116,7 @@ runTest('src-tauri/build.rs exists and invokes tauri_build', () => {
   const buildRsPath = path.join(ROOT_DIR, 'src-tauri', 'build.rs');
   assert(fs.existsSync(buildRsPath), 'build.rs should exist');
   const content = fs.readFileSync(buildRsPath, 'utf8');
-  assert(content.includes('tauri_build::build()'), 'build.rs must call tauri_build::build()');
+  assert(content.includes('tauri_build::build()') || content.includes('tauri_build::try_build'), 'build.rs must call tauri_build::build() or tauri_build::try_build()');
 });
 
 runTest('.github/workflows/build-desktop.yml defines multi-platform CI/CD matrix', () => {

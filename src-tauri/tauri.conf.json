@@ -2,9 +2,9 @@
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/tooling/cli/schema.json",
   "build": {
     "beforeDevCommand": "",
-    "beforeBuildCommand": "",
+    "beforeBuildCommand": "node ../build-dist.js",
     "devPath": "http://localhost:3000",
-    "distDir": "../"
+    "distDir": "../dist"
   },
   "package": {
     "productName": "Halal OS",
@@ -34,7 +34,13 @@
       "http": {
         "all": true,
         "request": true,
-        "scope": ["http://127.0.0.1:*", "http://localhost:*"]
+        "scope": [
+          "http://localhost:3000/*",
+          "http://127.0.0.1:3000/*",
+          "http://localhost:8080/*",
+          "http://127.0.0.1:8080/*",
+          "https://*/*"
+        ]
       }
     },
     "bundle": {
