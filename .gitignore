@@ -3,6 +3,12 @@
 .idea/
 .vscode/
 
+# Build artifacts & dependencies
+node_modules/
+dist/
+target/
+src-tauri/target/
+
 # Local/temp files
 *.log
 tmp/
