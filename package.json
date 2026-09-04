@@ -18,8 +18,9 @@
     "test:ui": "node tests/tauri_and_ui.test.js",
     "test:tauri": "node tests/tauri_and_ui.test.js",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
+    "tauri:dev": "node build-dist.js && tauri dev",
+    "tauri:build": "node build-dist.js && tauri build",
+    "build:dist": "node build-dist.js",
     "test": "node tests/integration.test.js && node tests/iso_pipeline.test.js && node tests/tauri_and_ui.test.js"
   },
   "keywords": [
