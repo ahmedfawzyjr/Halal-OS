@@ -228,7 +228,7 @@ async function runTestSuite() {
   assert(fs.existsSync(desktopWorkflowPath), '.github/workflows/build-desktop.yml exists');
   if (fs.existsSync(desktopWorkflowPath)) {
     const workflowContent = fs.readFileSync(desktopWorkflowPath, 'utf8');
-    assert(workflowContent.includes('windows-latest') && workflowContent.includes('ubuntu-latest') && workflowContent.includes('macos-latest'), 'Workflow targets Windows, Linux, and macOS matrix');
+    assert(workflowContent.includes('windows-latest') && (workflowContent.includes('ubuntu-latest') || workflowContent.includes('ubuntu-22.04')) && workflowContent.includes('macos-latest'), 'Workflow targets Windows, Linux, and macOS matrix');
     assert(workflowContent.includes('tauri-action'), 'Workflow utilizes official tauri-action');
   }
 

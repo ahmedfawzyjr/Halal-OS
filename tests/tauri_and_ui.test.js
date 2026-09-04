@@ -124,7 +124,7 @@ runTest('.github/workflows/build-desktop.yml defines multi-platform CI/CD matrix
   assert(fs.existsSync(workflowPath), 'build-desktop.yml must exist');
   const content = fs.readFileSync(workflowPath, 'utf8');
   assert(content.includes('windows-latest'), 'Workflow matrix must include Windows runner');
-  assert(content.includes('ubuntu-latest'), 'Workflow matrix must include Ubuntu Linux runner');
+  assert(content.includes('ubuntu-latest') || content.includes('ubuntu-22.04'), 'Workflow matrix must include Ubuntu Linux runner');
   assert(content.includes('macos-latest'), 'Workflow matrix must include macOS runner');
   assert(content.includes('tauri-apps/tauri-action'), 'Workflow must use tauri-action');
   assert(content.includes('sha256') || content.includes('SHA256'), 'Workflow must compute SHA-256 binary checksums');
