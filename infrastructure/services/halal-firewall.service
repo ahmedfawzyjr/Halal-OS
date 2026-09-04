@@ -1,0 +1,16 @@
+[Unit]
+Description=Halal OS Amanah Zero-Telemetry Netfilter & Firewall Daemon
+Before=network-pre.target
+Wants=network-pre.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/halal-security --block-telemetry
+ExecReload=/usr/local/bin/halal-security --block-telemetry
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

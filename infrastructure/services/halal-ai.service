@@ -1,0 +1,25 @@
+[Unit]
+Description=Halal OS Amina Local AI Sovereign Inference Engine
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=halal
+Group=halal
+WorkingDirectory=/usr/share/halalos/ai
+ExecStart=/usr/bin/python3 /usr/share/halalos/ai/local_engine.py --port 8088 --host 127.0.0.1
+Restart=on-failure
+RestartSec=5s
+Environment=PYTHONUNBUFFERED=1
+Environment=HALAL_AI_OFFLINE=1
+
+# Security Hardening
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

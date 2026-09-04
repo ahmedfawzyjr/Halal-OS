@@ -1,0 +1,93 @@
+name: 🖥️ CI/CD — Tauri Desktop Build Matrix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src-tauri/**'
+      - '*.html'
+      - '*.js'
+      - '*.css'
+      - 'package.json'
+      - '.github/workflows/build-desktop.yml'
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src-tauri/**'
+      - '*.html'
+      - '*.js'
+      - '*.css'
+      - 'package.json'
+      - '.github/workflows/build-desktop.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-tauri:
+    name: Build Desktop — ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'x86_64-apple-darwin,aarch64-apple-darwin' || '' }}
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Build Tauri Desktop Application
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Halal OS Desktop __VERSION__ ☪'
+          releaseBody: 'Official Multi-Platform Desktop binary builds for Halal OS (Windows, Linux, macOS).'
+          releaseDraft: false
+          prerelease: false
+
+      - name: Generate SHA256 Checksums (Linux / macOS)
+        if: matrix.platform != 'windows-latest'
+        run: |
+          mkdir -p target/checksums
+          find src-tauri/target/release/bundle -type f \( -name "*.deb" -o -name "*.AppImage" -o -name "*.dmg" \) -exec sha256sum {} + > target/checksums/SHA256SUMS-${{ matrix.platform }}.txt || true
+
+      - name: Generate SHA256 Checksums (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path target/checksums | Out-Null
+          Get-ChildItem -Path src-tauri/target/release/bundle -Recurse -Include *.msi,*.exe | Get-FileHash -Algorithm SHA256 | Out-File target/checksums/SHA256SUMS-windows.txt
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: halal-os-desktop-${{ matrix.platform }}
+          path: |
+            src-tauri/target/release/bundle/**
+            target/checksums/**
+          if-no-files-found: warn

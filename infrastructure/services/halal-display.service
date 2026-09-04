@@ -1,0 +1,16 @@
+[Unit]
+Description=Halal OS Display Manager & Islamic Wayland Greeter
+After=systemd-user-sessions.service plymouth-quit-wait.service
+Conflicts=getty@tty7.service
+Wants=systemd-user-sessions.service
+
+[Service]
+ExecStart=/usr/local/bin/halaldm --daemon
+Restart=always
+RestartSec=2s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+Alias=display-manager.service
+WantedBy=graphical.target

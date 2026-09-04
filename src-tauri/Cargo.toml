@@ -1,0 +1,20 @@
+[package]
+name = "halal-os-desktop"
+version = "2.0.0"
+description = "Halal OS Sovereign Desktop Application Shell"
+authors = ["Halal OS Core Team <core@halalos.org>"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.5", features = ["shell-open", "system-tray", "notification", "dialog", "fs-all", "http-all"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"
+reqwest = { version = "0.11", features = ["json"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

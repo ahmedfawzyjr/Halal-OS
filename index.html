@@ -1,10 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Halal OS - Privacy First, Faith Forward</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#041a14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Halal OS">
   <link rel="stylesheet" href="index.css">
   <!-- Tabler Icons CDN -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -177,6 +182,9 @@
         <div style="font-size: 11px; color: var(--color-gold-light); font-weight: 500; cursor: pointer; margin-left: 8px;" id="top-hijri-date" onclick="openWindow('window-islamic'); selectIslamicSubTab('calendar')" tabindex="0" role="button" aria-label="Open Hijri Calendar Tab">15 Dhul-Hijjah 1447</div>
       </div>
       <div class="hp-right">
+        <div class="hp-icon-btn" title="Dual-Mode System Bridge" id="dual-mode-badge" onclick="toggleDaemonStatusDropdown()" tabindex="0" role="button" aria-label="Microservices Daemon Status" aria-haspopup="true" aria-expanded="false">
+          <i class="ti ti-server-2" id="dual-mode-icon" style="color: var(--color-emerald-active);"></i>
+        </div>
         <div class="hp-icon-btn" title="Shield Guard Dashboard" id="privacy-shield-btn" onclick="togglePrivacyShieldDropdown()" tabindex="0" role="button" aria-label="Toggle Privacy Shield Dashboard" aria-haspopup="true" aria-expanded="false">
           <i class="ti ti-shield-check privacy-shield-indicator" id="top-shield-icon"></i>
         </div>
@@ -186,6 +194,26 @@
         <div class="hp-icon-btn" title="Quick Settings Overlay" onclick="toggleQuickSettings()" tabindex="0" role="button" aria-label="Toggle Quick Settings Menu" aria-haspopup="true" aria-expanded="false">
           <i class="ti ti-settings-2"></i>
         </div>
+      </div>
+
+      <!-- Dual-Mode Daemon Status Overlay -->
+      <div id="daemon-status-dropdown" class="glass-panel-elevated" style="position: absolute; right: 80px; top: 46px; width: 340px; border-radius: var(--r-medium); padding: 18px; display: none; flex-direction: column; gap: 12px; z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.35);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+            <i class="ti ti-cpu" style="color: var(--color-emerald-active);"></i>
+            <span>System Daemons</span>
+          </div>
+          <span class="tag tag-green" style="font-size: 10px;" id="daemon-status-mode-tag">Dual-Mode</span>
+        </div>
+        <div style="font-size: 11px; color: var(--color-text-muted);">
+          Halal OS automatically routes requests to localhost microservices &amp; Rust daemons with zero-cloud fallback.
+        </div>
+        <div class="daemon-list" id="daemon-status-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Populated dynamically -->
+        </div>
+        <button class="btn btn-sm btn-primary" style="width: 100%; justify-content: center; gap: 6px;" onclick="halalSystemBridge.checkHealth();">
+          <i class="ti ti-refresh"></i> <span>Re-scan Local Ports</span>
+        </button>
       </div>
 
       <!-- Live Privacy Dashboard Overlay -->
@@ -1976,23 +2004,65 @@ LAN status: sandbox Isolated
               <!-- Tab: Quran Reader -->
               <div class="islamic-tab-panel active" id="isl-tab-quran">
                 <div class="quran-meta-bar" style="flex-wrap: wrap; gap: 10px;">
-                  <div style="font-weight: 700; font-size: 15px;" id="quran-chapter-name">Surah Al-Fatiha (The Opening)</div>
-                  <div style="display: flex; gap: 8px; align-items: center;">
+                  <div style="font-weight: 700; font-size: 15px;" id="quran-chapter-name">Surah Al-Fatiha (سورة الفاتحة)</div>
+                  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <button class="btn btn-sm" onclick="toggleQuranTafsir()"><i class="ti ti-align-left"></i> <span id="lbl-quran-tafsir">Show Tafsir</span></button>
-                    <button class="btn btn-sm" onclick="toggleQuranPlay()" id="btn-quran-audio" style="background: var(--color-gold); color: #412402; border:none;"><i class="ti ti-player-play" id="icon-quran-audio"></i> <span id="lbl-quran-play">Listen</span></button>
-                    <select id="quran-reciter-select" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 4px 8px; border-radius: var(--r-small); outline: none; font-size: 12px;">
-                      <option value="alafasy">Mishary Alafasy</option>
-                      <option value="abdulbasit">Abdul Basit</option>
-                      <option value="alghamdi">Saad Al-Ghamdi</option>
+                    <select id="quran-reciter-select" onchange="changeQuranReciter(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 4px 8px; border-radius: var(--r-small); outline: none; font-size: 12px;">
+                      <option value="alafasy">Mishary Alafasy (مشاري العفاسي)</option>
+                      <option value="abdulbasit">Abdul Basit (عبد الباسط عبد الصمد)</option>
+                      <option value="alghamdi">Saad Al-Ghamdi (سعد الغامدي)</option>
+                      <option value="husary">Mahmoud Khalil Al-Husary (محمود خليل الحصري)</option>
                     </select>
                     <select id="quran-surah-select" onchange="loadQuranSurah(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: var(--color-text-primary); padding: 4px 8px; border-radius: var(--r-small); outline: none; font-size: 12px;">
-                      <option value="1">1. Al-Fatiha</option>
-                      <option value="112">112. Al-Ikhlas</option>
-                      <option value="113">113. Al-Falaq</option>
-                      <option value="114">114. An-Nas</option>
+                      <option value="1">1. Al-Fatiha (الفاتحة)</option>
+                      <option value="2">2. Al-Baqarah - Key Ayat (البقرة)</option>
+                      <option value="36">36. Ya-Sin (يس)</option>
+                      <option value="55">55. Ar-Rahman (الرحمن)</option>
+                      <option value="67">67. Al-Mulk (الملك)</option>
+                      <option value="103">103. Al-Asr (العصر)</option>
+                      <option value="108">108. Al-Kawthar (الكوثر)</option>
+                      <option value="109">109. Al-Kafirun (الكافرون)</option>
+                      <option value="112">112. Al-Ikhlas (الإخلاص)</option>
+                      <option value="113">113. Al-Falaq (الفلق)</option>
+                      <option value="114">114. An-Nas (الناس)</option>
                     </select>
                   </div>
                 </div>
+
+                <!-- Complete Quran Reciter Audio Player Bar -->
+                <div class="quran-audio-player-bar" id="quran-player-bar">
+                  <div class="quran-player-controls-left">
+                    <button class="btn btn-sm btn-icon" id="btn-quran-prev" onclick="prevQuranAyah()" title="Previous Ayah"><i class="ti ti-player-track-prev"></i></button>
+                    <button class="btn btn-sm" id="btn-quran-audio" onclick="toggleQuranPlay()" style="background: var(--color-gold); color: #412402; font-weight: 700; border: none; min-width: 86px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                      <i class="ti ti-player-play" id="icon-quran-audio"></i> <span id="lbl-quran-play">Listen</span>
+                    </button>
+                    <button class="btn btn-sm btn-icon" id="btn-quran-next" onclick="nextQuranAyah()" title="Next Ayah"><i class="ti ti-player-track-next"></i></button>
+                    <button class="btn btn-sm btn-icon" id="btn-quran-stop" onclick="stopQuranAudio()" title="Stop Recitation"><i class="ti ti-player-stop"></i></button>
+                    <span id="quran-playing-ayah-display" style="font-size: 11px; font-weight: 600; color: var(--color-gold-light); min-width: 90px; text-align: center;">Ayah 1 of 7</span>
+                  </div>
+                  <div class="quran-player-scrubber-center">
+                    <span id="quran-audio-current-time" style="font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary); min-width: 32px;">0:00</span>
+                    <input type="range" id="quran-audio-progress" min="0" max="100" value="0" step="0.1" oninput="seekQuranProgress(this.value)" class="quran-progress-slider" title="Seek Audio">
+                    <span id="quran-audio-total-time" style="font-family: var(--font-mono); font-size: 11px; color: var(--color-text-secondary); min-width: 32px;">0:00</span>
+                  </div>
+                  <div class="quran-player-controls-right">
+                    <button class="btn btn-sm btn-icon" id="btn-quran-repeat" onclick="cycleQuranRepeatMode()" title="Repeat Mode: Off">
+                      <i class="ti ti-repeat" id="icon-quran-repeat"></i> <span id="lbl-quran-repeat" style="font-size: 10px;">Off</span>
+                    </button>
+                    <select id="quran-audio-speed" onchange="changeQuranPlaybackSpeed(this.value)" title="Playback Speed" style="font-size: 11px; padding: 2px 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: white; border-radius: var(--r-small); outline: none;">
+                      <option value="0.75">0.75x</option>
+                      <option value="1.0" selected>1.0x</option>
+                      <option value="1.25">1.25x</option>
+                      <option value="1.5">1.5x</option>
+                      <option value="2.0">2.0x</option>
+                    </select>
+                    <div style="display: flex; align-items: center; gap: 4px;" title="Volume">
+                      <i class="ti ti-volume" style="font-size: 13px; color: var(--color-text-muted);"></i>
+                      <input type="range" id="quran-audio-volume" min="0" max="1" step="0.05" value="0.8" oninput="setQuranVolume(this.value)" style="width: 50px; accent-color: var(--color-gold);">
+                    </div>
+                  </div>
+                </div>
+
                 <div class="quran-search-bar-row" style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
                   <div style="position: relative; flex: 1;">
                     <i class="ti ti-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); font-size: 14px;"></i>
@@ -2031,86 +2101,245 @@ LAN status: sandbox Isolated
 
               <!-- Tab: Qibla Compass -->
               <div class="islamic-tab-panel" id="isl-tab-qibla" style="display: none;">
-                <h3 style="font-size: 15px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;" id="lbl-qibla-title">Qibla Direction (AR Compass)</h3>
-                <div class="qibla-container" style="position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                  <h3 style="font-size: 15px; font-weight: 700; margin: 0;" id="lbl-qibla-title">3D Spherical Qibla Compass Finder</h3>
+                  <div style="display: flex; gap: 6px; align-items: center;">
+                    <select id="qibla-city-select" onchange="onQiblaCitySelected(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: white; padding: 4px 8px; border-radius: var(--r-small); font-size: 12px; outline: none;">
+                      <option value="cairo" selected>Cairo, Egypt (القاهرة)</option>
+                      <option value="makkah">Makkah, Saudi Arabia (مكة المكرمة)</option>
+                      <option value="madinah">Madinah, Saudi Arabia (المدينة المنورة)</option>
+                      <option value="jerusalem">Jerusalem, Palestine (القدس الشريف)</option>
+                      <option value="istanbul">Istanbul, Turkey (إسطنبول)</option>
+                      <option value="london">London, United Kingdom (لندن)</option>
+                      <option value="paris">Paris, France (باريس)</option>
+                      <option value="newyork">New York, USA (نيويورك)</option>
+                      <option value="losangeles">Los Angeles, USA (لوس أنجلوس)</option>
+                      <option value="tokyo">Tokyo, Japan (طوكيو)</option>
+                      <option value="jakarta">Jakarta, Indonesia (جاكرتا)</option>
+                      <option value="kualalumpur">Kuala Lumpur, Malaysia (كوالالمبور)</option>
+                      <option value="dubai">Dubai, UAE (دبي)</option>
+                      <option value="riyadh">Riyadh, Saudi Arabia (الرياض)</option>
+                      <option value="toronto">Toronto, Canada (تورونتو)</option>
+                      <option value="sydney">Sydney, Australia (سيدني)</option>
+                      <option value="custom">-- Custom Coordinates (إحداثيات مخصصة) --</option>
+                    </select>
+                    <button class="btn btn-sm" onclick="toggleQiblaGyro()" id="btn-qibla-gyro" title="Toggle Gyroscope Sensor Tracking"><i class="ti ti-device-mobile"></i> <span id="lbl-qibla-gyro-txt">Sensor</span></button>
+                  </div>
+                </div>
+
+                <!-- Custom Lat/Lng Row (Hidden by default unless custom is picked) -->
+                <div id="qibla-custom-coords-row" style="display: none; padding: 8px 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--color-border); border-radius: var(--r-small); margin-top: 8px; gap: 10px; align-items: center;">
+                  <span style="font-size: 11px; color: var(--color-gold-light); font-weight: 600;">Custom Position:</span>
+                  <label style="font-size: 11px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px;">Lat: <input type="number" id="qibla-custom-lat" step="0.0001" value="30.0444" style="width: 80px; background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); font-size: 11px; padding: 2px 4px; border-radius: 3px;" oninput="updateCustomQiblaCoords()"></label>
+                  <label style="font-size: 11px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 4px;">Lng: <input type="number" id="qibla-custom-lng" step="0.0001" value="31.2357" style="width: 80px; background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); font-size: 11px; padding: 2px 4px; border-radius: 3px;" oninput="updateCustomQiblaCoords()"></label>
+                </div>
+
+                <!-- Qibla Telemetry Badges -->
+                <div class="qibla-telemetry-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;">
+                  <div class="telemetry-card glass-panel" style="padding: 8px 12px; text-align: center; border-radius: var(--r-small); background: rgba(255,255,255,0.02);">
+                    <div style="font-size: 10px; color: var(--color-text-muted); text-transform: uppercase;">Qibla Bearing</div>
+                    <div id="qibla-target-angle-display" style="font-size: 14px; font-weight: 700; color: var(--color-gold-light); font-family: var(--font-mono);">136.2° East</div>
+                  </div>
+                  <div class="telemetry-card glass-panel" style="padding: 8px 12px; text-align: center; border-radius: var(--r-small); background: rgba(255,255,255,0.02);">
+                    <div style="font-size: 10px; color: var(--color-text-muted); text-transform: uppercase;">Distance to Kaaba</div>
+                    <div id="qibla-distance-display" style="font-size: 14px; font-weight: 700; color: var(--color-emerald-active); font-family: var(--font-mono);">1,288 km (800 mi)</div>
+                  </div>
+                  <div class="telemetry-card glass-panel" style="padding: 8px 12px; text-align: center; border-radius: var(--r-small); background: rgba(255,255,255,0.02);">
+                    <div style="font-size: 10px; color: var(--color-text-muted); text-transform: uppercase;">Compass Heading</div>
+                    <div id="qibla-cardinal-display" style="font-size: 14px; font-weight: 700; color: white;">SE (Southeast)</div>
+                  </div>
+                </div>
+
+                <div class="qibla-container" style="position: relative; margin-top: 10px;">
                   <div class="compass-outer" id="qibla-compass-wheel">
-                    <div class="kaaba-marker">🕋</div>
+                    <!-- Degree ticks ring -->
+                    <div class="compass-azimuth-ring">
+                      <span class="azimuth-cardinal north">N</span>
+                      <span class="azimuth-cardinal east">E</span>
+                      <span class="azimuth-cardinal south">S</span>
+                      <span class="azimuth-cardinal west">W</span>
+                    </div>
+                    <div class="kaaba-marker" id="qibla-kaaba-marker" title="Holy Kaaba Direction (Mecca)">🕋</div>
                     <div class="compass-needle" id="qibla-needle"></div>
                     <!-- Drag calibration knob -->
                     <div class="qibla-rotator-handle" id="qibla-drag-knob" title="Drag to align needle">🧭</div>
                   </div>
                   <div style="text-align: center;">
-                    <div style="font-weight: 600; font-size: 14px;" id="lbl-qibla-angle">Qibla angle from North: 136° East</div>
-                    <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px;" id="lbl-qibla-desc">Drag the compass wheel or click calibration to lock exactly on 136°.</div>
+                    <div style="font-weight: 600; font-size: 14px;" id="lbl-qibla-angle">Qibla angle from North: 136.2° East</div>
+                    <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px;" id="lbl-qibla-desc">Drag the compass wheel or click calibration to lock exactly towards Makkah.</div>
                   </div>
-                  <button class="btn btn-sm" onclick="calibrateQiblaCompass()" id="lbl-qibla-btn">Simulate Auto-Calibration</button>
+                  <button class="btn btn-sm" onclick="calibrateQiblaCompass()" id="lbl-qibla-btn" style="background: rgba(212, 160, 23, 0.15); color: var(--color-gold-light); border-color: var(--color-gold);"><i class="ti ti-rotate"></i> Auto-Calibrate Vector</button>
                 </div>
               </div>
 
-              <!-- Tab: Zakat Calculator -->
+              <!-- Tab: Zakat Calculator & Bayt Al-Mal Ledger -->
               <div class="islamic-tab-panel" id="isl-tab-zakat" style="display: none;">
-                <h3 style="font-size: 15px; font-weight: 700; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;" id="lbl-zakat-title">Zakat Nisab Obligation Calculator</h3>
-                <div class="zakat-calc-form" style="max-height: 380px; overflow-y: auto; padding-right: 4px;">
-                  <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; padding: 10px; background: rgba(212, 160, 23, 0.08); border: 1px solid rgba(212, 160, 23, 0.2); border-radius: var(--r-small); font-size: 11px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                  <h3 style="font-size: 15px; font-weight: 700; margin: 0;" id="lbl-zakat-title">Bayt Al-Mal: Zakat Nisab & Obligation Ledger</h3>
+                  <div style="display: flex; gap: 6px; align-items: center;">
+                    <!-- Sub-view navigation -->
+                    <div class="btn-group" style="display: flex; border: 1px solid var(--color-border); border-radius: var(--r-small); overflow: hidden;">
+                      <button class="btn btn-sm active" id="btn-zakat-sub-calc" onclick="switchZakatSubView('calc')" style="border: none; border-radius: 0; padding: 4px 10px; font-size: 11px;"><i class="ti ti-calculator"></i> Assessment</button>
+                      <button class="btn btn-sm" id="btn-zakat-sub-ledger" onclick="switchZakatSubView('ledger')" style="border: none; border-radius: 0; padding: 4px 10px; font-size: 11px; background: transparent;"><i class="ti ti-receipt"></i> Ledger (<span id="zakat-ledger-count">0</span>)</button>
+                    </div>
+                    <!-- Currency selector -->
+                    <select id="zakat-currency-select" onchange="onZakatCurrencyChanged(this.value)" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: white; padding: 4px 6px; border-radius: var(--r-small); font-size: 11px; outline: none;">
+                      <option value="USD" selected>USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="SAR">SAR (﷼)</option>
+                      <option value="AED">AED (د.إ)</option>
+                      <option value="EGP">EGP (ج.م)</option>
+                      <option value="TRY">TRY (₺)</option>
+                      <option value="PKR">PKR (₨)</option>
+                      <option value="MYR">MYR (RM)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- SUB-VIEW 1: Assessment & Asset Distribution -->
+                <div id="zakat-view-calc" style="margin-top: 10px;">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; padding: 8px 12px; background: rgba(212, 160, 23, 0.08); border: 1px solid rgba(212, 160, 23, 0.2); border-radius: var(--r-small); font-size: 11px; margin-bottom: 10px; align-items: center;">
                     <div>
-                      <span id="lbl-zakat-nisab-val">Nisab Limit:</span>
-                      <strong id="zakat-nisab-display" style="font-family: var(--font-mono); color: var(--color-gold-light);">$5,420.00</strong>
+                      <span id="lbl-zakat-nisab-val">Live Nisab Limit:</span>
+                      <strong id="zakat-nisab-display" style="font-family: var(--font-mono); color: var(--color-gold-light); font-size: 13px;">$5,419.60</strong>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                      <div>Gold/g: <input type="number" id="zakat-gold-price" value="63.76" style="width: 50px; background: none; border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); font-size: 10px; text-align: center; border-radius: 3px;" oninput="calculateZakat()"></div>
-                      <div>Silver/g: <input type="number" id="zakat-silver-price" value="1.05" style="width: 50px; background: none; border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); font-size: 10px; text-align: center; border-radius: 3px;" oninput="calculateZakat()"></div>
-                    </div>
-                  </div>
-                  
-                  <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                    <div style="flex: 1;">
-                      <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; display: block;">Nisab Standard Metal</label>
-                      <select id="zakat-metal-standard" onchange="calculateZakat()" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); color: white; padding: 6px; border-radius: var(--r-small); font-size: 12px; outline: none;">
-                        <option value="gold">Gold (85g Standard)</option>
-                        <option value="silver">Silver (595g Standard)</option>
-                      </select>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                      <div>Standard: 
+                        <select id="zakat-metal-standard" onchange="calculateZakat()" style="background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); color: white; font-size: 10px; padding: 2px 4px; border-radius: 3px;">
+                          <option value="gold" selected>Gold (85g)</option>
+                          <option value="silver">Silver (595g)</option>
+                        </select>
+                      </div>
+                      <div>Gold/g: <input type="number" id="zakat-gold-price" value="63.76" step="0.1" style="width: 54px; background: none; border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); font-size: 10px; text-align: center; border-radius: 3px;" oninput="calculateZakat()"></div>
+                      <div>Silver/g: <input type="number" id="zakat-silver-price" value="1.05" step="0.01" style="width: 48px; background: none; border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); font-size: 10px; text-align: center; border-radius: 3px;" oninput="calculateZakat()"></div>
                     </div>
                   </div>
 
-                  <div class="zakat-input-group">
-                    <label id="lbl-zakat-i-savings">Total Savings / Cash (held for 1 full Lunar year)</label>
-                    <input type="number" id="zakat-savings" class="zakat-text-input" value="12000" oninput="calculateZakat()">
-                  </div>
-                  
-                  <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <div style="flex: 1;">
-                      <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; display: block;">Gold holdings (grams)</label>
-                      <input type="number" id="zakat-gold-grams" class="zakat-text-input" style="width: 100%; margin: 0;" value="24" oninput="calculateZakat()">
+                  <div class="zakat-grid-container" style="display: grid; grid-template-columns: 1fr 220px; gap: 14px; max-height: 360px; overflow-y: auto; padding-right: 4px;">
+                    <!-- Left Form Column -->
+                    <div class="zakat-calc-form" style="display: flex; flex-direction: column; gap: 8px;">
+                      <div class="zakat-input-group">
+                        <label id="lbl-zakat-i-savings" style="font-size: 11px;">Cash / Bank Savings (Held 1 Lunar Year)</label>
+                        <input type="number" id="zakat-savings" class="zakat-text-input" value="12000" oninput="calculateZakat()" style="padding: 6px 10px; font-size: 12px;">
+                      </div>
+                      
+                      <div style="display: flex; gap: 8px;">
+                        <div style="flex: 1;">
+                          <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 2px; display: block;">Gold holdings (grams)</label>
+                          <input type="number" id="zakat-gold-grams" class="zakat-text-input" style="width: 100%; margin: 0; padding: 6px 10px; font-size: 12px;" value="24" oninput="calculateZakat()">
+                        </div>
+                        <div style="flex: 1;">
+                          <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 2px; display: block;">Silver holdings (grams)</label>
+                          <input type="number" id="zakat-silver-grams" class="zakat-text-input" style="width: 100%; margin: 0; padding: 6px 10px; font-size: 12px;" value="150" oninput="calculateZakat()">
+                        </div>
+                      </div>
+
+                      <div style="display: flex; gap: 8px;">
+                        <div style="flex: 1;">
+                          <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 2px; display: block;">Trade Merchandise / Inventory</label>
+                          <input type="number" id="zakat-business" class="zakat-text-input" style="width: 100%; margin: 0; padding: 6px 10px; font-size: 12px;" value="2500" oninput="calculateZakat()">
+                        </div>
+                        <div style="flex: 1;">
+                          <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 2px; display: block;">Stocks, Crypto & Funds</label>
+                          <input type="number" id="zakat-investments" class="zakat-text-input" style="width: 100%; margin: 0; padding: 6px 10px; font-size: 12px;" value="3500" oninput="calculateZakat()">
+                        </div>
+                      </div>
+
+                      <div style="display: flex; gap: 8px;">
+                        <div style="flex: 1;">
+                          <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 2px; display: block;">Real Estate Trade Assets</label>
+                          <input type="number" id="zakat-realestate" class="zakat-text-input" style="width: 100%; margin: 0; padding: 6px 10px; font-size: 12px;" value="0" oninput="calculateZakat()">
+                        </div>
+                        <div style="flex: 1;">
+                          <label style="font-size: 11px; color: var(--color-danger); margin-bottom: 2px; display: block;">Less: Debts & Immediate Dues</label>
+                          <input type="number" id="zakat-debts" class="zakat-text-input" style="width: 100%; margin: 0; padding: 6px 10px; font-size: 12px; border-color: rgba(239, 68, 68, 0.3);" value="1000" oninput="calculateZakat()">
+                        </div>
+                      </div>
                     </div>
-                    <div style="flex: 1;">
-                      <label style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; display: block;">Silver holdings (grams)</label>
-                      <input type="number" id="zakat-silver-grams" class="zakat-text-input" style="width: 100%; margin: 0;" value="150" oninput="calculateZakat()">
+
+                    <!-- Right Summary & Donut Chart Column -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                      <canvas id="zakat-asset-chart" width="200" height="150" style="width: 200px; height: 150px;"></canvas>
+                      <div class="zakat-result-box" style="width: 100%; padding: 10px; border-radius: var(--r-small);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--color-text-secondary);">
+                          <span>Net Zakatable:</span>
+                          <span id="zakat-net-worth" style="font-family: var(--font-mono); font-weight: 600;">$18,687.74</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+                          <span style="font-size: 11px; font-weight: 600;" id="lbl-zakat-res-nisab">Nisab Status</span>
+                          <span class="tag tag-green" id="zakat-nisab-badge" style="font-size: 10px; padding: 1px 6px;">Met (وجبت)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px; margin-top: 4px;">
+                          <span style="font-size: 12px; font-weight: 700;" id="lbl-zakat-res-due">Zakat (2.5%)</span>
+                          <span style="font-size: 16px; font-weight: 800; color: var(--color-emerald-active); font-family: var(--font-mono);" id="zakat-due-value">$467.19</span>
+                        </div>
+                      </div>
+                      <button class="btn btn-sm btn-primary" onclick="switchZakatSubView('ledger')" style="width: 100%; font-size: 11px; padding: 5px;"><i class="ti ti-plus"></i> Record Payment</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SUB-VIEW 2: Disbursement Ledger & 8 Quranic Categories -->
+                <div id="zakat-view-ledger" style="display: none; margin-top: 10px;">
+                  <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--color-border); border-radius: var(--r-small); padding: 10px; margin-bottom: 10px;">
+                    <div style="font-weight: 600; font-size: 12px; color: var(--color-gold-light); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                      <i class="ti ti-heart-handshake"></i> Record Disbursement to Quranic Category (Surah 9:60)
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.5fr auto; gap: 8px; align-items: flex-end;">
+                      <div>
+                        <label style="font-size: 10px; color: var(--color-text-secondary); display: block; margin-bottom: 2px;">Beneficiary Category (المصرف الشرعي)</label>
+                        <select id="zakat-disburse-category" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
+                          <option value="fuqara">1. Al-Fuqara - The Poor (الفقراء)</option>
+                          <option value="masakin">2. Al-Masakin - The Needy (المساكين)</option>
+                          <option value="amilina">3. Al-Amilina - Zakat Workers (العاملين عليها)</option>
+                          <option value="muallafa">4. Al-Mu'allafa - Reconciliation (المؤلفة قلوبهم)</option>
+                          <option value="riqab">5. Fir-Riqab - Freeing Captives (في الرقاب)</option>
+                          <option value="gharimin">6. Al-Gharimin - Debtors (الغارمين)</option>
+                          <option value="sabilillah">7. Fi Sabilillah - In Allah's Cause (في سبيل الله)</option>
+                          <option value="ibnsabil">8. Ibn As-Sabil - Wayfarer (ابن السبيل)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style="font-size: 10px; color: var(--color-text-secondary); display: block; margin-bottom: 2px;">Amount (<span id="zakat-ledger-curr-symbol">$</span>)</label>
+                        <input type="number" id="zakat-disburse-amount" placeholder="0.00" step="0.01" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); color: white; font-family: var(--font-mono); padding: 5px; border-radius: 3px; font-size: 11px;">
+                      </div>
+                      <div>
+                        <label style="font-size: 10px; color: var(--color-text-secondary); display: block; margin-bottom: 2px;">Recipient / Organization</label>
+                        <input type="text" id="zakat-disburse-recipient" placeholder="e.g. Local Relief Fund / Family" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--color-border); color: white; padding: 5px; border-radius: 3px; font-size: 11px;">
+                      </div>
+                      <button class="btn btn-sm btn-primary" onclick="saveZakatDisbursement()" style="padding: 6px 12px; font-size: 11px; height: 30px;"><i class="ti ti-check"></i> Add</button>
                     </div>
                   </div>
 
-                  <div class="zakat-input-group">
-                    <label>Value of business assets (merchandise, inventory)</label>
-                    <input type="number" id="zakat-business" class="zakat-text-input" value="2500" oninput="calculateZakat()">
-                  </div>
-                  
-                  <div class="zakat-input-group">
-                    <label>Liabilities, debts, and immediate expenses due</label>
-                    <input type="number" id="zakat-debts" class="zakat-text-input" value="1000" oninput="calculateZakat()">
+                  <!-- Ledger Entries Table -->
+                  <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--r-small);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;" id="zakat-ledger-table">
+                      <thead>
+                        <tr style="background: rgba(255,255,255,0.04); border-bottom: 1px solid var(--color-border); text-align: left;">
+                          <th style="padding: 6px 8px;">Date</th>
+                          <th style="padding: 6px 8px;">Category</th>
+                          <th style="padding: 6px 8px;">Recipient</th>
+                          <th style="padding: 6px 8px; text-align: right;">Amount</th>
+                          <th style="padding: 6px 8px; text-align: center;">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="zakat-ledger-tbody">
+                        <!-- Populated by JavaScript -->
+                      </tbody>
+                    </table>
                   </div>
 
-                  <div class="zakat-result-box">
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 4px; color: var(--color-text-secondary);">
-                      <span>Total Net Worth:</span>
-                      <span id="zakat-net-worth" style="font-family: var(--font-mono); font-weight: 600;">$15,000.00</span>
+                  <!-- Ledger summary footer & Certificate trigger -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 8px 12px; background: rgba(27, 94, 32, 0.1); border: 1px solid rgba(27, 94, 32, 0.25); border-radius: var(--r-small);">
+                    <div style="font-size: 11px;">
+                      <span>Total Disbursed: </span>
+                      <strong id="zakat-ledger-total-paid" style="font-family: var(--font-mono); color: var(--color-emerald-active); font-size: 12px;">$0.00</strong>
+                      <span style="margin: 0 8px; color: var(--color-text-muted);">|</span>
+                      <span>Remaining Obligation: </span>
+                      <strong id="zakat-ledger-remaining-due" style="font-family: var(--font-mono); color: var(--color-gold-light); font-size: 12px;">$467.19</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <span style="font-size: 12px; font-weight: 600;" id="lbl-zakat-res-nisab">Nisab Obligation Status</span>
-                      <span class="tag tag-green" id="zakat-nisab-badge">Met</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px; margin-top: 4px;">
-                      <span style="font-size: 15px; font-weight: 700;" id="lbl-zakat-res-due">Zakat Due (2.5%)</span>
-                      <span style="font-size: 20px; font-weight: 800; color: var(--color-emerald-active); font-family: var(--font-mono);" id="zakat-due-value">$412.50</span>
-                    </div>
+                    <button class="btn btn-sm" onclick="openZakatCertificate()" style="background: var(--color-gold); color: #412402; font-weight: 700; border: none; font-size: 11px;"><i class="ti ti-certificate"></i> Generate Certificate</button>
                   </div>
                 </div>
               </div>
@@ -2386,6 +2615,92 @@ LAN status: sandbox Isolated
     </div>
   </div>
 
+  <!-- ==================== 4.7 BAYT AL-MAL ZAKAT CERTIFICATE MODAL ==================== -->
+  <div id="modal-zakat-certificate" class="modal-backdrop zakat-cert-modal-backdrop" style="display: none;">
+    <div class="zakat-certificate-card">
+      <div class="zakat-cert-header">
+        <div class="zakat-cert-bismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+        <div class="zakat-cert-title-en">BAYT AL-MAL • SOVEREIGN ISLAMIC TREASURY</div>
+        <div class="zakat-cert-title-ar">شهادة أداء الزكاة الشرعية الرسمية</div>
+        <div class="zakat-cert-sub">Official Certificate of Islamic Zakat Fulfillment & Disbursement</div>
+      </div>
+
+      <div class="zakat-cert-divider"></div>
+
+      <div class="zakat-cert-meta-grid">
+        <div>
+          <span class="cert-label">Certificate Ref:</span>
+          <span class="cert-val font-mono" id="cert-ref-number">HOS-ZKT-2026-8842</span>
+        </div>
+        <div>
+          <span class="cert-label">Gregorian Date:</span>
+          <span class="cert-val font-mono" id="cert-date-gregorian">2026-09-04</span>
+        </div>
+        <div>
+          <span class="cert-label">Hijri Date:</span>
+          <span class="cert-val" id="cert-date-hijri">1448-03-22 AH</span>
+        </div>
+        <div>
+          <span class="cert-label">Fulfillment Status:</span>
+          <span class="cert-val tag tag-green" id="cert-status-badge">Fulfilled (تم الأداء)</span>
+        </div>
+      </div>
+
+      <div class="zakat-cert-donor-box">
+        <label for="cert-donor-name" class="cert-label">Donor Name (المزكّي):</label>
+        <input type="text" id="cert-donor-name" class="cert-donor-input" value="Anonymous Servant of Allah / فاعل خير" placeholder="Enter Donor / Organization Name">
+      </div>
+
+      <div class="zakat-cert-financial-table">
+        <div class="cert-row">
+          <span>Total Net Zakatable Wealth (صافي الأموال الزكوية)</span>
+          <strong class="font-mono" id="cert-total-assets">$18,687.74</strong>
+        </div>
+        <div class="cert-row">
+          <span>Assessed Zakat Obligation Rate (النسبة الشرعية 2.5%)</span>
+          <strong class="font-mono" id="cert-zakat-due">$467.19</strong>
+        </div>
+        <div class="cert-row">
+          <span>Total Recorded Disbursements (المبالغ المؤداة والموزعة)</span>
+          <strong class="font-mono text-emerald" id="cert-total-paid">$467.19</strong>
+        </div>
+        <div class="cert-row cert-row-total">
+          <span>Remaining Balance Due (المتبقي في الذمة)</span>
+          <strong class="font-mono text-gold" id="cert-remaining-due">$0.00</strong>
+        </div>
+      </div>
+
+      <div class="zakat-cert-verse-box">
+        <div class="cert-quran-ar">﴿ خُذْ مِنْ أَمْوَالِهِمْ صَدَقَةً تُطَهِّرُهُمْ وَتُزَكِّيهِم بِهَا وَصَلِّ عَلَيْهِمْ إِنَّ صَلَاتَكَ سَكَنٌ لَّهُمْ ﴾</div>
+        <div class="cert-quran-en">"Take from their wealth a charity by which you purify them and cause them increase, and invoke [Allah's blessings] upon them." (Surah At-Tawbah 9:103)</div>
+      </div>
+
+      <div class="zakat-cert-signatures">
+        <div class="cert-seal">
+          <div class="seal-inner">
+            <i class="ti ti-building-bank"></i>
+            <span>BAYT AL-MAL<br>SEAL OF RECORD</span>
+          </div>
+        </div>
+        <div class="cert-sign-lines">
+          <div class="cert-sign-col">
+            <div class="sign-line"></div>
+            <span>Treasury Comptroller Verification</span>
+          </div>
+          <div class="cert-sign-col">
+            <div class="sign-line"></div>
+            <span>Ledger Cryptographic Timestamp</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="zakat-cert-actions no-print">
+        <button class="btn btn-secondary" onclick="closeZakatCertificate()"><i class="ti ti-x"></i> Close</button>
+        <button class="btn btn-primary" onclick="printZakatCertificate()"><i class="ti ti-printer"></i> Print / Export PDF Certificate</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== 5. INSHA NOTIFICATION TOAST CONTAINER ==================== -->
   <div id="notification-container"></div>
 
@@ -2416,5 +2731,16 @@ LAN status: sandbox Isolated
   <div id="custom-cursor-ring" class="custom-cursor-ring"></div>
 
   <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('☪ [Halal OS] Service Worker registered with scope:', reg.scope);
+        }).catch((err) => {
+          console.log('☪ [Halal OS] Service Worker registration note:', err.message);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

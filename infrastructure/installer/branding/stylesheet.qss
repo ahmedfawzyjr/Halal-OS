@@ -1,0 +1,100 @@
+/* ☪ Halal OS - Calamares Installer Emerald & Gold Stylesheet */
+
+QWidget {
+    font-family: "Amiri", "Inter", sans-serif;
+    font-size: 13px;
+    color: #e6f4ea;
+    background-color: #0b1a14;
+}
+
+QDialog, QMainWindow {
+    background-color: #0b1a14;
+}
+
+/* Sidebar & Navigation */
+#sidebarApp {
+    background-color: #0d4d3a;
+    border-right: 1px solid #1a5c48;
+}
+
+#sidebarApp QLabel {
+    color: #a3cfbb;
+    padding: 8px 16px;
+}
+
+#sidebarApp QLabel:focus, #sidebarApp QLabel[selected=true] {
+    color: #d4af37;
+    font-weight: bold;
+    background-color: #083327;
+    border-left: 4px solid #d4af37;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #0d4d3a;
+    color: #ffffff;
+    border: 1px solid #1f7a5c;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background-color: #116149;
+    border-color: #d4af37;
+    color: #ffffff;
+}
+
+QPushButton:pressed {
+    background-color: #083327;
+}
+
+QPushButton:disabled {
+    background-color: #142920;
+    color: #527566;
+    border-color: #1c382c;
+}
+
+/* Primary Action Button (Next/Install) */
+QPushButton#nextButton {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0d4d3a, stop:1 #176a51);
+    border: 1px solid #d4af37;
+    color: #ffffff;
+}
+
+QPushButton#nextButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #116149, stop:1 #1f8264);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+/* Content Area */
+QTabWidget::pane {
+    border: 1px solid #1a382c;
+    background: #0f241c;
+    border-radius: 8px;
+}
+
+QProgressBar {
+    background-color: #142920;
+    border: 1px solid #1f7a5c;
+    border-radius: 6px;
+    text-align: center;
+    color: #ffffff;
+}
+
+QProgressBar::chunk {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0d4d3a, stop:1 #d4af37);
+    border-radius: 5px;
+}
+
+QComboBox, QLineEdit, QSpinBox {
+    background-color: #142920;
+    border: 1px solid #1f7a5c;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #ffffff;
+}
+
+QComboBox:focus, QLineEdit:focus {
+    border-color: #d4af37;
+}

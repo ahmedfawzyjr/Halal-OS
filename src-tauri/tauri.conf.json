@@ -1,0 +1,81 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/tooling/cli/schema.json",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "http://localhost:3000",
+    "distDir": "../"
+  },
+  "package": {
+    "productName": "Halal OS",
+    "version": "2.0.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "notification": {
+        "all": true
+      },
+      "dialog": {
+        "all": true,
+        "open": true,
+        "save": true
+      },
+      "fs": {
+        "all": false,
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true
+      },
+      "http": {
+        "all": true,
+        "request": true,
+        "scope": ["http://127.0.0.1:*", "http://localhost:*"]
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "org.halalos.desktop",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "resources": [],
+      "externalBin": [],
+      "copyright": "GPL-3.0 - Halal OS Core Foundation",
+      "category": "Productivity",
+      "shortDescription": "Sovereign Islamic Operating System Desktop Shell",
+      "longDescription": "Halal OS provides a sovereign, privacy-first computing environment with native Islamic features, local AI, and zero cloud telemetry."
+    },
+    "security": {
+      "csp": "default-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* data: blob: 'unsafe-inline' 'unsafe-eval'"
+    },
+    "windows": [
+      {
+        "title": "Halal OS (نظام حلال) - Sovereign Islamic Desktop",
+        "width": 1366,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "systemTray": {
+      "iconPath": "icons/icon.ico",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false
+    }
+  }
+}

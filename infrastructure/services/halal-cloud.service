@@ -1,0 +1,22 @@
+[Unit]
+Description=Halal OS Sovereign E2EE Cloud & Sync Orchestrator
+After=network.target
+
+[Service]
+Type=simple
+User=halal
+Group=halal
+WorkingDirectory=/usr/share/halalos/cloud
+ExecStart=/usr/local/bin/cloud-orchestrator
+Restart=always
+RestartSec=3s
+Environment=PORT=8082
+
+# Hardening
+ProtectSystem=full
+ProtectHome=false
+ReadWritePaths=/var/lib/halal-os/cloud-vault
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

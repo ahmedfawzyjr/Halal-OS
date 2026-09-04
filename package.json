@@ -1,0 +1,43 @@
+{
+  "name": "halal-os",
+  "version": "2.0.0",
+  "description": "Halal OS (نظام حلال) - World's First Sovereign Islamic Operating System Simulator, HDK & Microservices Suite",
+  "main": "desktop-shell.js",
+  "scripts": {
+    "start": "node desktop-shell.js --open",
+    "serve": "node desktop-shell.js --port 3000",
+    "dev": "node desktop-shell.js --port 3000 --open",
+    "ai": "python ai/local_engine.py --serve",
+    "ai:test": "python ai/local_engine.py",
+    "store": "go run app-store/main.go",
+    "cloud": "go run cloud/main.go",
+    "build:iso": "bash infrastructure/build_iso.sh",
+    "build:iso:docker": "node -e \"process.platform === 'win32' ? require('child_process').execSync('powershell infrastructure/build_iso_docker.ps1', {stdio:'inherit'}) : require('child_process').execSync('bash infrastructure/build_iso_docker.sh', {stdio:'inherit'})\"",
+    "qemu": "node -e \"process.platform === 'win32' ? require('child_process').execSync('powershell infrastructure/run_qemu.ps1', {stdio:'inherit'}) : require('child_process').execSync('bash infrastructure/run_qemu.sh', {stdio:'inherit'})\"",
+    "test:iso": "node tests/iso_pipeline.test.js",
+    "test:ui": "node tests/tauri_and_ui.test.js",
+    "test:tauri": "node tests/tauri_and_ui.test.js",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "test": "node tests/integration.test.js && node tests/iso_pipeline.test.js && node tests/tauri_and_ui.test.js"
+  },
+  "keywords": [
+    "halal-os",
+    "islamic-operating-system",
+    "hdk",
+    "amina-ai",
+    "amanah-security",
+    "offline-pwa",
+    "sovereign-os"
+  ],
+  "author": "Halal OS Core Team <core@halalos.org>",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/halalos/halal-os"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

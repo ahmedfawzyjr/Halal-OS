@@ -1,0 +1,58 @@
+{
+  "name": "Halal OS | نظام حلال",
+  "short_name": "Halal OS",
+  "description": "The World's First Sovereign Islamic Operating System Simulator with HDK Design System and Zero Cloud Telemetry",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#041a14",
+  "theme_color": "#0d4d3a",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": [
+    "productivity",
+    "lifestyle",
+    "utilities",
+    "education"
+  ],
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./favicon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "القرآن الكريم (Quran Kareem)",
+      "url": "./index.html#app-quran",
+      "description": "تلاوة وقراءة المصحف الشريف بتجويد وصوت خاشع"
+    },
+    {
+      "name": "مواقيت الصلاة (Prayer Times)",
+      "url": "./index.html#app-prayer",
+      "description": "مواقيت الصلاة الدقيقة وتحديد اتجاه القبلة"
+    },
+    {
+      "name": "المساعد أمينة (Amina AI)",
+      "url": "./index.html#app-amina",
+      "description": "المساعد الذكي المحلي فائق الخصوصية والأمان"
+    },
+    {
+      "name": "أمانة للحماية (Amanah Security)",
+      "url": "./index.html#app-amanah",
+      "description": "مركز الحماية وجدار الأمان ومنع التسريب"
+    }
+  ]
+}

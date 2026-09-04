@@ -614,6 +614,226 @@ let isFilesColumnView = false;
 let filesSearchQuery = "";
 let filesActiveTagFilter = "all";
 
+// --- DUAL-MODE SYSTEM BRIDGE (Offline PWA + Local Microservices) ---
+const halalSystemBridge = {
+  endpoints: {
+    ai: "http://127.0.0.1:8088",
+    store: "http://127.0.0.1:8080",
+    cloud: "http://127.0.0.1:8082",
+    bridge: "/api/system-bridge"
+  },
+  services: {
+    ai: { name: "Local AI Engine", port: 8088, status: "checking", latency: 0, icon: "ti-brain" },
+    store: { name: "App Store Core", port: 8080, status: "checking", latency: 0, icon: "ti-shopping-bag" },
+    cloud: { name: "Cloud Sync E2EE", port: 8082, status: "checking", latency: 0, icon: "ti-cloud" },
+    bridge: { name: "Desktop Shell Bridge", port: 3000, status: "checking", latency: 0, icon: "ti-server" },
+    firewall: { name: "Amanah Firewall", port: 0, status: "active", latency: 0, icon: "ti-shield-lock" }
+  },
+  isDualModeActive: false,
+  checkInterval: null,
+
+  async init() {
+    await this.checkHealth();
+    this.checkInterval = setInterval(() => this.checkHealth(), 12000);
+  },
+
+  async checkHealth() {
+    let onlineCount = 0;
+    
+    // 1. Check AI
+    try {
+      const t0 = performance.now();
+      const res = await fetch(`${this.endpoints.ai}/health`, { signal: AbortSignal.timeout(1500) });
+      if (res.ok) {
+        this.services.ai.status = "online";
+        this.services.ai.latency = Math.round(performance.now() - t0);
+        onlineCount++;
+      } else {
+        this.services.ai.status = "offline";
+      }
+    } catch {
+      this.services.ai.status = "offline";
+    }
+
+    // 2. Check Store
+    try {
+      const t0 = performance.now();
+      const res = await fetch(`${this.endpoints.store}/health`, { signal: AbortSignal.timeout(1500) });
+      if (res.ok) {
+        this.services.store.status = "online";
+        this.services.store.latency = Math.round(performance.now() - t0);
+        onlineCount++;
+      } else {
+        this.services.store.status = "offline";
+      }
+    } catch {
+      this.services.store.status = "offline";
+    }
+
+    // 3. Check Cloud
+    try {
+      const t0 = performance.now();
+      const res = await fetch(`${this.endpoints.cloud}/health`, { signal: AbortSignal.timeout(1500) });
+      if (res.ok) {
+        this.services.cloud.status = "online";
+        this.services.cloud.latency = Math.round(performance.now() - t0);
+        onlineCount++;
+      } else {
+        this.services.cloud.status = "offline";
+      }
+    } catch {
+      this.services.cloud.status = "offline";
+    }
+
+    // 4. Check Desktop Bridge
+    try {
+      const t0 = performance.now();
+      const res = await fetch(this.endpoints.bridge, { signal: AbortSignal.timeout(1000) });
+      if (res.ok) {
+        this.services.bridge.status = "online";
+        this.services.bridge.latency = Math.round(performance.now() - t0);
+        onlineCount++;
+      } else {
+        this.services.bridge.status = "offline";
+      }
+    } catch {
+      this.services.bridge.status = "offline";
+    }
+
+    this.isDualModeActive = onlineCount > 0;
+    this.updateBadgeUI(onlineCount);
+    if (document.getElementById("daemon-status-dropdown")?.style.display === "flex") {
+      renderDaemonStatusList();
+    }
+  },
+
+  updateBadgeUI(onlineCount) {
+    const icon = document.getElementById("dual-mode-icon");
+    const tag = document.getElementById("daemon-status-mode-tag");
+    const badge = document.getElementById("dual-mode-badge");
+
+    if (this.isDualModeActive) {
+      if (icon) icon.style.color = "var(--color-emerald-active)";
+      if (tag) {
+        tag.className = "tag tag-green";
+        tag.textContent = `Connected (${onlineCount} daemons)`;
+      }
+      if (badge) badge.title = `Dual-Mode Active: ${onlineCount} Local Microservices Connected`;
+    } else {
+      if (icon) icon.style.color = "var(--color-gold-light)";
+      if (tag) {
+        tag.className = "tag tag-gold";
+        tag.textContent = "Offline PWA Mode";
+      }
+      if (badge) badge.title = "Dual-Mode: Running in Pure Offline Standalone Mode";
+    }
+  },
+
+  async queryAI(prompt, language = "en") {
+    if (this.services.ai.status !== "online") return null;
+    try {
+      const res = await fetch(`${this.endpoints.ai}/api/v1/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, language }),
+        signal: AbortSignal.timeout(6000)
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.response || null;
+    } catch {
+      return null;
+    }
+  },
+
+  async installAppPackage(appId) {
+    if (this.services.store.status === "online") {
+      try {
+        const res = await fetch(`${this.endpoints.store}/api/v1/install`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: appId }),
+          signal: AbortSignal.timeout(4000)
+        });
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch (err) {
+        console.warn("Store backend install fallback to offline simulation:", err);
+      }
+    }
+    return { success: true, simulated: true, app: appId };
+  },
+
+  async fetchStoreCatalog() {
+    if (this.services.store.status === "online") {
+      try {
+        const res = await fetch(`${this.endpoints.store}/api/v1/catalog`, { signal: AbortSignal.timeout(3000) });
+        if (res.ok) return await res.json();
+      } catch (err) {
+        console.warn("Catalog fetch fallback to local:", err);
+      }
+    }
+    return null;
+  },
+
+  async syncCloudPush(key, payload) {
+    if (this.services.cloud.status === "online") {
+      try {
+        const res = await fetch(`${this.endpoints.cloud}/api/v1/sync/push`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key, payload }),
+          signal: AbortSignal.timeout(4000)
+        });
+        if (res.ok) return await res.json();
+      } catch (err) {
+        console.warn("Cloud sync push fallback:", err);
+      }
+    }
+    return { status: "offline_cached", key };
+  }
+};
+
+function toggleDaemonStatusDropdown() {
+  const el = document.getElementById("daemon-status-dropdown");
+  if (!el) return;
+  const isHidden = el.style.display === "none" || el.style.display === "";
+  el.style.display = isHidden ? "flex" : "none";
+  if (isHidden) {
+    renderDaemonStatusList();
+    halalSystemBridge.checkHealth();
+  }
+}
+
+function renderDaemonStatusList() {
+  const container = document.getElementById("daemon-status-list");
+  if (!container) return;
+  container.innerHTML = "";
+
+  Object.entries(halalSystemBridge.services).forEach(([key, s]) => {
+    const item = document.createElement("div");
+    item.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:8px;";
+
+    const isOnline = s.status === "online" || s.status === "active";
+    const statusColor = isOnline ? "var(--color-emerald-active)" : "var(--color-gold-light)";
+    const statusLabel = s.status === "online" ? `Online (${s.latency}ms)` : (s.status === "active" ? "Active (Shield)" : "Offline (PWA Mode)");
+    const portBadge = s.port ? `:${s.port}` : "Kernel";
+
+    item.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px;">
+        <i class="ti ${s.icon}" style="font-size:16px; color:${statusColor};"></i>
+        <div>
+          <div style="font-size:12px; font-weight:600;">${s.name}</div>
+          <div style="font-size:10px; color:var(--color-text-muted);">${portBadge} &bull; ${statusLabel}</div>
+        </div>
+      </div>
+      <span class="tag ${isOnline ? "tag-green" : "tag-gold"}" style="font-size:10px; text-transform:uppercase;">${s.status}</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
 // --- 2. INITIALIZATION / BOOT PROCESS ---
 window.addEventListener("DOMContentLoaded", () => {
   // Simulate system load
@@ -696,6 +916,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // Init custom cursor & click sounds
   initCustomCursor();
   initClickSounds();
+
+  // Initialize Dual-Mode Microservices System Bridge
+  halalSystemBridge.init();
 });
 
 // --- 3. CLOCK & PRAYER SCHEDULER LOGIC ---
@@ -2385,6 +2608,7 @@ function executeTerminalCommand(cmdText, tabId = 0) {
   if (baseCmd === "help") {
     responseBlock.textContent = `Available utilities:
   neofetch       Display system specification branding details.
+  daemons        Inspect local microservices & Rust daemon status.
   hadith         Print a graded authentic Hadith statement.
   quran          Print Surah details and local translation.
   halalpkg       Package Manager command tool interface.
@@ -2393,6 +2617,29 @@ function executeTerminalCommand(cmdText, tabId = 0) {
   prayer/salah   Display the daily prayer schedule and countdown widget.
   clear          Flush terminal history logs.`;
   } 
+  else if (baseCmd === "daemons" || baseCmd === "services" || baseCmd === "systemctl") {
+    const sub = tokens[1] ? tokens[1].toLowerCase() : "";
+    if (sub === "ping" || sub === "check") {
+      halalSystemBridge.checkHealth();
+      responseBlock.innerHTML = `<span style="color: var(--color-emerald-active);">Probing local daemon sockets...</span>\nHealth checks dispatched across ports 8088, 8080, 8082, 3000.`;
+    } else {
+      let daemonRows = "";
+      Object.entries(halalSystemBridge.services).forEach(([k, s]) => {
+        const isOnline = s.status === "online" || s.status === "active";
+        const col = isOnline ? "var(--color-emerald-active)" : "var(--color-gold-light)";
+        const mark = isOnline ? "[ACTIVE]" : "[OFFLINE/PWA]";
+        const portStr = s.port ? String(s.port) : "Kernel";
+        daemonRows += `  ${s.name.padEnd(24)} Port ${portStr.padEnd(6)} <span style="color:${col};font-weight:700;">${mark}</span> (${s.latency}ms)\n`;
+      });
+      responseBlock.innerHTML = `
+<span style="color: var(--color-emerald-active); font-weight: 700;">☪ HALAL OS MICROSERVICES & DAEMONS CONTROLLER</span>
+------------------------------------------------------------
+${daemonRows}------------------------------------------------------------
+System Mode: <span style="color:var(--color-emerald-active);font-weight:700;">${halalSystemBridge.isDualModeActive ? "Dual-Mode (Connected)" : "Dual-Mode (Offline Standalone PWA)"}</span>
+Type 'daemons ping' to re-verify live socket connectivity.
+`;
+    }
+  }
   else if (baseCmd === "neofetch") {
     responseBlock.innerHTML = `
 <span style="color: var(--color-emerald-active); font-weight:700;">       ☪       </span>   <span style="color: var(--color-gold-light); font-weight: 700;">halalos@kalam</span>
@@ -2680,7 +2927,7 @@ function checkAminaSystemCommands(q) {
   return null;
 }
 
-function processAminaQuery(q) {
+async function processAminaQuery(q) {
   const queryLower = q.toLowerCase();
   let response = "";
   let nextChips = ["What time is Fajr?", "Read Al-Ikhlas", "Check Privacy Score", "Switch to Arabic", "Open Files"];
@@ -2690,53 +2937,68 @@ function processAminaQuery(q) {
   if (sysCmdReply) {
     response = sysCmdReply;
     nextChips = ["Open Browser", "Lock Vault", "Enable Firewall", "What time is Fajr?"];
-  }
-  // 2. Otherwise default queries
-  else if (queryLower.includes("prayer") || queryLower.includes("salah") || queryLower.includes("time") || queryLower.includes("fajr") || queryLower.includes("maghrib") || queryLower.includes("asr")) {
-    response = `⏰ **Simulated Prayer Times Today (Cairo)**:
+  } else {
+    // 2. Try querying live local AI daemon via System Bridge
+    let liveAiResponse = null;
+    try {
+      if (window.halalSystemBridge && typeof window.halalSystemBridge.queryAI === "function") {
+        liveAiResponse = await window.halalSystemBridge.queryAI(q, setupState.lang || "en");
+      }
+    } catch (e) {
+      console.warn("Amina local AI query fallback:", e);
+    }
+
+    if (liveAiResponse) {
+      response = liveAiResponse;
+      nextChips = ["What time is Fajr?", "Read Al-Ikhlas", "Check Privacy Score", "Open Files"];
+    }
+    // 3. Graceful offline fallback rules
+    else if (queryLower.includes("prayer") || queryLower.includes("salah") || queryLower.includes("time") || queryLower.includes("fajr") || queryLower.includes("maghrib") || queryLower.includes("asr")) {
+      response = `⏰ **Simulated Prayer Times Today (Cairo)**:
 - Fajr: 04:12 AM
 - Dhuhr: 12:00 PM
 - Asr: 03:28 PM
 - Maghrib: 06:41 PM
 - Isha: 08:06 PM
-*Next prayer countdown: ${document.getElementById("top-prayer-text").textContent}*`;
-    nextChips = ["Read Al-Ikhlas", "Open Islamic Suite", "Check Privacy Score"];
-  }
-  else if (queryLower.includes("quran") || queryLower.includes("verse") || queryLower.includes("ikhlas")) {
-    response = `📖 **Quran Recitation Al-Ikhlas (112:1-2)**:
+*Next prayer countdown: ${document.getElementById("top-prayer-text") ? document.getElementById("top-prayer-text").textContent : "02:14:10"}*`;
+      nextChips = ["Read Al-Ikhlas", "Open Islamic Suite", "Check Privacy Score"];
+    }
+    else if (queryLower.includes("quran") || queryLower.includes("verse") || queryLower.includes("ikhlas")) {
+      response = `📖 **Quran Recitation Al-Ikhlas (112:1-2)**:
 - Arabic: قُلْ هُوَ اللَّهُ أَحَدٌ * اللَّهُ الصَّمَدُ
 - English: "Say, 'He is Allah, [who is] One, Allah, the Eternal Refuge.'"
 *(Source: Uthmani Authenticated Corpus)*`;
-    nextChips = ["What time is Maghrib?", "Open Quran Reader", "Switch to Arabic"];
-  }
-  else if (queryLower.includes("zakat") || queryLower.includes("charity") || queryLower.includes("nisab")) {
-    response = `🧮 **Zakat Obligation calculation (Simulated)**:
+      nextChips = ["What time is Maghrib?", "Open Quran Reader", "Switch to Arabic"];
+    }
+    else if (queryLower.includes("zakat") || queryLower.includes("charity") || queryLower.includes("nisab")) {
+      response = `🧮 **Zakat Obligation calculation (Simulated)**:
 Standard Nisab is calculated against 85g gold ($5,420 cash value). Your current assets exceed this limit.
 *Your calculated Zakat due: ${document.getElementById("zakat-due-value") ? document.getElementById("zakat-due-value").textContent : "$120.00"}*`;
-    nextChips = ["Open Zakat Calculator", "What time is Maghrib?", "Check Privacy Score"];
-  }
-  else if (queryLower.includes("score") || queryLower.includes("privacy") || queryLower.includes("security")) {
-    const radial = document.getElementById("psd-radial-score");
-    const scoreVal = radial ? radial.textContent : "98";
-    response = `🔒 **Amanah Privacy Score: ${scoreVal}/100**
+      nextChips = ["Open Zakat Calculator", "What time is Maghrib?", "Check Privacy Score"];
+    }
+    else if (queryLower.includes("score") || queryLower.includes("privacy") || queryLower.includes("security")) {
+      const radial = document.getElementById("psd-radial-score");
+      const scoreVal = radial ? radial.textContent : "98";
+      response = `🔒 **Amanah Privacy Score: ${scoreVal}/100**
 - Firewall Status: ${setupState.firewallEnabled ? "ACTIVE (Ad-blocking enabled)" : "DEACTIVATED (Warning)"}
 - Telemetry: Blocked
 - Sandbox: Active
 Verify your specific permissions mapping inside Tazkiyah settings.`;
-    nextChips = ["Enable Firewall", "Lock Vault", "Open Settings"];
-  }
-  else if (queryLower.includes("language") || queryLower.includes("arabic")) {
-    response = `🌐 I support multilingual operations. To switch language layout to Arabic, please type **"switch language to Arabic"** or change it in Tazkiyah Settings general tab.`;
-    nextChips = ["Switch to Arabic", "Open Files", "What time is Fajr?"];
-  }
-  else if (queryLower.includes("install")) {
-    response = `📦 You can install verified applications using the package manager. Run \`halalpkg install [app_name]\` in Kalam Terminal.`;
-    nextChips = ["Open Terminal", "Enable Firewall", "Read Al-Ikhlas"];
-  }
-  else {
-    response = `🤖 **Amina AI Local Inference**:
+      nextChips = ["Enable Firewall", "Lock Vault", "Open Settings"];
+    }
+    else if (queryLower.includes("language") || queryLower.includes("arabic")) {
+      response = `🌐 I support multilingual operations. To switch language layout to Arabic, please type **"switch language to Arabic"** or change it in Tazkiyah Settings general tab.`;
+      nextChips = ["Switch to Arabic", "Open Files", "What time is Fajr?"];
+    }
+    else if (queryLower.includes("install")) {
+      response = `📦 You can install verified applications using the package manager. Run \`halalpkg install [app_name]\` in Kalam Terminal.`;
+      nextChips = ["Open Terminal", "Enable Firewall", "Read Al-Ikhlas"];
+    }
+    else {
+      response = `🤖 **Amina AI Local Inference**:
 I processed your request on-device. All metadata resides completely within local memory storage coordinates. How else may I assist your system control or faith preferences?`;
-    nextChips = ["What time is Fajr?", "Check Privacy Score", "Lock Vault"];
+      nextChips = ["What time is Fajr?", "Check Privacy Score", "Lock Vault"];
+    }
   }
 
   appendAminaBubble(response, "assistant", true);
@@ -4598,7 +4860,7 @@ function initDynamicARIA() {
 }
 
 /* ---------------------------------------------------------------
-   WINDOW MANAGEMENT � ARIA updates when opening/closing
+   WINDOW MANAGEMENT  ARIA updates when opening/closing
    --------------------------------------------------------------- */
 // Patch openWindow to announce to screen readers
 const _origOpenWindow = typeof openWindow === 'function' ? openWindow : null;
@@ -4627,7 +4889,7 @@ window._closeWindowAria = function(id) {
 };
 
 /* ---------------------------------------------------------------
-   WORKSPACE SWITCHING � keyboard accessible
+   WORKSPACE SWITCHING  keyboard accessible
    --------------------------------------------------------------- */
 function switchMaqam(num) {
   const btn = document.querySelector(`[onclick*="selectMaqam(${num})"]`) ||
@@ -4640,7 +4902,7 @@ function switchMaqam(num) {
 }
 
 /* ---------------------------------------------------------------
-   MOBILE � Touch enhancements
+   MOBILE  Touch enhancements
    --------------------------------------------------------------- */
 function initTouchEnhancements() {
   // Add touch-action to draggable windows (disable on mobile)
@@ -4751,9 +5013,20 @@ function searchCloudFiles(query) {
   });
 }
 
-function uploadToCloud() {
-  showInsha('?? Uploading... Encrypting with AES-256 before transfer', 'success');
-  setTimeout(() => showInsha('?? Upload complete � E2E Encrypted', 'success'), 2500);
+async function uploadToCloud() {
+  showInsha('☁️ Uploading... Encrypting with AES-256 before transfer', 'success');
+  if (window.halalSystemBridge && typeof window.halalSystemBridge.syncCloudPush === "function") {
+    try {
+      await window.halalSystemBridge.syncCloudPush({
+        type: "file_upload",
+        timestamp: new Date().toISOString(),
+        encryption: "AES-256-GCM"
+      });
+    } catch (e) {
+      console.warn("Cloud sync push fallback:", e);
+    }
+  }
+  setTimeout(() => showInsha('🔒 Upload complete — E2E Encrypted & Synced', 'success'), 2500);
 }
 
 function createCloudFolder() {
@@ -4777,7 +5050,7 @@ function selectContact(el, name) {
   if (nameEl) nameEl.textContent = name;
 }
 
-function sendCloudMessage() {
+async function sendCloudMessage() {
   const input = document.getElementById('cloud-msg-input');
   const area = document.getElementById('cloud-messages-area');
   if (!input || !area || !input.value.trim()) return;
@@ -4788,11 +5061,25 @@ function sendCloudMessage() {
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
   input.value = '';
+
+  // Synchronize with local cloud daemon if available
+  if (window.halalSystemBridge && typeof window.halalSystemBridge.syncCloudPush === "function") {
+    try {
+      await window.halalSystemBridge.syncCloudPush({
+        type: "chat_message",
+        text: msg,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn("Cloud chat push fallback:", e);
+    }
+  }
+
   // Simulated reply
   setTimeout(() => {
     const reply = document.createElement('div');
     reply.style.cssText = 'display:flex;gap:8px;';
-    reply.innerHTML = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(27,94,32,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">M</div><div style="background:rgba(255,255,255,0.06);padding:8px 12px;border-radius:12px 12px 12px 2px;font-size:12px;max-width:70%">JazakAllah khair! ??</div>`;
+    reply.innerHTML = `<div style="width:24px;height:24px;border-radius:50%;background:rgba(27,94,32,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0">M</div><div style="background:rgba(255,255,255,0.06);padding:8px 12px;border-radius:12px 12px 12px 2px;font-size:12px;max-width:70%">JazakAllah khair! 🤲</div>`;
     area.appendChild(reply);
     area.scrollTop = area.scrollHeight;
   }, 1200);
@@ -4987,3 +5274,1572 @@ function initCustomCursor() {
   updateHoverElements();
   setInterval(updateHoverElements, 1000); // Dynamic elements helper
 }
+
+
+
+// ================================================================
+// ☪ HALAL OS - NATIVE ISLAMIC SUITE CORE ENGINE
+// 1. Quran Audio Player & Surah Library (11 Surahs + EveryAyah CDN)
+// 2. 3D Spherical Qibla Compass Finder (16 Cities + Great Circle Math)
+// 3. Bayt Al-Mal Zakat Engine & Ledger (Nisab, Donut Chart, 8 Categories)
+// 4. Prayer Times & Hijri Calendar Engine
+// ================================================================
+
+/* --- 1. QURAN SURAH DATASET (11 Surahs in Uthmani Script + Tafsir) --- */
+const SURAH_DATA = {
+  1: {
+    id: 1,
+    name_en: "Al-Fatiha",
+    name_ar: "الفاتحة",
+    title: "Surah Al-Fatiha (سورة الفاتحة)",
+    type: "Meccan",
+    total_verses: 7,
+    verses: [
+      { number: 1, text_ar: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ", text_en: "In the name of Allah, the Entirely Merciful, the Especially Merciful.", tafsir: "The opening of the Quran and the greatest Surah, encapsulating all fundamental Islamic theology and servitude." },
+      { number: 2, text_ar: "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ", text_en: "[All] praise is [due] to Allah, Lord of the worlds.", tafsir: "Praise belongs unconditionally to the Creator and Sustainer of all existence." },
+      { number: 3, text_ar: "ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ", text_en: "The Entirely Merciful, the Especially Merciful.", tafsir: "Ar-Rahman is general mercy for all creation; Ar-Raheem is specific mercy for the believers." },
+      { number: 4, text_ar: "مَـٰلِكِ يَوْمِ ٱلدِّينِ", text_en: "Sovereign of the Day of Recompense.", tafsir: "Absolute ruler and judge on the Day of Resurrection where justice is fully rendered." },
+      { number: 5, text_ar: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", text_en: "It is You we worship and You we ask for help.", tafsir: "The core covenant of Tawhid: devotion exclusively to Allah and seeking assistance only from Him." },
+      { number: 6, text_ar: "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ", text_en: "Guide us to the straight path.", tafsir: "Supplication for steadfastness upon the upright way of divine truth." },
+      { number: 7, text_ar: "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ", text_en: "The path of those upon whom You have bestowed favor, not of those who have evoked [Your] anger or of those who are astray.", tafsir: "The path of prophets and the righteous, avoiding rebellion and misguidance." }
+    ]
+  },
+  2: {
+    id: 2,
+    name_en: "Al-Baqarah (Key Ayat)",
+    name_ar: "البقرة (آيات مختارة)",
+    title: "Surah Al-Baqarah - Ayat Al-Kursi & Amanar-Rasul (سورة البقرة)",
+    type: "Medinan",
+    total_verses: 3,
+    verses: [
+      { number: 255, text_ar: "اللَّهُ لَا إِلَـٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَّهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَن ذَا الَّذِي يَشْفَعُ عِندَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ", text_en: "Allah - there is no deity except Him, the Ever-Living, the Sustainer of [all] existence. Neither drowsiness overtakes Him nor sleep. To Him belongs whatever is in the heavens and whatever is on the earth. Who is it that can intercede with Him except by His permission? He knows what is [presently] before them and what will be after them, and they encompass not a thing of His knowledge except for what He wills. His Kursi extends over the heavens and the earth, and their preservation tires Him not. And He is the Most High, the Most Great.", tafsir: "Ayat Al-Kursi (The Throne Verse) is the greatest verse in the Holy Quran, containing ten independent divine attributes of majesty." },
+      { number: 285, text_ar: "آمَنَ الرَّسُولُ بِمَا أُنزِلَ إِلَيْهِ مِن رَّبِّهِ وَالْمُؤْمِنُونَ ۚ كُلٌّ آمَنَ بِاللَّهِ وَمَلَائِكَتِهِ وَكُتُبِهِ وَرُسُلِهِ لَا نُفَرِّقُ بَيْنَ أَحَدٍ مِّن رُّسُلِهِ ۚ وَقَالُوا سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ", text_en: "The Messenger has believed in what was revealed to him from his Lord, and [so have] the believers. All of them have believed in Allah and His angels and His books and His messengers, [saying], 'We make no distinction between any of His messengers.' And they say, 'We hear and we obey. [We seek] Your forgiveness, our Lord, and to You is the [final] destination.'", tafsir: "First of the two concluding verses of Al-Baqarah, declaring the complete articles of Islamic faith and obedience." },
+      { number: 286, text_ar: "لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا ۚ لَهَا مَا كَسَبَتْ وَعَلَيْهَا مَا اكْتَسَبَتْ ۗ رَبَّنَا لَا تُؤَاخِذْنَا إِن نَّسِينَا أَوْ أَخْطَأْنَا ۚ رَبَّنَا وَلَا تَحْمِلْ عَلَيْنَا إِصْرًا كَمَا حَمَلْتَهُ عَلَى الَّذِينَ مِن قَبْلِنَا ۚ رَبَّنَا وَلَا تُحَمِّلْنَا مَا لَا طَاقَةَ لَنَا بِهِ ۖ وَاعْفُ عَنَّا وَاغْفِرْ لَنَا وَارْحَمْنَا ۚ أَنتَ مَوْلَانَا فَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ", text_en: "Allah does not charge a soul except [with that within] its capacity. It will have [the consequence of] what [good] it gained, and it will bear [the consequence of] what [evil] it earned. 'Our Lord, do not impose blame upon us if we have forgotten or erred. Our Lord, and lay not upon us a burden like that which You laid upon those before us. Our Lord, and burden us not with that which we have no ability to bear. And pardon us; and forgive us; and have mercy upon us. You are our protector, so give us victory over the disbelieving people.'", tafsir: "The profound closing supplication affirming divine mercy, individual accountability, and seeking refuge and victory in Allah." }
+    ]
+  },
+  36: {
+    id: 36,
+    name_en: "Ya-Sin",
+    name_ar: "يس",
+    title: "Surah Ya-Sin - Verses 1-12 (سورة يس)",
+    type: "Meccan",
+    total_verses: 12,
+    verses: [
+      { number: 1, text_ar: "يسٓ", text_en: "Ya, Seen.", tafsir: "Disjointed letters (Al-Muqatta'at), Allah alone knows their definitive wisdom, pointing to the miraculous nature of the Quran." },
+      { number: 2, text_ar: "وَٱلْقُرْءَانِ ٱلْحَكِيمِ", text_en: "By the wise Qur'an.", tafsir: "An oath by the Quran which is filled with divine wisdom, clear legislation, and undeniable proof." },
+      { number: 3, text_ar: "إِنَّكَ لَمِنَ ٱلْمُرْسَلِينَ", text_en: "Indeed you, [O Muhammad], are from among the messengers,", tafsir: "Direct confirmation from Allah affirming the true prophethood of Muhammad (peace be upon him)." },
+      { number: 4, text_ar: "عَلَىٰ صِرَٰطٍ مَّسْتَقِيمٍ", text_en: "On a straight path.", tafsir: "Established upon the true religion and straight creed." },
+      { number: 5, text_ar: "تَنزِيلَ ٱلْعَزِيزِ ٱلرَّحِيمِ", text_en: "[This is] a revelation of the Exalted in Might, the Merciful,", tafsir: "The Quran descended from the Almighty in retribution and Merciful to His faithful servants." },
+      { number: 6, text_ar: "لِتُنذِرَ قَوْمًا مَّآ أُنذِرَ ءَابَآؤُهُمْ فَهُمْ غَـٰفِلُونَ", text_en: "That you may warn a people whose forefathers were not warned, so they are unaware.", tafsir: "Sent to warn the Arabs who had not received a recent prophet, living in heedlessness." },
+      { number: 7, text_ar: "لَقَدْ حَقَّ ٱلْقَوْلُ عَلَىٰٓ أَكْثَرِهِمْ فَهُمْ لَا يُؤْمِنُونَ", text_en: "Already the word has come into effect upon most of them, so they do not believe.", tafsir: "The divine decree of punishment became deserved due to their persistent rejection." },
+      { number: 8, text_ar: "إِنَّا جَعَلْنَا فِىٓ أَعْنَـٰقِهِمْ أَغْلَـٰلًا فَهِىَ إِلَى ٱلْأَذْقَانِ فَهُم مُّقْمَحُونَ", text_en: "Indeed, We have put shackles on their necks, and they are to their chins, so their heads are held up.", tafsir: "A vivid depiction of spiritual blindness and arrogance that impedes bowing to truth." },
+      { number: 9, text_ar: "وَجَعَلْنَا مِنۢ بَيْنِ أَيْدِيهِمْ سَدًّا وَمِنْ خَلْفِهِمْ سَدًّا فَأَغْشَيْنَـٰهُمْ فَهُمْ لَا يُبْصِرُونَ", text_en: "And We have put before them a barrier and behind them a barrier and covered them, so they do not see.", tafsir: "Spiritual barrier and covering preventing stubborn deniers from observing divine signs." },
+      { number: 10, text_ar: "وَسَوَآءٌ عَلَيْهِمْ ءَأَنذَرْتَهُمْ أَمْ لَمْ تُنذِرْهُمْ لَا يُؤْمِنُونَ", text_en: "And it is all the same for them whether you warn them or do not warn them - they will not believe.", tafsir: "Warning will only benefit those who have an open heart to divine revelation." },
+      { number: 11, text_ar: "إِنَّمَا تُنذِرُ مَنِ ٱتَّبَعَ ٱلذِّكْرَ وَخَشِىَ ٱلرَّحْمَـٰنَ بِٱلْغَيْبِ ۖ فَبَشِّرْهُ بِمَغْفِرَةٍ وَأَجْرٍ كَرِيمٍ", text_en: "You can only warn one who follows the message and fears the Most Merciful unseen. So give him good tidings of forgiveness and noble reward.", tafsir: "Rejoice those who follow the Quran and fear Allah inwardly with glad tidings of paradise." },
+      { number: 12, text_ar: "إِنَّا نَحْنُ نُحْىِ ٱلْمَوْتَىٰ وَنَكْتُبُ مَا قَدَّمُوا۟ وَءَاثَـٰرَهُمْ ۚ وَكُلَّ شَىْءٍ أَحْصَيْنَـٰهُ فِىٓ إِمَامٍ مُّبِينٍ", text_en: "Indeed, it is We who bring the dead to life and record what they have put forth and what they left behind, and all things We have enumerated in a clear register.", tafsir: "Affirmation of resurrection and the preservation of every deed and legacy in the Preserved Tablet." }
+    ]
+  },
+  55: {
+    id: 55,
+    name_en: "Ar-Rahman",
+    name_ar: "الرحمن",
+    title: "Surah Ar-Rahman - Verses 1-16 (سورة الرحمن)",
+    type: "Medinan",
+    total_verses: 16,
+    verses: [
+      { number: 1, text_ar: "ٱلرَّحْمَـٰنُ", text_en: "The Most Merciful", tafsir: "Allah opens with His great name expressing boundless grace." },
+      { number: 2, text_ar: "عَلَّمَ ٱلْقُرْءَانَ", text_en: "Taught the Qur'an,", tafsir: "The greatest gift to mankind is teaching them the Noble Quran." },
+      { number: 3, text_ar: "خَلَقَ ٱلْإِنسَـٰنَ", text_en: "Created man,", tafsir: "Brought human beings into existence with perfect design." },
+      { number: 4, text_ar: "عَلَّمَهُ ٱلْبَيَانَ", text_en: "[And] taught him eloquence.", tafsir: "Endowed humanity with clear speech, intellect, and expression." },
+      { number: 5, text_ar: "ٱلشَّمْسُ وَٱلْقَمَرُ بِحُسْبَانٍ", text_en: "The sun and the moon [move] by precise calculation,", tafsir: "Celestial precision running in ordained mathematical orbits." },
+      { number: 6, text_ar: "وَٱلنَّجْمُ وَٱلشَّجَرُ يَسْجُدَانِ", text_en: "And the stars and trees prostrate.", tafsir: "All creation submits obediently to their Lord." },
+      { number: 7, text_ar: "وَٱلسَّمَآءَ رَفَعَهَا وَوَضَعَ ٱلْمِيزَانَ", text_en: "And the heaven He raised and imposed the balance", tafsir: "Elevated the cosmos and instituted balance and justice." },
+      { number: 8, text_ar: "أَلَّا تَطْغَوْا۟ فِى ٱلْمِيزَانِ", text_en: "That you not transgress within the balance.", tafsir: "Ordering fair dealings and prohibiting injustice." },
+      { number: 9, text_ar: "وَأَقِيمُوا۟ ٱلْوَزْنَ بِٱلْقِسْطِ وَلَا تُخْسِرُوا۟ ٱلْمِيزَانَ", text_en: "And establish weight in justice and do not make deficient the balance.", tafsir: "Maintain equity in all transactions." },
+      { number: 10, text_ar: "وَٱلْأَرْضَ وَضَعَهَا لِلْأَنَامِ", text_en: "And the earth He laid [out] for the creatures.", tafsir: "Made the earth habitable and fertile for all living creatures." },
+      { number: 11, text_ar: "فِيهَا فَـٰكِهَةٌ وَٱلنَّخْلُ ذَاتُ ٱلْأَكْمَامِ", text_en: "Therein is fruit and palm trees having sheaths [of dates]", tafsir: "Providing diverse fruits, dates, and nourishment." },
+      { number: 12, text_ar: "وَٱلْحَبُّ ذُو ٱلْعَصْفِ وَٱلرَّيْحَانُ", text_en: "And grain having husks and scented plants.", tafsir: "Grains for food and sweet-scented plants for joy." },
+      { number: 13, text_ar: "فَبِأَىِّ ءَالَآءِ رَبِّكُمَا تُكَذِّبَانِ", text_en: "So which of the favors of your Lord would you deny?", tafsir: "The profound refrain addressed to mankind and jinn reminding them of countless divine blessings." },
+      { number: 14, text_ar: "خَلَقَ ٱلْإِنسَـٰنَ مِن صَلْصَـٰلٍ كَٱلْفَخَّارِ", text_en: "He created man from clay like [that of] pottery.", tafsir: "Describing the physical origin of humanity from dried clay." },
+      { number: 15, text_ar: "وَخَلَقَ ٱلْجَآنَّ مِن مَّارِجٍ مِّن نَّارٍ", text_en: "And He created the jinn from a smokeless flame of fire.", tafsir: "Describing the creation of the jinn world from smokeless fire." },
+      { number: 16, text_ar: "فَبِأَىِّ ءَالَآءِ رَبِّكُمَا تُكَذِّبَانِ", text_en: "So which of the favors of your Lord would you deny?", tafsir: "Reiterating acknowledgment of divine mastery and grace." }
+    ]
+  },
+  67: {
+    id: 67,
+    name_en: "Al-Mulk",
+    name_ar: "الملك",
+    title: "Surah Al-Mulk - Verses 1-10 (سورة الملك)",
+    type: "Meccan",
+    total_verses: 10,
+    verses: [
+      { number: 1, text_ar: "تَبَـٰرَكَ ٱلَّذِى بِيَدِهِ ٱلْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَىْءٍ قَدِيرٌ", text_en: "Blessed is He in whose hand is dominion, and He is over all things competent -", tafsir: "Exalted is Allah, the Absolute Sovereign of the universe possessing complete omnipotence." },
+      { number: 2, text_ar: "ٱلَّذِى خَلَقَ ٱلْمَوْتَ وَٱلْحَيَوٰةَ لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًا ۚ وَهُوَ ٱلْعَزِيزُ ٱلْغَفُورُ", text_en: "[He] who created death and life to test you [as to] which of you is best in deed - and He is the Exalted in Might, the Forgiving -", tafsir: "Life and death are ordained to test moral sincerity and devotion in action." },
+      { number: 3, text_ar: "ٱلَّذِى خَلَقَ سَبْعَ سَمَـٰوَٰتٍ طِبَاقًا ۖ مَّا تَرَىٰ فِى خَلْقِ ٱلرَّحْمَـٰنِ مِن تَفَـٰوُتٍ ۖ فَٱرْجِعِ ٱلْبَصَرَ هَلْ تَرَىٰ مِن فُطُورٍ", text_en: "[And] who created seven heavens in layers. You do not see in the creation of the Most Merciful any inconsistency. So return [your] vision [to the sky]; do you see any breaks?", tafsir: "The cosmos is created with supreme flawlessness and harmony without cracks or defects." },
+      { number: 4, text_ar: "ثُمَّ ٱرْجِعِ ٱلْبَصَرَ كَرَّتَيْنِ يَنقَلِبْ إِلَيْكَ ٱلْبَصَرُ خَاسِئًا وَهُوَ حَسِيرٌ", text_en: "Then return [your] vision twice again. [Your] vision will return to you humbled while it is fatigued.", tafsir: "Even if scrutinized repeatedly, the observer finds only awe-inspiring perfection." },
+      { number: 5, text_ar: "وَلَقَدْ زَيَّنَّا ٱلسَّمَآءَ ٱلدُّنْيَا بِمَصَـٰبِيحَ وَجَعَلْنَـٰهَا رُجُومًا لِّلشَّيَـٰطِينِ ۖ وَأَعْتَدْنَا لَهُمْ عَذَابَ ٱلسَّعِيرِ", text_en: "And We have certainly beautified the nearest heaven with stars and have made [from] them missiles to drive away the devils and have prepared for them the punishment of the Blaze.", tafsir: "Stars serve as celestial beauty, navigation guidance, and protection." },
+      { number: 6, text_ar: "وَلِلَّذِينَ كَفَرُوا۟ بِرَبِّهِمْ عَذَابُ جَهَنَّمَ ۖ وَبِئْسَ ٱلْمَصِيرُ", text_en: "And for those who disbelieved in their Lord is the punishment of Hell, and wretched is the destination.", tafsir: "Consequence awaiting those who obstinately reject their Creator." },
+      { number: 7, text_ar: "إِذَآ أُلْقُوا۟ فِيهَا سَمِعُوا۟ لَهَا شَهِيقًا وَهِىَ تَفُورُ", text_en: "When they are thrown into it, they hear from it a [dreadful] inhaling while it boils up.", tafsir: "Depiction of the terrifying roar of Hellfire." },
+      { number: 8, text_ar: "تَكَادُ تَمَيَّزُ مِنَ ٱلْغَيْظِ ۖ كُلَّمَآ أُلْقِىَ فِيهَا فَوْجٌ سَأَلَهُمْ خَزَنَتُهَآ أَلَمْ يَأْتِكُمْ نَذِيرٌ", text_en: "It almost bursts with rage. Every time a company is thrown into it, its keepers ask them, 'Did there not come to you a warner?'", tafsir: "Angels question inmates confirming that clear divine messengers had indeed arrived." },
+      { number: 9, text_ar: "قَالُوا۟ بَلَىٰ قَدْ جَآءَنَا نَذِيرٌ فَكَذَّبْنَا وَقُلْنَا مَا نَزَّلَ ٱللَّهُ مِن شَىْءٍ إِنْ أَنتُمْ إِلَّا فِى ضَلَـٰلٍ كَبِيرٍ", text_en: "They will say, 'Yes, a warner had come to us, but we denied and said, \"Allah has not sent down anything. You are not except in great error.\"'", tafsir: "Honest admission of past arrogance and denial of truth in worldly life." },
+      { number: 10, text_ar: "وَقَالُوا۟ لَوْ كُنَّا نَسْمَعُ أَوْ نَعْقِلُ مَا كُنَّا فِىٓ أَصْحَـٰبِ ٱلسَّعِيرِ", text_en: "And they will say, 'If only we had been listening or reasoning, we would not be among the companions of the Blaze.'", tafsir: "Expressing remorse over not applying rational thought and sincere listening to divine guidance." }
+    ]
+  },
+  103: {
+    id: 103,
+    name_en: "Al-Asr",
+    name_ar: "العصر",
+    title: "Surah Al-Asr (سورة العصر)",
+    type: "Meccan",
+    total_verses: 3,
+    verses: [
+      { number: 1, text_ar: "وَٱلْعَصْرِ", text_en: "By time,", tafsir: "An oath by the passage of time which witnesses the deeds of mankind." },
+      { number: 2, text_ar: "إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ", text_en: "Indeed, mankind is in loss,", tafsir: "Every human is inherently in loss and depletion of life capital." },
+      { number: 3, text_ar: "إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّـٰلِحَـٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ بِٱلصَّبْرِ", text_en: "Except for those who have believed and done righteous deeds and advised each other to truth and advised each other to patience.", tafsir: "The four pillars of salvation: sound faith, righteous action, mutual counsel to truth, and patient perseverance." }
+    ]
+  },
+  108: {
+    id: 108,
+    name_en: "Al-Kawthar",
+    name_ar: "الكوثر",
+    title: "Surah Al-Kawthar (سورة الكوثر)",
+    type: "Meccan",
+    total_verses: 3,
+    verses: [
+      { number: 1, text_ar: "إِنَّآ أَعْطَيْنَـٰكَ ٱلْكَوْثَرَ", text_en: "Indeed, We have granted you, [O Muhammad], al-Kawthar.", tafsir: "Al-Kawthar represents immense goodness and the blessed celestial river in Paradise granted to the Prophet." },
+      { number: 2, text_ar: "فَصَلِّ لِرَبِّكَ وَٱنْحَرْ", text_en: "So pray to your Lord and sacrifice [to Him alone].", tafsir: "Direct command to offer prayer and sacrifice exclusively to Allah in gratitude." },
+      { number: 3, text_ar: "إِنَّ شَانِئَكَ هُوَ ٱلْأَبْتَرُ", text_en: "Indeed, your enemy is the one cut off.", tafsir: "Those who hate the Prophet are the ones truly severed from divine mercy and noble legacy." }
+    ]
+  },
+  109: {
+    id: 109,
+    name_en: "Al-Kafirun",
+    name_ar: "الكافرون",
+    title: "Surah Al-Kafirun (سورة الكافرون)",
+    type: "Meccan",
+    total_verses: 6,
+    verses: [
+      { number: 1, text_ar: "قُلْ يَـٰٓأَيُّهَا ٱلْكَـٰفِرُونَ", text_en: "Say, 'O disbelievers,", tafsir: "Direct address distinguishing the monotheistic creed from falsehood." },
+      { number: 2, text_ar: "لَآ أَعْبُدُ مَا تَعْبُدُونَ", text_en: "I do not worship what you worship.", tafsir: "Complete disavowal of idol worship and compromise in faith." },
+      { number: 3, text_ar: "وَلَآ أَنتُمْ عَـٰبِدُونَ مَآ أَعْبُدُ", text_en: "Nor are you worshippers of what I worship.", tafsir: "Clarifying the fundamental divergence in true worship." },
+      { number: 4, text_ar: "وَلَآ أَنَا۠ عَابِدٌۭ مَّا عَبَدتُّمْ", text_en: "Nor will I be a worshipper of what you worship.", tafsir: "Reaffirming unwavering commitment to Islamic monotheism." },
+      { number: 5, text_ar: "وَلَآ أَنتُمْ عَـٰبِدُونَ مَآ أَعْبُدُ", text_en: "Nor will you be worshippers of what I worship.", tafsir: "Reiterating complete spiritual distinction." },
+      { number: 6, text_ar: "لَكُمْ دِينُكُمْ وَلِىَ دِينِ", text_en: "For you is your religion, and for me is my religion.'", tafsir: "Declaration of freedom of conscience and firm adherence to the divine religion." }
+    ]
+  },
+  112: {
+    id: 112,
+    name_en: "Al-Ikhlas",
+    name_ar: "الإخلاص",
+    title: "Surah Al-Ikhlas (سورة الإخلاص)",
+    type: "Meccan",
+    total_verses: 4,
+    verses: [
+      { number: 1, text_ar: "قُلْ هُوَ ٱللَّهُ أَحَدٌ", text_en: "Say, 'He is Allah, [who is] One,", tafsir: "Declaration of absolute uniqueness, singularity, and indivisibility of God." },
+      { number: 2, text_ar: "ٱللَّهُ ٱلصَّمَدُ", text_en: "Allah, the Eternal Refuge.", tafsir: "As-Samad: the Self-Sufficient Master upon whom all creation depends while He depends on none." },
+      { number: 3, text_ar: "لَمْ يَلِدْ وَلَمْ يُولَدْ", text_en: "He neither begets nor is born,", tafsir: "Transcendent above reproduction, physical ancestry, or offspring." },
+      { number: 4, text_ar: "وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ", text_en: "Nor is there to Him any equivalent.'", tafsir: "Nothing in creation is comparable or equal to Allah in essence, attributes, or actions." }
+    ]
+  },
+  113: {
+    id: 113,
+    name_en: "Al-Falaq",
+    name_ar: "الفلق",
+    title: "Surah Al-Falaq (سورة الفلق)",
+    type: "Meccan",
+    total_verses: 5,
+    verses: [
+      { number: 1, text_ar: "قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ", text_en: "Say, 'I seek refuge in the Lord of daybreak", tafsir: "Seeking protection with the Lord who cleaves the dawn from the dark night." },
+      { number: 2, text_ar: "مِن شَرِّ مَا خَلَقَ", text_en: "From the evil of that which He created", tafsir: "Refuge from all perils and harms existing among creations." },
+      { number: 3, text_ar: "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ", text_en: "And from the evil of darkness when it settles", tafsir: "Refuge from nocturnal evils and hidden dangers of the night." },
+      { number: 4, text_ar: "وَمِن شَرِّ ٱلنَّفَّـٰثَـٰتِ فِى ٱلْعُقَدِ", text_en: "And from the evil of the blowers in knots", tafsir: "Protection from witchcraft, sorcery, and divisive malice." },
+      { number: 5, text_ar: "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ", text_en: "And from the evil of an envier when he envies.'", tafsir: "Protection from jealousy, the evil eye, and destructive envy." }
+    ]
+  },
+  114: {
+    id: 114,
+    name_en: "An-Nas",
+    name_ar: "الناس",
+    title: "Surah An-Nas (سورة الناس)",
+    type: "Meccan",
+    total_verses: 6,
+    verses: [
+      { number: 1, text_ar: "قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ", text_en: "Say, 'I seek refuge in the Lord of mankind,", tafsir: "Seeking sanctuary in the Cherisher and Guardian of all humanity." },
+      { number: 2, text_ar: "مَلِكِ ٱلنَّاسِ", text_en: "The Sovereign of mankind,", tafsir: "The True Sovereign King who exercises supreme authority over humanity." },
+      { number: 3, text_ar: "إِلَـٰهِ ٱلنَّاسِ", text_en: "The God of mankind,", tafsir: "The only Deity worthy of worship by all people." },
+      { number: 4, text_ar: "مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ", text_en: "From the evil of the retreating whisperer -", tafsir: "Protection from Satan who whispers suggestions and withdraws when Allah is remembered." },
+      { number: 5, text_ar: "ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ", text_en: "Who whispers into the breasts of mankind -", tafsir: "Targeting the hearts and souls with doubt, desire, and confusion." },
+      { number: 6, text_ar: "مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ", text_en: "From among the jinn and mankind.'", tafsir: "Warning against corrupting whisperers among both spiritual jinn and human companions." }
+    ]
+  }
+};
+
+/* --- Reciter CDN Mapping for EveryAyah CDN --- */
+const RECITERS_MAP = {
+  alafasy: { name: "Mishary Alafasy", dir: "Alafasy_128kbps" },
+  abdulbasit: { name: "Abdul Basit (Murattal)", dir: "Abdul_Basit_Murattal_192kbps" },
+  alghamdi: { name: "Saad Al-Ghamdi", dir: "Ghamadi_40kbps" },
+  husary: { name: "Mahmoud Khalil Al-Husary", dir: "Husary_128kbps" }
+};
+
+/* --- Global Quran Audio State --- */
+let quranPlayerState = {
+  currentSurahId: 1,
+  currentVerseIndex: 0,
+  currentReciter: "alafasy",
+  isPlaying: false,
+  playbackSpeed: 1.0,
+  repeatMode: "none", // 'none' | 'ayah' | 'surah'
+  volume: 0.8,
+  showTafsir: false,
+  searchFilter: "",
+  audio: null,
+  waveformAnimId: null
+};
+
+// Initialize Audio Element
+function initQuranAudioElement() {
+  if (!quranPlayerState.audio) {
+    quranPlayerState.audio = new Audio();
+    
+    quranPlayerState.audio.addEventListener('timeupdate', () => {
+      const audio = quranPlayerState.audio;
+      if (!audio) return;
+      const cur = audio.currentTime || 0;
+      const dur = audio.duration || 0;
+      
+      const curEl = document.getElementById('quran-audio-current-time');
+      const totEl = document.getElementById('quran-audio-total-time');
+      const progEl = document.getElementById('quran-audio-progress');
+      
+      if (curEl) curEl.textContent = formatAudioTime(cur);
+      if (totEl && dur) totEl.textContent = formatAudioTime(dur);
+      if (progEl && dur) progEl.value = (cur / dur) * 100;
+    });
+
+    quranPlayerState.audio.addEventListener('ended', () => {
+      onQuranAyahEnded();
+    });
+
+    quranPlayerState.audio.addEventListener('error', (e) => {
+      console.warn("EveryAyah CDN stream error/offline, activating WebAudio harmonic synth fallback:", e);
+      playOfflineAyahSynth();
+    });
+  }
+}
+
+function formatAudioTime(seconds) {
+  if (isNaN(seconds) || seconds < 0) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function getAyahAudioUrl(surahId, verseNumber, reciterKey) {
+  const reciter = RECITERS_MAP[reciterKey] || RECITERS_MAP.alafasy;
+  const sStr = String(surahId).padStart(3, '0');
+  const vStr = String(verseNumber).padStart(3, '0');
+  return `https://everyayah.com/data/${reciter.dir}/${sStr}${vStr}.mp3`;
+}
+
+/* --- Quran UI & Reader Methods --- */
+function selectIslamicSubTab(tab) {
+  document.querySelectorAll('.islamic-nav-btn').forEach(btn => {
+    btn.classList.remove('active');
+    btn.setAttribute('aria-selected', 'false');
+  });
+  document.querySelectorAll('.islamic-tab-panel').forEach(panel => {
+    panel.classList.remove('active');
+    panel.style.display = 'none';
+  });
+
+  const activeBtn = document.querySelector(`.islamic-nav-btn[data-tab="${tab}"]`);
+  const activePanel = document.getElementById(`isl-tab-${tab}`);
+  
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.setAttribute('aria-selected', 'true');
+  }
+  if (activePanel) {
+    activePanel.classList.add('active');
+    activePanel.style.display = 'block';
+  }
+
+  if (tab === 'quran') {
+    if (!document.getElementById('quran-verses-container').children.length) {
+      loadQuranSurah(quranPlayerState.currentSurahId);
+    }
+  } else if (tab === 'prayer') {
+    renderPrayerTimes();
+  } else if (tab === 'qibla') {
+    const city = document.getElementById('qibla-city-select')?.value || 'cairo';
+    onQiblaCitySelected(city);
+  } else if (tab === 'zakat') {
+    calculateZakat();
+    renderZakatLedger();
+  } else if (tab === 'calendar') {
+    renderHijriCalendar();
+  }
+
+  announceToScreenReader && announceToScreenReader(`Islamic Suite: ${tab} view active`);
+}
+
+function loadQuranSurah(surahId) {
+  surahId = parseInt(surahId) || 1;
+  const surah = SURAH_DATA[surahId] || SURAH_DATA[1];
+  quranPlayerState.currentSurahId = surahId;
+  quranPlayerState.currentVerseIndex = 0;
+
+  const titleEl = document.getElementById('quran-chapter-name');
+  if (titleEl) titleEl.textContent = surah.title;
+
+  const selectEl = document.getElementById('quran-surah-select');
+  if (selectEl && selectEl.value !== String(surahId)) selectEl.value = String(surahId);
+
+  renderQuranVerses();
+  updateQuranPlayerControls();
+}
+
+function renderQuranVerses(filterText = '') {
+  const container = document.getElementById('quran-verses-container');
+  if (!container) return;
+
+  const surah = SURAH_DATA[quranPlayerState.currentSurahId] || SURAH_DATA[1];
+  const query = filterText.toLowerCase().trim();
+  const bookmarks = getSavedBookmarks();
+
+  let html = '';
+  surah.verses.forEach((v, idx) => {
+    const matches = !query || 
+      v.text_ar.includes(query) || 
+      v.text_en.toLowerCase().includes(query) || 
+      v.tafsir.toLowerCase().includes(query);
+
+    if (!matches) return;
+
+    const isPlayingThis = (quranPlayerState.isPlaying && quranPlayerState.currentVerseIndex === idx);
+    const isBookmarked = bookmarks.some(b => b.surah === surah.id && b.ayah === v.number);
+    const activeClass = isPlayingThis ? 'active-verse-playing' : '';
+
+    html += `
+      <div class="quran-verse-card ${activeClass}" id="verse-card-${surah.id}-${v.number}" data-index="${idx}" style="margin-bottom: 12px; padding: 12px; border-radius: var(--r-small); background: rgba(255,255,255,0.02); border: 1px solid ${isPlayingThis ? 'var(--color-gold)' : 'rgba(255,255,255,0.06)'}; transition: all 0.25s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="tag tag-gold" style="font-family: var(--font-mono); font-size: 10px; font-weight: 700;">${surah.id}:${v.number}</span>
+            <span style="font-size: 11px; color: var(--color-text-muted);">${surah.name_en} (${surah.type})</span>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-sm btn-icon" onclick="playAyahAudio(${idx})" title="Listen to this verse" style="padding: 2px 6px; font-size: 11px; color: ${isPlayingThis ? 'var(--color-gold-light)' : 'var(--color-text-primary)'};">
+              <i class="ti ${isPlayingThis ? 'ti-player-pause' : 'ti-volume'}"></i>
+            </button>
+            <button class="btn btn-sm btn-icon" onclick="toggleVerseBookmark(${surah.id}, ${v.number})" title="${isBookmarked ? 'Remove Bookmark' : 'Bookmark Verse'}" style="padding: 2px 6px; font-size: 11px; color: ${isBookmarked ? 'var(--color-gold)' : 'var(--color-text-muted)'};">
+              <i class="ti ${isBookmarked ? 'ti-bookmark-filled' : 'ti-bookmark'}"></i>
+            </button>
+            <button class="btn btn-sm btn-icon" onclick="copyAyahText(${surah.id}, ${v.number})" title="Copy Verse" style="padding: 2px 6px; font-size: 11px; color: var(--color-text-muted);">
+              <i class="ti ti-copy"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="quran-verse-arabic" style="font-family: 'Amiri', 'Traditional Arabic', serif; font-size: 21px; line-height: 2.2; text-align: right; direction: rtl; color: var(--color-text-primary); margin-bottom: 8px;">
+          ${v.text_ar} <span style="font-size: 15px; color: var(--color-gold); font-family: var(--font-mono); margin: 0 4px;">﴿${v.number}﴾</span>
+        </div>
+        
+        <div class="quran-verse-english" style="font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.85); margin-bottom: 6px;">
+          ${v.text_en}
+        </div>
+
+        <div class="quran-verse-tafsir" style="display: ${quranPlayerState.showTafsir ? 'block' : 'none'}; font-size: 11px; line-height: 1.4; color: var(--color-gold-light); background: rgba(212, 160, 23, 0.07); border-right: 3px solid var(--color-gold); padding: 6px 10px; border-radius: 2px; margin-top: 6px;">
+          <strong>Tafsir / Explanation:</strong> ${v.tafsir}
+        </div>
+      </div>
+    `;
+  });
+
+  if (!html) {
+    html = `<div style="text-align: center; padding: 24px; color: var(--color-text-muted); font-size: 13px;">No matching verses found for "${escapeHtml(query)}".</div>`;
+  }
+
+  container.innerHTML = html;
+  updateBookmarksBadge();
+}
+
+function updateQuranPlayerControls() {
+  const surah = SURAH_DATA[quranPlayerState.currentSurahId] || SURAH_DATA[1];
+  const total = surah.verses.length;
+  const currentNum = surah.verses[quranPlayerState.currentVerseIndex]?.number || 1;
+
+  const displayEl = document.getElementById('quran-playing-ayah-display');
+  if (displayEl) {
+    displayEl.textContent = `Ayah ${quranPlayerState.currentVerseIndex + 1} of ${total} (${surah.id}:${currentNum})`;
+  }
+
+  const playIcon = document.getElementById('icon-quran-audio');
+  const playLbl = document.getElementById('lbl-quran-play');
+  if (playIcon) playIcon.className = quranPlayerState.isPlaying ? 'ti ti-player-pause' : 'ti ti-player-play';
+  if (playLbl) playLbl.textContent = quranPlayerState.isPlaying ? 'Pause' : 'Listen';
+
+  const speedEl = document.getElementById('quran-audio-speed');
+  if (speedEl) speedEl.value = String(quranPlayerState.playbackSpeed);
+
+  const volEl = document.getElementById('quran-audio-volume');
+  if (volEl) volEl.value = String(quranPlayerState.volume);
+
+  const repeatLbl = document.getElementById('lbl-quran-repeat');
+  if (repeatLbl) {
+    if (quranPlayerState.repeatMode === 'none') repeatLbl.textContent = 'Off';
+    else if (quranPlayerState.repeatMode === 'ayah') repeatLbl.textContent = 'Ayah';
+    else if (quranPlayerState.repeatMode === 'surah') repeatLbl.textContent = 'Surah';
+  }
+}
+
+function playAyahAudio(index = 0) {
+  initQuranAudioElement();
+  const surah = SURAH_DATA[quranPlayerState.currentSurahId] || SURAH_DATA[1];
+  if (index < 0 || index >= surah.verses.length) index = 0;
+
+  quranPlayerState.currentVerseIndex = index;
+  const verse = surah.verses[index];
+  const url = getAyahAudioUrl(surah.id, verse.number, quranPlayerState.currentReciter);
+
+  try {
+    quranPlayerState.audio.src = url;
+    quranPlayerState.audio.playbackRate = quranPlayerState.playbackSpeed;
+    quranPlayerState.audio.volume = quranPlayerState.volume;
+    
+    const playPromise = quranPlayerState.audio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        quranPlayerState.isPlaying = true;
+        updateQuranPlayerControls();
+        renderQuranVerses(quranPlayerState.searchFilter);
+        startQuranWaveform();
+        scrollVerseIntoView(surah.id, verse.number);
+      }).catch(err => {
+        console.warn("Direct play interrupted or blocked by browser autoplay policy / offline:", err);
+        // Fallback to offline harmonic synth
+        playOfflineAyahSynth();
+      });
+    }
+  } catch(e) {
+    playOfflineAyahSynth();
+  }
+}
+
+function toggleQuranPlay() {
+  initQuranAudioElement();
+  if (quranPlayerState.isPlaying) {
+    if (quranPlayerState.audio) quranPlayerState.audio.pause();
+    quranPlayerState.isPlaying = false;
+    updateQuranPlayerControls();
+    renderQuranVerses(quranPlayerState.searchFilter);
+    stopQuranWaveform();
+  } else {
+    playAyahAudio(quranPlayerState.currentVerseIndex);
+  }
+}
+
+function nextQuranAyah() {
+  const surah = SURAH_DATA[quranPlayerState.currentSurahId] || SURAH_DATA[1];
+  if (quranPlayerState.currentVerseIndex + 1 < surah.verses.length) {
+    playAyahAudio(quranPlayerState.currentVerseIndex + 1);
+  } else {
+    // Cycle to next Surah if available
+    const surahKeys = Object.keys(SURAH_DATA).map(Number).sort((a,b) => a - b);
+    const currIdx = surahKeys.indexOf(quranPlayerState.currentSurahId);
+    if (currIdx !== -1 && currIdx + 1 < surahKeys.length) {
+      loadQuranSurah(surahKeys[currIdx + 1]);
+      playAyahAudio(0);
+    } else {
+      stopQuranAudio();
+    }
+  }
+}
+
+function prevQuranAyah() {
+  if (quranPlayerState.currentVerseIndex > 0) {
+    playAyahAudio(quranPlayerState.currentVerseIndex - 1);
+  } else {
+    playAyahAudio(0);
+  }
+}
+
+function stopQuranAudio() {
+  if (quranPlayerState.audio) {
+    quranPlayerState.audio.pause();
+    quranPlayerState.audio.currentTime = 0;
+  }
+  quranPlayerState.isPlaying = false;
+  updateQuranPlayerControls();
+  renderQuranVerses(quranPlayerState.searchFilter);
+  stopQuranWaveform();
+}
+
+function seekQuranProgress(percent) {
+  if (!quranPlayerState.audio || !quranPlayerState.audio.duration) return;
+  const targetTime = (parseFloat(percent) / 100) * quranPlayerState.audio.duration;
+  quranPlayerState.audio.currentTime = targetTime;
+}
+
+function changeQuranPlaybackSpeed(speed) {
+  quranPlayerState.playbackSpeed = parseFloat(speed) || 1.0;
+  if (quranPlayerState.audio) {
+    quranPlayerState.audio.playbackRate = quranPlayerState.playbackSpeed;
+  }
+}
+
+function cycleQuranRepeatMode() {
+  const modes = ['none', 'ayah', 'surah'];
+  const nextIdx = (modes.indexOf(quranPlayerState.repeatMode) + 1) % modes.length;
+  quranPlayerState.repeatMode = modes[nextIdx];
+  updateQuranPlayerControls();
+  showInsha(`Repeat Mode: ${quranPlayerState.repeatMode.toUpperCase()}`, 'info');
+}
+
+function changeQuranReciter(reciterId) {
+  if (RECITERS_MAP[reciterId]) {
+    quranPlayerState.currentReciter = reciterId;
+    if (quranPlayerState.isPlaying) {
+      playAyahAudio(quranPlayerState.currentVerseIndex);
+    }
+    showInsha(`Reciter changed: ${RECITERS_MAP[reciterId].name}`, 'success');
+  }
+}
+
+function setQuranVolume(vol) {
+  quranPlayerState.volume = parseFloat(vol) || 0.8;
+  if (quranPlayerState.audio) {
+    quranPlayerState.audio.volume = quranPlayerState.volume;
+  }
+}
+
+function onQuranAyahEnded() {
+  const surah = SURAH_DATA[quranPlayerState.currentSurahId] || SURAH_DATA[1];
+  
+  if (quranPlayerState.repeatMode === 'ayah') {
+    playAyahAudio(quranPlayerState.currentVerseIndex);
+  } else if (quranPlayerState.currentVerseIndex + 1 < surah.verses.length) {
+    playAyahAudio(quranPlayerState.currentVerseIndex + 1);
+  } else if (quranPlayerState.repeatMode === 'surah') {
+    playAyahAudio(0);
+  } else {
+    // End of surah
+    stopQuranAudio();
+    showInsha(`Completed recitation of ${surah.name_en}`, 'success');
+  }
+}
+
+function scrollVerseIntoView(surahId, verseNum) {
+  setTimeout(() => {
+    const el = document.getElementById(`verse-card-${surahId}-${verseNum}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, 100);
+}
+
+function toggleQuranTafsir() {
+  quranPlayerState.showTafsir = !quranPlayerState.showTafsir;
+  const lbl = document.getElementById('lbl-quran-tafsir');
+  if (lbl) lbl.textContent = quranPlayerState.showTafsir ? 'Hide Tafsir' : 'Show Tafsir';
+  renderQuranVerses(quranPlayerState.searchFilter);
+}
+
+function searchLocalQuran(query) {
+  quranPlayerState.searchFilter = query;
+  renderQuranVerses(query);
+}
+
+function copyAyahText(surahId, verseNum) {
+  const surah = SURAH_DATA[surahId];
+  if (!surah) return;
+  const v = surah.verses.find(x => x.number === verseNum);
+  if (!v) return;
+  const text = `"${v.text_ar}"\n${v.text_en}\n[${surah.name_en} ${surahId}:${verseNum} - Halal OS]`;
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showInsha('Verse copied to clipboard 📋', 'success');
+    }).catch(() => showInsha('Verse ready', 'info'));
+  } else {
+    showInsha('Verse copied 📋', 'success');
+  }
+}
+
+/* --- Bookmarks System --- */
+function getSavedBookmarks() {
+  try {
+    return JSON.parse(localStorage.getItem('halal_quran_bookmarks') || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function toggleVerseBookmark(surahId, ayahNum) {
+  let bookmarks = getSavedBookmarks();
+  const existingIdx = bookmarks.findIndex(b => b.surah === surahId && b.ayah === ayahNum);
+  const surah = SURAH_DATA[surahId];
+  
+  if (existingIdx !== -1) {
+    bookmarks.splice(existingIdx, 1);
+    showInsha(`Bookmark removed: ${surah?.name_en || 'Surah'} ${surahId}:${ayahNum}`, 'info');
+  } else {
+    bookmarks.push({
+      surah: surahId,
+      ayah: ayahNum,
+      title: `${surah?.name_en || 'Surah'} (${surahId}:${ayahNum})`,
+      date: new Date().toISOString()
+    });
+    showInsha(`Bookmarked ${surah?.name_en || 'Surah'} ${surahId}:${ayahNum} 🔖`, 'success');
+  }
+
+  localStorage.setItem('halal_quran_bookmarks', JSON.stringify(bookmarks));
+  renderQuranVerses(quranPlayerState.searchFilter);
+  renderBookmarksList();
+}
+
+function updateBookmarksBadge() {
+  const bookmarks = getSavedBookmarks();
+  const countEl = document.getElementById('quran-bookmarks-count');
+  if (countEl) countEl.textContent = String(bookmarks.length);
+}
+
+function toggleBookmarksList() {
+  const drawer = document.getElementById('quran-bookmarks-drawer');
+  if (!drawer) return;
+  const isHidden = drawer.style.display === 'none';
+  drawer.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) renderBookmarksList();
+}
+
+function renderBookmarksList() {
+  const listEl = document.getElementById('quran-bookmarks-list');
+  if (!listEl) return;
+  const bookmarks = getSavedBookmarks();
+
+  if (!bookmarks.length) {
+    listEl.innerHTML = '<div style="color: var(--color-text-muted);">No bookmarks saved yet. Click the bookmark icon next to a verse to save it.</div>';
+    return;
+  }
+
+  let html = '';
+  bookmarks.forEach(b => {
+    html += `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: rgba(255,255,255,0.03); border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);">
+        <span style="font-weight: 600; color: var(--color-gold-light); cursor: pointer;" onclick="jumpToBookmark(${b.surah}, ${b.ayah})">📖 ${b.title}</span>
+        <button class="btn btn-sm btn-icon" onclick="toggleVerseBookmark(${b.surah}, ${b.ayah})" style="color: var(--color-danger); font-size: 11px;"><i class="ti ti-trash"></i></button>
+      </div>
+    `;
+  });
+  listEl.innerHTML = html;
+  updateBookmarksBadge();
+}
+
+function jumpToBookmark(surahId, ayahNum) {
+  loadQuranSurah(surahId);
+  const surah = SURAH_DATA[surahId];
+  if (surah) {
+    const idx = surah.verses.findIndex(v => v.number === ayahNum);
+    if (idx !== -1) {
+      quranPlayerState.currentVerseIndex = idx;
+      scrollVerseIntoView(surahId, ayahNum);
+    }
+  }
+}
+
+/* --- WebAudio Fallback Synth for Headless/Offline Ayah Audition --- */
+function playOfflineAyahSynth() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    
+    // Maqam Rast acoustic intervals
+    const freqs = [261.63, 293.66, 320.00, 349.23, 392.00];
+    const baseFreq = freqs[quranPlayerState.currentVerseIndex % freqs.length];
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 1.2);
+
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 1.2);
+
+    quranPlayerState.isPlaying = true;
+    updateQuranPlayerControls();
+    startQuranWaveform();
+
+    setTimeout(() => {
+      onQuranAyahEnded();
+    }, 1300);
+  } catch(e) {
+    quranPlayerState.isPlaying = false;
+    updateQuranPlayerControls();
+  }
+}
+
+/* --- Waveform Visualizer --- */
+function startQuranWaveform() {
+  const canvas = document.getElementById('quran-audio-wave');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  canvas.width = canvas.parentElement.clientWidth || 300;
+  canvas.height = 36;
+  let phase = 0;
+
+  function renderWave() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Draw emerald & gold audio wave
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#d4af37';
+
+    for (let x = 0; x < w; x++) {
+      const y = (h / 2) + Math.sin((x * 0.05) + phase) * (h * 0.35) * Math.sin(x * 0.01 + phase * 0.5);
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    phase += 0.12;
+    if (quranPlayerState.isPlaying) {
+      quranPlayerState.waveformAnimId = requestAnimationFrame(renderWave);
+    }
+  }
+
+  stopQuranWaveform();
+  renderWave();
+}
+
+function stopQuranWaveform() {
+  if (quranPlayerState.waveformAnimId) {
+    cancelAnimationFrame(quranPlayerState.waveformAnimId);
+    quranPlayerState.waveformAnimId = null;
+  }
+  const canvas = document.getElementById('quran-audio-wave');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+
+/* ================================================================
+   2. 3D SPHERICAL QIBLA COMPASS ENGINE
+   ================================================================ */
+const KAABA_COORDS = { lat: 21.422487, lng: 39.826206 };
+
+const QIBLA_CITIES = {
+  cairo: { name: "Cairo, Egypt (القاهرة)", lat: 30.0444, lng: 31.2357 },
+  makkah: { name: "Makkah, Saudi Arabia (مكة المكرمة)", lat: 21.4225, lng: 39.8262 },
+  madinah: { name: "Madinah, Saudi Arabia (المدينة المنورة)", lat: 24.4672, lng: 39.6111 },
+  jerusalem: { name: "Jerusalem, Palestine (القدس الشريف)", lat: 31.7683, lng: 35.2137 },
+  istanbul: { name: "Istanbul, Turkey (إسطنبول)", lat: 41.0082, lng: 28.9784 },
+  london: { name: "London, United Kingdom (لندن)", lat: 51.5074, lng: -0.1278 },
+  paris: { name: "Paris, France (باريس)", lat: 48.8566, lng: 2.3522 },
+  newyork: { name: "New York, USA (نيويورك)", lat: 40.7128, lng: -74.0060 },
+  losangeles: { name: "Los Angeles, USA (لوس أنجلوس)", lat: 34.0522, lng: -118.2437 },
+  tokyo: { name: "Tokyo, Japan (طوكيو)", lat: 35.6762, lng: 139.6503 },
+  jakarta: { name: "Jakarta, Indonesia (جاكرتا)", lat: -6.2088, lng: 106.8456 },
+  kualalumpur: { name: "Kuala Lumpur, Malaysia (كوالالمبور)", lat: 3.1390, lng: 101.6869 },
+  dubai: { name: "Dubai, UAE (دبي)", lat: 25.2048, lng: 55.2708 },
+  riyadh: { name: "Riyadh, Saudi Arabia (الرياض)", lat: 24.7136, lng: 46.6753 },
+  toronto: { name: "Toronto, Canada (تورونتو)", lat: 43.6532, lng: -79.3832 },
+  sydney: { name: "Sydney, Australia (سيدني)", lat: -33.8688, lng: 151.2093 }
+};
+
+let qiblaState = {
+  currentLat: 30.0444,
+  currentLng: 31.2357,
+  bearing: 136.2,
+  distanceKm: 1288,
+  headingOffset: 0,
+  isGyroActive: false,
+  isDragging: false,
+  dragStartAngle: 0
+};
+
+/**
+ * Calculates the forward azimuth / great-circle bearing to Holy Kaaba (Makkah).
+ * Formula: atan2(sin(Δλ)*cos(φ2), cos(φ1)*sin(φ2) - sin(φ1)*cos(φ2)*cos(Δλ))
+ */
+function calculateQiblaBearing(lat, lng) {
+  // If located at or directly next to Kaaba
+  const dLat = Math.abs(lat - KAABA_COORDS.lat);
+  const dLng = Math.abs(lng - KAABA_COORDS.lng);
+  if (dLat < 0.005 && dLng < 0.005) return 0.0;
+
+  const toRad = deg => (deg * Math.PI) / 180;
+  const toDeg = rad => (rad * 180) / Math.PI;
+
+  const phi1 = toRad(lat);
+  const phi2 = toRad(KAABA_COORDS.lat);
+  const deltaLambda = toRad(KAABA_COORDS.lng - lng);
+
+  const y = Math.sin(deltaLambda) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLambda);
+
+  let initialBearing = toDeg(Math.atan2(y, x));
+  return (initialBearing + 360) % 360;
+}
+
+/**
+ * Calculates the Haversine distance in kilometers to the Kaaba.
+ */
+function calculateDistanceToKaaba(lat, lng) {
+  const R = 6371; // Earth's mean radius in km
+  const toRad = deg => (deg * Math.PI) / 180;
+
+  const dLat = toRad(KAABA_COORDS.lat - lat);
+  const dLng = toRad(KAABA_COORDS.lng - lng);
+  const phi1 = toRad(lat);
+  const phi2 = toRad(KAABA_COORDS.lat);
+
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(phi1) * Math.cos(phi2) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return Math.round(R * c);
+}
+
+/**
+ * Resolves 16-point cardinal direction descriptor.
+ */
+function getCardinalDirection(bearing) {
+  const cardinals = [
+    { label: "N (North)", symbol: "N" },
+    { label: "NNE (North-Northeast)", symbol: "NNE" },
+    { label: "NE (Northeast)", symbol: "NE" },
+    { label: "ENE (East-Northeast)", symbol: "ENE" },
+    { label: "E (East)", symbol: "E" },
+    { label: "ESE (East-Southeast)", symbol: "ESE" },
+    { label: "SE (Southeast)", symbol: "SE" },
+    { label: "SSE (South-Southeast)", symbol: "SSE" },
+    { label: "S (South)", symbol: "S" },
+    { label: "SSW (South-Southwest)", symbol: "SSW" },
+    { label: "SW (Southwest)", symbol: "SW" },
+    { label: "WSW (West-Southwest)", symbol: "WSW" },
+    { label: "W (West)", symbol: "W" },
+    { label: "WNW (West-Northwest)", symbol: "WNW" },
+    { label: "NW (Northwest)", symbol: "NW" },
+    { label: "NNW (North-Northwest)", symbol: "NNW" }
+  ];
+  const index = Math.round(bearing / 22.5) % 16;
+  return cardinals[index].label;
+}
+
+function onQiblaCitySelected(cityKey) {
+  const customRow = document.getElementById('qibla-custom-coords-row');
+  
+  if (cityKey === 'custom') {
+    if (customRow) customRow.style.display = 'flex';
+    updateCustomQiblaCoords();
+  } else {
+    if (customRow) customRow.style.display = 'none';
+    const city = QIBLA_CITIES[cityKey] || QIBLA_CITIES.cairo;
+    updateQiblaDisplay(city.lat, city.lng, city.name);
+  }
+}
+
+function updateCustomQiblaCoords() {
+  const latInput = document.getElementById('qibla-custom-lat');
+  const lngInput = document.getElementById('qibla-custom-lng');
+  const lat = parseFloat(latInput?.value) || 0;
+  const lng = parseFloat(lngInput?.value) || 0;
+  updateQiblaDisplay(lat, lng, "Custom Coordinates");
+}
+
+function updateQiblaDisplay(lat, lng, locationName = "") {
+  qiblaState.currentLat = lat;
+  qiblaState.currentLng = lng;
+
+  const bearing = calculateQiblaBearing(lat, lng);
+  const distanceKm = calculateDistanceToKaaba(lat, lng);
+  const distanceMi = Math.round(distanceKm * 0.621371);
+  const cardinal = getCardinalDirection(bearing);
+
+  qiblaState.bearing = bearing;
+  qiblaState.distanceKm = distanceKm;
+
+  // Update telemetry badges
+  const angleEl = document.getElementById('qibla-target-angle-display');
+  const distEl = document.getElementById('qibla-distance-display');
+  const cardEl = document.getElementById('qibla-cardinal-display');
+  const lblAngle = document.getElementById('lbl-qibla-angle');
+
+  if (angleEl) angleEl.textContent = `${bearing.toFixed(1)}° ${bearing > 180 ? 'West' : 'East'}`;
+  if (distEl) distEl.textContent = `${distanceKm.toLocaleString()} km (${distanceMi.toLocaleString()} mi)`;
+  if (cardEl) cardEl.textContent = cardinal;
+  if (lblAngle) lblAngle.textContent = `Qibla angle from True North: ${bearing.toFixed(1)}°`;
+
+  // Rotate Needle and Kaaba marker on compass
+  const needle = document.getElementById('qibla-needle');
+  const kaabaMarker = document.getElementById('qibla-kaaba-marker');
+
+  if (needle) {
+    needle.style.transform = `translate(-50%, -50%) rotate(${bearing}deg)`;
+  }
+  if (kaabaMarker) {
+    // Position Kaaba marker along circle circumference at bearing angle
+    const rad = (bearing - 90) * (Math.PI / 180);
+    const radius = 68; // px from center
+    const x = Math.cos(rad) * radius;
+    const y = Math.sin(rad) * radius;
+    kaabaMarker.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+  }
+}
+
+function calibrateQiblaCompass() {
+  qiblaState.headingOffset = 0;
+  updateQiblaDisplay(qiblaState.currentLat, qiblaState.currentLng);
+  showInsha('🧭 Qibla Compass re-centered to True Geographic North', 'success');
+}
+
+function toggleQiblaGyro() {
+  qiblaState.isGyroActive = !qiblaState.isGyroActive;
+  const btn = document.getElementById('btn-qibla-gyro');
+  const txt = document.getElementById('lbl-qibla-gyro-txt');
+
+  if (qiblaState.isGyroActive) {
+    if (btn) btn.classList.add('active');
+    if (txt) txt.textContent = 'Active';
+
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener('deviceorientation', handleOrientationEvent, true);
+      showInsha('📱 Device Orientation Sensor engaged', 'info');
+    } else {
+      showInsha('Orientation Sensor not available in environment', 'warning');
+    }
+  } else {
+    if (btn) btn.classList.remove('active');
+    if (txt) txt.textContent = 'Sensor';
+    window.removeEventListener('deviceorientation', handleOrientationEvent, true);
+    showInsha('Orientation Sensor disengaged', 'info');
+  }
+}
+
+function handleOrientationEvent(e) {
+  if (!qiblaState.isGyroActive) return;
+  const compassHeading = e.webkitCompassHeading || (360 - e.alpha);
+  if (compassHeading !== undefined && !isNaN(compassHeading)) {
+    const relativeAngle = (qiblaState.bearing - compassHeading + 360) % 360;
+    const needle = document.getElementById('qibla-needle');
+    if (needle) needle.style.transform = `translate(-50%, -50%) rotate(${relativeAngle}deg)`;
+  }
+}
+
+function initQiblaDragRotation() {
+  const wheel = document.getElementById('qibla-compass-wheel');
+  if (!wheel) return;
+
+  let isDragging = false;
+  let startX = 0, startY = 0;
+
+  const onStart = (e) => {
+    isDragging = true;
+    const rect = wheel.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    qiblaState.dragStartAngle = Math.atan2(clientY - cy, clientX - cx) * (180 / Math.PI);
+  };
+
+  const onMove = (e) => {
+    if (!isDragging) return;
+    const rect = wheel.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const currentAngle = Math.atan2(clientY - cy, clientX - cx) * (180 / Math.PI);
+    const delta = currentAngle - qiblaState.dragStartAngle;
+
+    const needle = document.getElementById('qibla-needle');
+    if (needle) {
+      needle.style.transform = `translate(-50%, -50%) rotate(${qiblaState.bearing + delta}deg)`;
+    }
+  };
+
+  const onEnd = () => { isDragging = false; };
+
+  wheel.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
+  wheel.addEventListener('touchstart', onStart, { passive: true });
+  window.addEventListener('touchmove', onMove, { passive: true });
+  window.addEventListener('touchend', onEnd, { passive: true });
+}
+
+
+/* ================================================================
+   3. BAYT AL-MAL: ZAKAT NISAB ENGINE & OBLIGATION LEDGER
+   ================================================================ */
+const ZAKAT_RATES = {
+  USD: { symbol: "$", rateVsUsd: 1.0 },
+  EUR: { symbol: "€", rateVsUsd: 0.92 },
+  GBP: { symbol: "£", rateVsUsd: 0.79 },
+  SAR: { symbol: "﷼", rateVsUsd: 3.75 },
+  AED: { symbol: "د.إ", rateVsUsd: 3.67 },
+  EGP: { symbol: "ج.م", rateVsUsd: 48.50 },
+  TRY: { symbol: "₺", rateVsUsd: 34.10 },
+  PKR: { symbol: "₨", rateVsUsd: 278.50 },
+  MYR: { symbol: "RM", rateVsUsd: 4.42 }
+};
+
+let zakatState = {
+  currency: "USD",
+  metalStandard: "gold", // 'gold' (85g) or 'silver' (595g)
+  goldPricePerGram: 63.76,
+  silverPricePerGram: 1.05,
+  netZakatable: 0,
+  nisabLimit: 5419.60,
+  isNisabMet: false,
+  zakatDue: 0,
+  assetBreakdown: {}
+};
+
+function onZakatCurrencyChanged(curr) {
+  if (ZAKAT_RATES[curr]) {
+    zakatState.currency = curr;
+    const symbolEl = document.getElementById('zakat-ledger-curr-symbol');
+    if (symbolEl) symbolEl.textContent = ZAKAT_RATES[curr].symbol;
+    calculateZakat();
+    renderZakatLedger();
+  }
+}
+
+function switchZakatSubView(subView) {
+  const calcView = document.getElementById('zakat-view-calc');
+  const ledgerView = document.getElementById('zakat-view-ledger');
+  const btnCalc = document.getElementById('btn-zakat-sub-calc');
+  const btnLedger = document.getElementById('btn-zakat-sub-ledger');
+
+  if (subView === 'calc') {
+    if (calcView) calcView.style.display = 'block';
+    if (ledgerView) ledgerView.style.display = 'none';
+    if (btnCalc) { btnCalc.classList.add('active'); btnCalc.style.background = 'var(--color-gold)'; btnCalc.style.color = '#412402'; }
+    if (btnLedger) { btnLedger.classList.remove('active'); btnLedger.style.background = 'transparent'; btnLedger.style.color = 'var(--color-text-primary)'; }
+    calculateZakat();
+  } else {
+    if (calcView) calcView.style.display = 'none';
+    if (ledgerView) ledgerView.style.display = 'block';
+    if (btnLedger) { btnLedger.classList.add('active'); btnLedger.style.background = 'var(--color-gold)'; btnLedger.style.color = '#412402'; }
+    if (btnCalc) { btnCalc.classList.remove('active'); btnCalc.style.background = 'transparent'; btnCalc.style.color = 'var(--color-text-primary)'; }
+    renderZakatLedger();
+  }
+}
+
+function calculateZakat() {
+  const curr = zakatState.currency;
+  const currInfo = ZAKAT_RATES[curr] || ZAKAT_RATES.USD;
+  const sym = currInfo.symbol;
+
+  const standard = document.getElementById('zakat-metal-standard')?.value || zakatState.metalStandard;
+  zakatState.metalStandard = standard;
+
+  const goldPrice = parseFloat(document.getElementById('zakat-gold-price')?.value) || 63.76;
+  const silverPrice = parseFloat(document.getElementById('zakat-silver-price')?.value) || 1.05;
+  zakatState.goldPricePerGram = goldPrice;
+  zakatState.silverPricePerGram = silverPrice;
+
+  // Nisab Calculation (85g gold or 595g silver)
+  const nisab = standard === 'gold' ? (85 * goldPrice) : (595 * silverPrice);
+  zakatState.nisabLimit = nisab;
+
+  const nisabDisplay = document.getElementById('zakat-nisab-display');
+  if (nisabDisplay) nisabDisplay.textContent = `${sym}${nisab.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  // Read Asset Form inputs
+  const savings = parseFloat(document.getElementById('zakat-savings')?.value) || 0;
+  const goldGrams = parseFloat(document.getElementById('zakat-gold-grams')?.value) || 0;
+  const silverGrams = parseFloat(document.getElementById('zakat-silver-grams')?.value) || 0;
+  const business = parseFloat(document.getElementById('zakat-business')?.value) || 0;
+  const investments = parseFloat(document.getElementById('zakat-investments')?.value) || 0;
+  const realestate = parseFloat(document.getElementById('zakat-realestate')?.value) || 0;
+  const debts = parseFloat(document.getElementById('zakat-debts')?.value) || 0;
+
+  const goldValue = goldGrams * goldPrice;
+  const silverValue = silverGrams * silverPrice;
+  const grossAssets = savings + goldValue + silverValue + business + investments + realestate;
+  const netZakatable = Math.max(0, grossAssets - debts);
+
+  zakatState.netZakatable = netZakatable;
+  zakatState.isNisabMet = netZakatable >= nisab;
+  zakatState.zakatDue = zakatState.isNisabMet ? (netZakatable * 0.025) : 0;
+
+  zakatState.assetBreakdown = {
+    "Cash & Bank": savings,
+    "Gold Assets": goldValue,
+    "Silver Assets": silverValue,
+    "Merchandise": business,
+    "Investments": investments,
+    "Real Estate": realestate
+  };
+
+  // Update UI Elements
+  const netWorthEl = document.getElementById('zakat-net-worth');
+  const badgeEl = document.getElementById('zakat-nisab-badge');
+  const dueValEl = document.getElementById('zakat-due-value');
+
+  if (netWorthEl) netWorthEl.textContent = `${sym}${netZakatable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  if (badgeEl) {
+    if (zakatState.isNisabMet) {
+      badgeEl.className = 'tag tag-green';
+      badgeEl.textContent = 'Met (وجبت)';
+    } else {
+      badgeEl.className = 'tag tag-gold';
+      badgeEl.textContent = 'Below Nisab (معفى)';
+    }
+  }
+
+  if (dueValEl) {
+    dueValEl.textContent = `${sym}${zakatState.zakatDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    dueValEl.style.color = zakatState.isNisabMet ? 'var(--color-emerald-active)' : 'var(--color-text-muted)';
+  }
+
+  renderZakatAssetChart(zakatState.assetBreakdown);
+}
+
+function renderZakatAssetChart(breakdown) {
+  const canvas = document.getElementById('zakat-asset-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const entries = Object.entries(breakdown).filter(([_, val]) => val > 0);
+  const total = entries.reduce((acc, [_, val]) => acc + val, 0);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const outerRadius = Math.min(cx, cy) - 10;
+  const innerRadius = outerRadius * 0.58;
+
+  if (total <= 0) {
+    // Empty state ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+    ctx.arc(cx, cy, innerRadius, Math.PI * 2, 0, true);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.fill();
+    return;
+  }
+
+  const palette = [
+    "#2e7d32", // Cash - Green
+    "#d4af37", // Gold - Gold
+    "#94a3b8", // Silver - Silver slate
+    "#0284c7", // Merchandise - Blue
+    "#8b5cf6", // Investments - Purple
+    "#ea580c"  // Real Estate - Orange
+  ];
+
+  let startAngle = -Math.PI / 2;
+  entries.forEach(([label, val], idx) => {
+    const sliceAngle = (val / total) * (Math.PI * 2);
+    const endAngle = startAngle + sliceAngle;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerRadius, startAngle, endAngle);
+    ctx.arc(cx, cy, innerRadius, endAngle, startAngle, true);
+    ctx.closePath();
+    ctx.fillStyle = palette[idx % palette.length];
+    ctx.fill();
+
+    startAngle = endAngle;
+  });
+
+  // Inner text (Donut Center)
+  ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+  ctx.font = "bold 11px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Bayt Al-Mal", cx, cy - 6);
+
+  ctx.fillStyle = "#d4af37";
+  ctx.font = "9px monospace";
+  ctx.fillText("2.5% Rate", cx, cy + 8);
+}
+
+/* --- Bayt Al-Mal Ledger Persistence --- */
+const QURANIC_ZAKAT_CATEGORIES = {
+  fuqara: { en: "Al-Fuqara (The Poor)", ar: "الفقراء" },
+  masakin: { en: "Al-Masakin (The Needy)", ar: "المساكين" },
+  amilina: { en: "Al-Amilina (Zakat Workers)", ar: "العاملين عليها" },
+  muallafa: { en: "Al-Mu'allafa (Reconciliation)", ar: "المؤلفة قلوبهم" },
+  riqab: { en: "Fir-Riqab (Freeing Captives)", ar: "في الرقاب" },
+  gharimin: { en: "Al-Gharimin (Debtors)", ar: "الغارمين" },
+  sabilillah: { en: "Fi Sabilillah (In Allah's Cause)", ar: "في سبيل الله" },
+  ibnsabil: { en: "Ibn As-Sabil (The Wayfarer)", ar: "ابن السبيل" }
+};
+
+function getZakatLedger() {
+  try {
+    return JSON.parse(localStorage.getItem('halal_zakat_ledger') || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveZakatDisbursement() {
+  const catKey = document.getElementById('zakat-disburse-category')?.value || 'fuqara';
+  const amountInput = document.getElementById('zakat-disburse-amount');
+  const recipientInput = document.getElementById('zakat-disburse-recipient');
+
+  const amount = parseFloat(amountInput?.value);
+  const recipient = recipientInput?.value?.trim() || "General Distribution";
+
+  if (isNaN(amount) || amount <= 0) {
+    showInsha('Please enter a valid disbursement amount', 'warning');
+    return;
+  }
+
+  const ledger = getZakatLedger();
+  const record = {
+    id: 'zkt_' + Date.now(),
+    date: new Date().toISOString().split('T')[0],
+    category: catKey,
+    categoryName: QURANIC_ZAKAT_CATEGORIES[catKey]?.en || catKey,
+    recipient: recipient,
+    amount: amount,
+    currency: zakatState.currency
+  };
+
+  ledger.unshift(record);
+  localStorage.setItem('halal_zakat_ledger', JSON.stringify(ledger));
+
+  if (amountInput) amountInput.value = '';
+  if (recipientInput) recipientInput.value = '';
+
+  renderZakatLedger();
+  showInsha(`Recorded ${ZAKAT_RATES[zakatState.currency]?.symbol || '$'}${amount.toFixed(2)} to ${record.categoryName} 🤲`, 'success');
+}
+
+function deleteZakatRecord(recordId) {
+  let ledger = getZakatLedger();
+  ledger = ledger.filter(r => r.id !== recordId);
+  localStorage.setItem('halal_zakat_ledger', JSON.stringify(ledger));
+  renderZakatLedger();
+  showInsha('Ledger record removed', 'info');
+}
+
+function renderZakatLedger() {
+  const tbody = document.getElementById('zakat-ledger-tbody');
+  const ledger = getZakatLedger();
+  const currSym = ZAKAT_RATES[zakatState.currency]?.symbol || '$';
+
+  const countEl = document.getElementById('zakat-ledger-count');
+  if (countEl) countEl.textContent = String(ledger.length);
+
+  let totalPaid = 0;
+  if (tbody) {
+    if (!ledger.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 18px; color: var(--color-text-muted);">
+            No disbursements recorded yet. Add your first Zakat disbursement above.
+          </td>
+        </tr>
+      `;
+    } else {
+      let html = '';
+      ledger.forEach(r => {
+        totalPaid += (parseFloat(r.amount) || 0);
+        html += `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <td style="padding: 6px 8px; font-family: var(--font-mono);">${r.date}</td>
+            <td style="padding: 6px 8px;"><span class="tag tag-gold" style="font-size: 10px;">${r.categoryName || r.category}</span></td>
+            <td style="padding: 6px 8px; color: var(--color-text-primary);">${escapeHtml(r.recipient)}</td>
+            <td style="padding: 6px 8px; text-align: right; font-family: var(--font-mono); font-weight: 700; color: var(--color-emerald-active);">${currSym}${r.amount.toFixed(2)}</td>
+            <td style="padding: 6px 8px; text-align: center;">
+              <button class="btn btn-sm btn-icon" onclick="deleteZakatRecord('${r.id}')" title="Delete record" style="color: var(--color-danger); font-size: 11px;"><i class="ti ti-trash"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+  }
+
+  // Summary Totals
+  const remaining = Math.max(0, zakatState.zakatDue - totalPaid);
+  const totalPaidEl = document.getElementById('zakat-ledger-total-paid');
+  const remEl = document.getElementById('zakat-ledger-remaining-due');
+
+  if (totalPaidEl) totalPaidEl.textContent = `${currSym}${totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (remEl) {
+    remEl.textContent = `${currSym}${remaining.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    remEl.style.color = remaining === 0 ? 'var(--color-emerald-active)' : 'var(--color-gold-light)';
+  }
+}
+
+/* --- Official Zakat Certificate Generator --- */
+function openZakatCertificate() {
+  const modal = document.getElementById('modal-zakat-certificate');
+  if (!modal) return;
+
+  const currSym = ZAKAT_RATES[zakatState.currency]?.symbol || '$';
+  const ledger = getZakatLedger();
+  const totalPaid = ledger.reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
+  const remaining = Math.max(0, zakatState.zakatDue - totalPaid);
+
+  // Generate Reference ID
+  const refEl = document.getElementById('cert-ref-number');
+  if (refEl) refEl.textContent = `HOS-ZKT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  // Gregorian Date
+  const gregEl = document.getElementById('cert-date-gregorian');
+  if (gregEl) gregEl.textContent = new Date().toISOString().split('T')[0];
+
+  // Hijri Date
+  const hijriEl = document.getElementById('cert-date-hijri');
+  if (hijriEl) hijriEl.textContent = "1448-03-22 AH";
+
+  // Financial Table
+  const assetsEl = document.getElementById('cert-total-assets');
+  const dueEl = document.getElementById('cert-zakat-due');
+  const paidEl = document.getElementById('cert-total-paid');
+  const remDueEl = document.getElementById('cert-remaining-due');
+  const badgeEl = document.getElementById('cert-status-badge');
+
+  if (assetsEl) assetsEl.textContent = `${currSym}${zakatState.netZakatable.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (dueEl) dueEl.textContent = `${currSym}${zakatState.zakatDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (paidEl) paidEl.textContent = `${currSym}${totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (remDueEl) remDueEl.textContent = `${currSym}${remaining.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  if (badgeEl) {
+    if (totalPaid >= zakatState.zakatDue && zakatState.zakatDue > 0) {
+      badgeEl.className = 'cert-val tag tag-green';
+      badgeEl.textContent = 'Fully Fulfilled (تم الأداء بالكامل)';
+    } else if (totalPaid > 0) {
+      badgeEl.className = 'cert-val tag tag-gold';
+      badgeEl.textContent = 'Partially Disbursed (أداء جزئي)';
+    } else {
+      badgeEl.className = 'cert-val tag tag-gold';
+      badgeEl.textContent = 'Assessment Verified (تم توثيق الوجوب)';
+    }
+  }
+
+  modal.style.display = 'flex';
+  trapFocus(modal);
+}
+
+function closeZakatCertificate() {
+  const modal = document.getElementById('modal-zakat-certificate');
+  if (modal) modal.style.display = 'none';
+}
+
+function printZakatCertificate() {
+  window.print();
+}
+
+
+/* ================================================================
+   4. PRAYER TIMES & HIJRI CALENDAR GENERATORS
+   ================================================================ */
+function renderPrayerTimes() {
+  const container = document.getElementById('prayer-list-rows');
+  if (!container) return;
+
+  const prayers = [
+    { name_en: "Fajr", name_ar: "الفجر", time: "04:12 AM", icon: "ti-sun" },
+    { name_en: "Sunrise", name_ar: "الشروق", time: "05:38 AM", icon: "ti-sunrise" },
+    { name_en: "Dhuhr", name_ar: "الظهر", time: "12:54 PM", icon: "ti-sun-filled", active: true },
+    { name_en: "Asr", name_ar: "العصر", time: "04:28 PM", icon: "ti-cloud-sun" },
+    { name_en: "Maghrib", name_ar: "المغرب", time: "07:11 PM", icon: "ti-sunset-2" },
+    { name_en: "Isha", name_ar: "العشاء", time: "08:34 PM", icon: "ti-moon-stars" }
+  ];
+
+  let html = '';
+  prayers.forEach(p => {
+    html += `
+      <div class="prayer-row ${p.active ? 'active-prayer' : ''}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: var(--r-small); margin-bottom: 6px; background: ${p.active ? 'rgba(212, 160, 23, 0.12)' : 'rgba(255,255,255,0.02)'}; border: 1px solid ${p.active ? 'var(--color-gold)' : 'rgba(255,255,255,0.04)'};">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="ti ${p.icon}" style="font-size: 16px; color: ${p.active ? 'var(--color-gold-light)' : 'var(--color-text-secondary)'};"></i>
+          <div>
+            <strong style="font-size: 13px;">${p.name_en}</strong>
+            <span style="font-size: 12px; color: var(--color-text-muted); margin-left: 6px;">(${p.name_ar})</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          ${p.active ? '<span class="tag tag-gold" style="font-size: 10px;">Next Prayer</span>' : ''}
+          <strong style="font-family: var(--font-mono); font-size: 14px; color: ${p.active ? 'var(--color-gold-light)' : 'white'};">${p.time}</strong>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderHijriCalendar() {
+  const container = document.getElementById('calendar-days-grid');
+  if (!container) return;
+
+  let html = '';
+  // 30 days grid for Dhul-Hijjah 1447
+  for (let day = 1; day <= 30; day++) {
+    const isToday = (day === 15);
+    const isFriday = ((day + 4) % 7 === 0);
+    const isEid = (day >= 10 && day <= 13);
+
+    let bg = 'rgba(255,255,255,0.02)';
+    let border = 'rgba(255,255,255,0.04)';
+    let color = 'white';
+
+    if (isToday) {
+      bg = 'rgba(212, 160, 23, 0.2)';
+      border = 'var(--color-gold)';
+      color = 'var(--color-gold-light)';
+    } else if (isEid) {
+      bg = 'rgba(27, 94, 32, 0.2)';
+      border = 'var(--color-emerald)';
+      color = 'var(--color-emerald-active)';
+    }
+
+    html += `
+      <div style="background: ${bg}; border: 1px solid ${border}; border-radius: 4px; padding: 8px 4px; text-align: center; color: ${color};">
+        <div style="font-size: 13px; font-weight: 700;">${day}</div>
+        <div style="font-size: 9px; color: var(--color-text-muted); margin-top: 2px;">${isFriday ? 'Jumuah' : 'Sep ' + day}</div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+/* --- Initialize Native Islamic Suite & Desktop Bridge on Startup --- */
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    initQiblaDragRotation();
+    loadQuranSurah(1);
+    updateQiblaDisplay(30.0444, 31.2357, "Cairo, Egypt");
+    calculateZakat();
+    renderZakatLedger();
+    initTauriBridge();
+  }, 300);
+});
+
+/* ================================================================
+   4. TAURI NATIVE DESKTOP BRIDGE & SYSTEM TRAY INTEGRATION
+   ================================================================ */
+
+function openApp(appId) {
+  if (['qibla', 'zakat', 'quran', 'prayer', 'calendar'].includes(appId)) {
+    openWindow('window-islamic');
+    selectIslamicSubTab(appId);
+  } else if (appId === 'islamic') {
+    openWindow('window-islamic');
+  } else {
+    const targetWinId = appId.startsWith('window-') ? appId : 'window-' + appId;
+    const el = document.getElementById(targetWinId);
+    if (el) {
+      openWindow(targetWinId);
+    } else {
+      openWindow('window-' + appId);
+    }
+  }
+}
+
+function toggleAthanMute() {
+  if (typeof setupState === 'undefined') {
+    window.setupState = window.setupState || {};
+  }
+  setupState.athanMuted = !setupState.athanMuted;
+  const chk = document.getElementById("settings-chk-adhan");
+  if (chk) chk.checked = !setupState.athanMuted;
+  
+  if (typeof showInshaNotification === 'function') {
+    showInshaNotification(
+      "Adhan Audio",
+      setupState.athanMuted ? "Adhan audio muted in system tray" : "Adhan audio unmuted in system tray",
+      "info"
+    );
+  } else if (typeof showInsha === 'function') {
+    showInsha(setupState.athanMuted ? "🔇 Adhan audio muted" : "🔊 Adhan audio unmuted", "info");
+  }
+  return setupState.athanMuted;
+}
+
+// Global exposes for Rust IPC eval & test environments
+window.openApp = openApp;
+window.toggleQuranPlay = typeof toggleQuranPlay === 'function' ? toggleQuranPlay : () => {};
+window.toggleAthanMute = toggleAthanMute;
+
+function initTauriBridge() {
+  if (typeof window !== 'undefined' && window.__TAURI__) {
+    const { invoke } = window.__TAURI__;
+    console.log("☪ Halal OS: Tauri Native Desktop Shell Bridge Connected");
+
+    window.toggleWindowVisibility = () => {
+      return invoke('toggle_window_visibility');
+    };
+
+    // Helper to push prayer times & Hijri date to Native System Tray
+    const syncPrayerToTray = () => {
+      try {
+        let nextPrayer = "Fajr";
+        let timeRemaining = "1h 30m";
+        let hijriDate = "15 Dhul-Hijjah 1447";
+
+        const topPrayerEl = document.getElementById("top-prayer-text");
+        if (topPrayerEl && topPrayerEl.textContent) {
+          const parts = topPrayerEl.textContent.split(" in ");
+          if (parts.length === 2) {
+            nextPrayer = parts[0];
+            timeRemaining = parts[1];
+          }
+        }
+
+        const hijriEl = document.getElementById("top-hijri-date") || document.getElementById("lbl-cal-hijri-month");
+        if (hijriEl && hijriEl.textContent) {
+          hijriDate = hijriEl.textContent.trim();
+        }
+
+        invoke('update_tray_prayer_status', {
+          nextPrayer: nextPrayer,
+          timeRemaining: timeRemaining,
+          hijriDate: hijriDate
+        }).catch(err => console.warn("Tauri tray update warning:", err));
+      } catch (err) {
+        console.warn("Tauri bridge sync error:", err);
+      }
+    };
+
+    // Initial sync and periodic timer
+    setTimeout(syncPrayerToTray, 1000);
+    setInterval(syncPrayerToTray, 30000);
+  }
+}
+
+// Export for testing environments
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    openApp,
+    toggleAthanMute,
+    initTauriBridge
+  };
+}
+
